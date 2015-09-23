@@ -1,0 +1,7 @@
+[package]
+name = "oscpad"
+version = "0.1.0"
+authors = ["Ben B <bburdette@gmail.com>"]
+
+[dependencies]
+websocket = "0.12.2"

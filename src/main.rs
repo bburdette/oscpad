@@ -5,7 +5,7 @@ use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
 
 fn main() {
-	let server = Server::bind("127.0.0.1:8001").unwrap();
+	let server = Server::bind("127.0.0.1:1234").unwrap();
 
 	for connection in server {
 		// Spawn a new thread for each connection.
@@ -40,6 +40,7 @@ fn main() {
 			
 			for message in receiver.incoming_messages() {
 				let message = message.unwrap();
+        println!("message: {:?}", message);
 				
 				match message {
 					Message::Close(_) => {

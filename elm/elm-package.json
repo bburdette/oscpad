@@ -1,0 +1,16 @@
+{
+    "summary": "web controls for sending/receiving OSC messages.",
+    "native-modules": true,
+    "source-directories": [
+        "src",
+        "../../elm-sockets"
+    ],
+    "repository": "https://github.com/USER/PROJECT.git",
+    "dependencies": {
+        "elm-lang/core": "2.0.0 <= v < 3.0.0"
+    },
+    "exposed-modules": [],
+    "version": "1.0.0",
+    "elm-version": "0.15.0 <= v < 0.16.0",
+    "license": "GPLv2"
+}

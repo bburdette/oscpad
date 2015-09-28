@@ -4,6 +4,60 @@ use std::thread;
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
 
+extern crate iron;
+
+use iron::prelude::*;
+use iron::status;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+use std::os;
+use std::env;
+use std::io::Read;
+
+fn main() {
+
+    let args = env::args();
+    let mut iter = args.skip(1); // skip the program name
+
+    match iter.next() {
+      Some(file_name) => {
+        println!("{}", file_name);
+        let path = &Path::new(&file_name);
+        let f = File::open(path);
+        let mut s = String::new();
+        match f { 
+          Ok(mut of) => {
+            match of.read_to_string(&mut s) { 
+              Err(e) => {
+                println!("err: {:?}", e);
+                },
+              Ok(len) => { 
+                println!("read {} bytes", len)
+                }, 
+            } 
+            },
+          Err(e) => {
+            println!("err: {:?}", e);
+            },
+          }
+        println!("args!");
+        println!("file contents: {}", s);
+        }
+      None => {
+        println!("no args!");
+        }
+    }
+
+}
+
+
+/*
+    Iron::new(|req: &mut Request| {
+        Ok(Response::with((status::Ok, "Hello World!")))
+    }).http("localhost:3000").unwrap();
+
+
 fn main() {
 	let server = Server::bind("127.0.0.1:1234").unwrap();
 
@@ -59,3 +113,5 @@ fn main() {
 		});
 	}
 }
+
+*/

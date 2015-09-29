@@ -14,23 +14,26 @@ use std::path::Path;
 use std::os;
 use std::env;
 use std::io::Read;
+use std::string::*;
 
 fn main() {
 
     let args = env::args();
     let mut iter = args.skip(1); // skip the program name
 
+    let mut s = String::new();
+
     match iter.next() {
       Some(file_name) => {
         println!("{}", file_name);
         let path = &Path::new(&file_name);
         let f = File::open(path);
-        let mut s = String::new();
         match f { 
           Ok(mut of) => {
             match of.read_to_string(&mut s) { 
               Err(e) => {
                 println!("err: {:?}", e);
+                return ();
                 },
               Ok(len) => { 
                 println!("read {} bytes", len)
@@ -39,6 +42,7 @@ fn main() {
             },
           Err(e) => {
             println!("err: {:?}", e);
+            return ();
             },
           }
         println!("args!");
@@ -49,13 +53,13 @@ fn main() {
         }
     }
 
+    Iron::new(move |req: &mut Request| {
+        Ok(Response::with((status::Ok, &*s)))
+    }).http("localhost:3000").unwrap();
 }
 
 
 /*
-    Iron::new(|req: &mut Request| {
-        Ok(Response::with((status::Ok, "Hello World!")))
-    }).http("localhost:3000").unwrap();
 
 
 fn main() {

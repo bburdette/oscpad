@@ -8,6 +8,7 @@ extern crate iron;
 
 use iron::prelude::*;
 use iron::status;
+use iron::mime::Mime;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
@@ -45,24 +46,26 @@ fn main() {
             return ();
             },
           }
-        println!("args!");
-        println!("file contents: {}", s);
+        println!("serving file: {}", file_name);
+        println!("from localhost:3000");
         }
       None => {
         println!("no args!");
         }
     }
 
+    thread::spawn(move || { 
+      winsockets_main();
+      });
+
     Iron::new(move |req: &mut Request| {
-        Ok(Response::with((status::Ok, &*s)))
+        let content_type = "text/html".parse::<Mime>().unwrap();
+        Ok(Response::with((content_type, status::Ok, &*s)))
     }).http("localhost:3000").unwrap();
 }
 
 
-/*
-
-
-fn main() {
+fn winsockets_main() {
 	let server = Server::bind("127.0.0.1:1234").unwrap();
 
 	for connection in server {
@@ -118,4 +121,3 @@ fn main() {
 	}
 }
 
-*/

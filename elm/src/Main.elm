@@ -1,5 +1,6 @@
 module Main where
 
+{-
 import Effects exposing (Never)
 import SpinSquarePair exposing (init, update, view)
 import StartApp
@@ -32,9 +33,7 @@ port tasks : Signal (Task.Task Never ())
 port tasks =
   app.tasks
 
-
-{-
-module Main where
+-}
 
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
@@ -43,9 +42,13 @@ import Task exposing (Task)
 import Keyboard
 import Char
 import String
+import WebSocket exposing (WebSocket)
 
 socket : Task x WebSocket
 socket = WebSocket.create "ws://localhost:1234"
+
+listen : Signal.Mailbox String
+listen = Signal.mailbox ""
 
 --main = Signal.map2 (\a b -> show ("Sending: " ++ a ++ ", Receiving: " ++ b))
 --         inputKeyboard listen.signal
@@ -70,4 +73,3 @@ port sending = Signal.map send inputKeyboard
 inputKeyboard : Signal String
 -- inputKeyboard = Signal.map (\c -> Char.fromCode c |> String.fromChar) Keyboard.presses
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
--}

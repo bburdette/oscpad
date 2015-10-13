@@ -102,7 +102,9 @@ fn winsockets_main() {
 			for message in receiver.incoming_messages() {
 				let message = message.unwrap();
         println!("message: {:?}", message);
-				
+			
+        let replyy = Message::Text("replyyyblah".to_string());
+	
 				match message {
 					Message::Close(_) => {
 						let message = Message::Close(None);
@@ -111,10 +113,15 @@ fn winsockets_main() {
 						return;
 					}
 					Message::Ping(data) => {
+            println!("Message::Ping(data)");
 						let message = Message::Pong(data);
 						sender.send_message(message).unwrap();
 					}
-					_ => sender.send_message(message).unwrap(),
+					// _ => sender.send_message(message).unwrap(),
+					_ => { 
+            println!("sending replyy");
+            sender.send_message(replyy).unwrap()
+            }
 				}
 			}
 		});

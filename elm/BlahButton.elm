@@ -29,7 +29,7 @@ init nayme sendf =
 -- UPDATE
 
 type Action
-    = BlahClick | UselessCrap
+    = BlahClick | UselessCrap | Reply String
 
 
 update : Action -> Model -> (Model, Effects Action)
@@ -38,6 +38,7 @@ update action model =
     BlahClick -> (model, Effects.task 
       ((model.mahsend model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
     UselessCrap -> (model, Effects.none)
+    Reply s -> (Model s (model.mahsend), Effects.none)
 
 -- VIEW
 

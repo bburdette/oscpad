@@ -29,8 +29,8 @@ port listening = socket `Task.andThen` WebSocket.listen listen.address
 connected : Signal.Mailbox Bool
 connected = Signal.mailbox False
 
-port connection : Task x ()
-port connection = socket `Task.andThen` WebSocket.connected connected.address
+-- port connection : Task x ()
+-- port connection = socket `Task.andThen` WebSocket.connected connected.address
 
 send : String -> Task x ()
 send message = socket `Task.andThen` WebSocket.send message
@@ -50,7 +50,8 @@ app =
     { init = init "cabbage" send
     , update = update
     , view = view
-    , inputs = []
+    , inputs = [(Signal.map BlahButton.Reply listen.signal)]
+    -- , inputs = []
     -- , inputs = [inputKeyboard, listen.signal, (Signal.map toString connected.signal)]
     -- , inputs = [inputKeyboard]
     }

@@ -17,6 +17,9 @@ use std::env;
 use std::io::Read;
 use std::string::*;
 
+extern crate serde_json;
+use serde_json::Value;
+
 fn main() {
 
     let args = env::args();
@@ -48,6 +51,11 @@ fn main() {
           }
         println!("serving file: {}", file_name);
         println!("from localhost:3000");
+  
+        let data: Value = serde_json::from_str(&s[..]).unwrap();
+
+        println!("serdeval: {:?}", data);
+
         }
       None => {
         println!("no args!");

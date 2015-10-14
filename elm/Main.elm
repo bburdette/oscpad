@@ -18,19 +18,15 @@ socket = WebSocket.create "ws://localhost:1234"
 listen : Signal.Mailbox String
 listen = Signal.mailbox ""
 
---main = Signal.map2 (\a b -> show ("Sending: " ++ a ++ ", Receiving: " ++ b))
---         inputKeyboard listen.signal
--- main = Signal.map3 (\a b c -> show ("Sending: " ++ a ++ ", Receiving: " ++ b ++ ", Connected: " ++ c))
---         inputKeyboard listen.signal (Signal.map toString connected.signal)
+port listening : Task x (List ())
+port listening = socket `Task.andThen` 
+  (\s -> 
+    Task.sequence [WebSocket.listen listen.address s, 
+                   WebSocket.connected connected.address s])
 
-port listening : Task x ()
-port listening = socket `Task.andThen` WebSocket.listen listen.address
 
 connected : Signal.Mailbox Bool
 connected = Signal.mailbox False
-
--- port connection : Task x ()
--- port connection = socket `Task.andThen` WebSocket.connected connected.address
 
 send : String -> Task x ()
 send message = socket `Task.andThen` WebSocket.send message
@@ -43,7 +39,6 @@ inputKeyboard : Signal String
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 ---------------------------------------
-
 
 app =
   StartApp.start

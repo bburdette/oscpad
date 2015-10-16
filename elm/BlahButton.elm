@@ -9,6 +9,12 @@ import Json.Decode as Json
 import Task
 
 
+-- how to specify a button in json.
+type alias Spec = 
+  {
+    name: String
+  }
+
 -- MODEL
 
 type alias Model =
@@ -17,11 +23,11 @@ type alias Model =
     }
 
 
-init : String -> 
+init : Spec -> 
   (String -> Task.Task Never ()) -> 
   (Model, Effects Action)
-init nayme sendf =
-  ( Model nayme sendf
+init spec sendf =
+  ( Model (spec.name) sendf
   , Effects.none
   )
 

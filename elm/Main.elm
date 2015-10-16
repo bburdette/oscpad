@@ -24,7 +24,6 @@ port listening = socket `Task.andThen`
     Task.sequence [WebSocket.listen listen.address s, 
                    WebSocket.connected connected.address s])
 
-
 connected : Signal.Mailbox Bool
 connected = Signal.mailbox False
 
@@ -42,7 +41,7 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 app =
   StartApp.start
-    { init = init "cabbage" send
+    { init = init (BlahButton.Spec "cabbage") send
     , update = update
     , view = view
     , inputs = [(Signal.map BlahButton.Reply listen.signal)]

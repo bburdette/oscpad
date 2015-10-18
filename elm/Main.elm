@@ -1,6 +1,7 @@
 
 import Effects exposing (Never)
-import BlahButton exposing (init, update, view)
+import BlahButton 
+import MultiButt 
 import StartApp
 import Task
 import Signal exposing (Signal)
@@ -41,9 +42,9 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 app =
   StartApp.start
-    { init = init (BlahButton.Spec "cabbage") send
-    , update = update
-    , view = view
+    { init = BlahButton.init send (BlahButton.Spec "cabbage")
+    , update = BlahButton.update
+    , view = BlahButton.view
     , inputs = [(Signal.map BlahButton.Reply listen.signal)]
     -- , inputs = []
     -- , inputs = [inputKeyboard, listen.signal, (Signal.map toString connected.signal)]

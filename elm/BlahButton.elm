@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Json
+import Json.Decode as Json exposing ((:=))
 import Task
 
 
@@ -15,6 +15,9 @@ type alias Spec =
     name: String
   }
 
+jsSpec : Json.Decoder Spec
+jsSpec = Json.object1 Spec ("name" := Json.string)
+
 -- MODEL
 
 type alias Model =
@@ -23,10 +26,10 @@ type alias Model =
     }
 
 
-init : Spec -> 
-  (String -> Task.Task Never ()) -> 
+init : (String -> Task.Task Never ()) -> 
+  Spec ->  
   (Model, Effects Action)
-init spec sendf =
+init sendf spec =
   ( Model (spec.name) sendf
   , Effects.none
   )

@@ -31,29 +31,23 @@ type alias Model =
 
 type alias ID = Int
 
-init : Spec -> (String -> Task.Task Never ()) -> (Model, Effects Action)
-init spec sendf =
-  ( Model spec.title [] 0 sendf
-  , Effects.none
-  )
-
 -- UPDATE
 
 type Action
-    = MBConfig String 
+    = JsonMsg String 
     | BAction ID BlahButton.Action 
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    MBConfig s -> 
+    JsonMsg s -> 
       let t = Json.decodeString jsSpec s
        in case t of 
-          Ok spec -> init spec model.mahsend
+          Ok spec -> init model.mahsend spec 
           Err e -> (model, Effects.none)
 
-initButts: Spec -> (String -> Task.Task Never ()) -> (Model, Effects Action)
-initButts spec sendf = 
+init: (String -> Task.Task Never ()) -> Spec -> (Model, Effects Action)
+init sendf spec = 
   let blist = map (BlahButton.init sendf) spec.buttons
       idxs = [0..(length spec.buttons)]  
       buttz = zip idxs (map fst blist) 
@@ -71,7 +65,7 @@ initButts spec sendf =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  div [] (map (viewBlahButton address) model.butts)
+  div [] ([text "meh", text model.title, text (toString (length model.butts))] ++ (map (viewBlahButton address) model.butts))
 
 
 viewBlahButton : Signal.Address Action -> (ID, BlahButton.Model) -> Html

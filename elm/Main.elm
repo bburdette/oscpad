@@ -42,6 +42,16 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 app =
   StartApp.start
+    { init = MultiButt.init send (MultiButt.Spec "mehtitle" [BlahButton.Spec "cabbage",
+                                                             BlahButton.Spec "grits"])
+    , update = MultiButt.update
+    , view = MultiButt.view
+    , inputs = [(Signal.map MultiButt.JsonMsg listen.signal)]
+    }
+
+{-
+app =
+  StartApp.start
     { init = BlahButton.init send (BlahButton.Spec "cabbage")
     , update = BlahButton.update
     , view = BlahButton.view
@@ -50,11 +60,10 @@ app =
     -- , inputs = [inputKeyboard, listen.signal, (Signal.map toString connected.signal)]
     -- , inputs = [inputKeyboard]
     }
-
+-}
 
 main =
   app.html
-
 
 port tasks : Signal (Task.Task Never ())
 port tasks =

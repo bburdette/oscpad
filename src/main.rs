@@ -50,35 +50,38 @@ fn main() {
             },
           }
         println!("serving file: {}", file_name);
-        println!("from localhost:3000");
+        println!("from localhost:3030");
   
         let data: Value = serde_json::from_str(&s[..]).unwrap();
 
         println!("serdeval: {:?}", data);
-
         }
       None => {
         println!("no args!");
         }
     }
 
+    let q = String::new() + &s[..];
+
     thread::spawn(move || { 
-      winsockets_main();
+      winsockets_main(q);
       });
 
     Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*s)))
-    }).http("localhost:3000").unwrap();
+    }).http("localhost:3030").unwrap();
 }
 
 
-fn winsockets_main() {
+fn winsockets_main(aSConfig: String) {
 	let server = Server::bind("127.0.0.1:1234").unwrap();
 
 	for connection in server {
 		// Spawn a new thread for each connection.
-		thread::spawn(move || {
+    let blah = String::new() + &aSConfig[..];
+		
+    thread::spawn(move || {
 			let request = connection.unwrap().read_request().unwrap(); // Get the request
 			let headers = request.headers.clone(); // Keep the headers so we can check them
 			
@@ -101,16 +104,16 @@ fn winsockets_main() {
 				.unwrap();
 			
 			println!("Connection from {}", ip);
-			
-			let message = Message::Text("Hello".to_string());
-			client.send_message(message).unwrap();
+     
+      let message = Message::Text(blah);
+			client.send_message(message.clone()).unwrap();
 			
 			let (mut sender, mut receiver) = client.split();
 			
 			for message in receiver.incoming_messages() {
 				let message = message.unwrap();
         println!("message: {:?}", message);
-			
+	
         let replyy = Message::Text("replyyyblah".to_string());
 	
 				match message {

@@ -45,6 +45,34 @@ update action model =
        in case t of 
           Ok spec -> init model.mahsend spec 
           Err e -> (model, Effects.none)
+    BAction id act -> 
+      let bb = find id model.butts in
+      case bb of 
+        Just bm -> 
+          let wha = BlahButton.update act bm 
+              updbutts = replace id (fst wha) model.butts
+              newmod = { model | butts <- updbutts }
+            in
+              (newmod, Effects.map (BAction id) (snd wha))
+        Nothing -> (model, Effects.none) 
+        
+find: a -> List (a, b) -> Maybe b
+find a ablist =
+  case ablist of 
+    ((av,b)::rest) -> 
+      if (a == av) 
+        then Just b
+        else (find a rest)
+    [] -> Nothing
+
+replace: a -> b -> List (a,b) -> List (a,b)
+replace a b ablist =
+  case ablist of 
+    ((av,bv)::rest) -> 
+      if (a == av) 
+        then (a,b) :: rest 
+        else (av,bv) :: (replace a b rest)
+    [] -> [(a,b)]
 
 init: (String -> Task.Task Never ()) -> Spec -> (Model, Effects Action)
 init sendf spec = 

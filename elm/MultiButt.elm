@@ -5,6 +5,7 @@ import Html exposing (..)
 import BlahButton
 import Task
 import List exposing (..)
+import Dict exposing (..)
 import Json.Decode as Json exposing ((:=))
 import Util exposing (..)
 
@@ -24,7 +25,7 @@ jsSpec = Json.object2 Spec
 type alias Model =
     {
       title: String, 
-      butts: List (ID, BlahButton.Model),
+      butts: Dict ID BlahButton.Model,
       nextID: ID,
       mahsend : (String -> Task.Task Never ())
     }
@@ -46,11 +47,11 @@ update action model =
           Ok spec -> init model.mahsend spec 
           Err e -> (model, Effects.none)
     BAction id act -> 
-      let bb = find id model.butts in
+      let bb = get id model.butts in
       case bb of 
         Just bm -> 
           let wha = BlahButton.update act bm 
-              updbutts = replace id (fst wha) model.butts
+              updbutts = insert id (fst wha) model.butts
               newmod = { model | butts <- updbutts }
             in
               (newmod, Effects.map (BAction id) (snd wha))
@@ -76,14 +77,14 @@ replace a b ablist =
 
 init: (String -> Task.Task Never ()) -> Spec -> (Model, Effects Action)
 init sendf spec = 
-  let blist = map (BlahButton.init sendf) spec.buttons
+  let blist = List.map (BlahButton.init sendf) spec.buttons
       idxs = [0..(length spec.buttons)]  
-      buttz = zip idxs (map fst blist) 
+      buttz = zip idxs (List.map fst blist) 
       fx = Effects.batch 
-             (map (\(i,a) -> Effects.map (BAction i) a)
-                  (zip idxs (map snd blist)))
+             (List.map (\(i,a) -> Effects.map (BAction i) a)
+                  (zip idxs (List.map snd blist)))
     in
-     (Model spec.title buttz (length spec.buttons) sendf, fx)
+     (Model spec.title (Dict.fromList buttz) (length spec.buttons) sendf, fx)
       
 
 -- VIEW
@@ -93,7 +94,9 @@ init sendf spec =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  div [] ([text "meh", text model.title, text (toString (length model.butts))] ++ (map (viewBlahButton address) model.butts))
+  let buttl = Dict.toList model.butts in 
+  div [] ([text "meh", text model.title, text (toString (length buttl))] 
+          ++ (List.map (viewBlahButton address) buttl)) 
 
 
 viewBlahButton : Signal.Address Action -> (ID, BlahButton.Model) -> Html

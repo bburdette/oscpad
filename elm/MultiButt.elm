@@ -18,7 +18,7 @@ type alias Spec =
 
 jsSpec : Json.Decoder Spec
 jsSpec = Json.object2 Spec 
-  ("name" := Json.string)
+  ("title" := Json.string)
   ("buttons" := Json.list BlahButton.jsSpec)
 
 
@@ -45,7 +45,7 @@ update action model =
       let t = Json.decodeString jsSpec s
        in case t of 
           Ok spec -> init model.mahsend spec 
-          Err e -> (model, Effects.none)
+          Err e -> ({model | title <- e}, Effects.none)
     BAction id act -> 
       let bb = get id model.butts in
       case bb of 

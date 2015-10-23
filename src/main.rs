@@ -20,62 +20,93 @@ use std::string::*;
 extern crate serde_json;
 use serde_json::Value;
 
+fn loadString(file_name: &str) -> Option<String>
+{
+  let path = &Path::new(&file_name);
+  let f = File::open(path);
+  let mut result = String::new();
+  match f { 
+    Ok(mut of) => {
+      match of.read_to_string(&mut result) { 
+        Err(e) => {
+          println!("err: {:?}", e);
+          None
+          },
+        Ok(len) => { 
+          println!("read {} bytes", len);
+          Some(result)
+          }, 
+      } 
+      },
+    Err(e) => {
+      println!("err: {:?}", e);
+      None
+      },
+    }
+ }
+
+
 fn main() {
 
+
+    // going to serve up html 
+    let mut htmlstring = String::new();
+    // on connect, send up json
+    let mut guistring = String::new();
+
+    // ip address.  I guess!
+    let mut ip = String::new();
+
+    // read in the settings json.
     let args = env::args();
     let mut iter = args.skip(1); // skip the program name
-
-    let mut s = String::new();
-
     match iter.next() {
       Some(file_name) => {
-        println!("{}", file_name);
-        let path = &Path::new(&file_name);
-        let f = File::open(path);
-        match f { 
-          Ok(mut of) => {
-            match of.read_to_string(&mut s) { 
-              Err(e) => {
-                println!("err: {:?}", e);
-                return ();
-                },
-              Ok(len) => { 
-                println!("read {} bytes", len)
-                }, 
-            } 
-            },
-          Err(e) => {
-            println!("err: {:?}", e);
-            return ();
-            },
-          }
-        println!("serving file: {}", file_name);
-        println!("from localhost:3030");
-  
-        let data: Value = serde_json::from_str(&s[..]).unwrap();
+        
+        println!("loading config file: {}", file_name);
+        let config = loadString(&file_name).unwrap();
+        
+        // read config file as json
+        let data: Value = serde_json::from_str(&config[..]).unwrap();
+        let obj = data.as_object().unwrap();
+        
+        let htmlfilename = 
+          obj.get("htmlfile").unwrap().as_string().unwrap();
+        htmlstring = loadString(&htmlfilename[..]).unwrap();
 
-        println!("serdeval: {:?}", data);
+        let guifilename = 
+          obj.get("guifile").unwrap().as_string().unwrap();
+        guistring = loadString(&guifilename[..]).unwrap();
+
+        println!("config: {:?}", data);
+
+        ip = String::new() + 
+          obj.get("ip").unwrap().as_string().unwrap();
+
         }
       None => {
         println!("no args!");
         }
     }
 
-    let q = String::new() + &s[..];
+    let q = String::new() + &guistring[..];
+
+    let ipnport = String::new() + &ip[..] + ":3030";
 
     thread::spawn(move || { 
-      winsockets_main(q);
+      winsockets_main(ip, q);
       });
 
     Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
-        Ok(Response::with((content_type, status::Ok, &*s)))
-    }).http("localhost:3030").unwrap();
+        Ok(Response::with((content_type, status::Ok, &*htmlstring)))
+    }).http(&ipnport[..]).unwrap();
 }
 
 
-fn winsockets_main(aSConfig: String) {
-	let server = Server::bind("127.0.0.1:1234").unwrap();
+fn winsockets_main(ipaddr: String, aSConfig: String) {
+  let ipnport = ipaddr + ":1234";
+	let server = Server::bind(&ipnport[..]).unwrap();
 
 	for connection in server {
 		// Spawn a new thread for each connection.

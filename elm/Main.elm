@@ -1,7 +1,8 @@
+module Main where
 
 import Effects exposing (Never)
-import BlahButton 
-import MultiButt 
+import SvgButton 
+import MultiSvgButt 
 import StartApp
 import Task
 import Signal exposing (Signal)
@@ -42,11 +43,11 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 app =
   StartApp.start
-    { init = MultiButt.init send (MultiButt.Spec "mehtitle" [BlahButton.Spec "cabbage",
-                                                             BlahButton.Spec "grits"])
-    , update = MultiButt.update
-    , view = MultiButt.view
-    , inputs = [(Signal.map MultiButt.JsonMsg listen.signal)]
+    { init = MultiSvgButt.init send (MultiSvgButt.Spec "mehtitle" [SvgButton.Spec "cabbage",
+                                                             SvgButton.Spec "grits"])
+    , update = MultiSvgButt.update
+    , view = MultiSvgButt.view
+    , inputs = [(Signal.map MultiSvgButt.JsonMsg listen.signal)]
     }
 
 {-

@@ -52,15 +52,15 @@ buttColor pressed =
 -- UPDATE
 
 type Action
-    = SvgClick | SvgMouseOpp | UselessCrap | Reply String
+    = SvgPress | SvgUnpress | UselessCrap | Reply String
 
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgClick -> ({ model | pressed <- True}, Effects.task 
+    SvgPress -> ({ model | pressed <- True}, Effects.task 
       ((model.sendf model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
-    SvgMouseOpp -> ({ model | pressed <- False}, Effects.none)
+    SvgUnpress -> ({ model | pressed <- False}, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
 
@@ -73,9 +73,9 @@ view address model =
   svg
     [ width "200", height "200", viewBox "0 0 200 200" ]
     [ g [ transform ("translate(100, 100)")
-        , onMouseDown (Signal.message address SvgClick)
-        , onMouseUp (Signal.message address SvgMouseOpp)
-        , onMouseOut (Signal.message address SvgMouseOpp)
+        , onMouseDown (Signal.message address SvgPress)
+        , onMouseUp (Signal.message address SvgUnpress)
+        , onMouseOut (Signal.message address SvgUnpress)
         ]
         [ rect
             [ x "-50"

@@ -9,7 +9,7 @@ import Json.Decode as Json exposing ((:=))
 import Task
 import Svg exposing (svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onClick)
+import Svg.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 
 -- how to specify a button in json.
 type alias Spec = 
@@ -31,7 +31,6 @@ jsSpec = Json.object1 Spec ("name" := Json.string)
 type alias Model =
   { name : String
   , pressed: Bool
-  , color: String
   , sendf : (String -> Task.Task Never ())
   }
 
@@ -39,22 +38,29 @@ type alias Model =
 init : (String -> Task.Task Never ()) -> Spec ->  
   (Model, Effects Action)
 init sendf spec =
-  ( Model (spec.name) False "#60B5CC" sendf
+  ( Model (spec.name) False sendf
   , Effects.none
   )
+
+buttColor: Bool -> String
+buttColor pressed = 
+  case pressed of 
+    True -> "#f000f0"
+    False -> "#60B5CC"
 
 
 -- UPDATE
 
 type Action
-    = SvgClick | UselessCrap | Reply String
+    = SvgClick | SvgMouseOpp | UselessCrap | Reply String
 
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgClick -> ({ model | color <- "#f000f0"}, Effects.task 
+    SvgClick -> ({ model | pressed <- True}, Effects.task 
       ((model.sendf model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+    SvgMouseOpp -> ({ model | pressed <- False}, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
 
@@ -67,7 +73,9 @@ view address model =
   svg
     [ width "200", height "200", viewBox "0 0 200 200" ]
     [ g [ transform ("translate(100, 100)")
-        , onClick (Signal.message address SvgClick)
+        , onMouseDown (Signal.message address SvgClick)
+        , onMouseUp (Signal.message address SvgMouseOpp)
+        , onMouseOut (Signal.message address SvgMouseOpp)
         ]
         [ rect
             [ x "-50"
@@ -76,7 +84,7 @@ view address model =
             , height "100"
             , rx "15"
             , ry "15"
-            , style ("fill: " ++ model.color ++ ";")
+            , style ("fill: " ++ buttColor(model.pressed) ++ ";")
             ]
             []
         , text' [ fill "white", textAnchor "middle" ] [ text model.name ]

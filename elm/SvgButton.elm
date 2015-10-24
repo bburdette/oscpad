@@ -31,6 +31,7 @@ jsSpec = Json.object1 Spec ("name" := Json.string)
 type alias Model =
   { name : String
   , pressed: Bool
+  , color: String
   , sendf : (String -> Task.Task Never ())
   }
 
@@ -38,7 +39,7 @@ type alias Model =
 init : (String -> Task.Task Never ()) -> Spec ->  
   (Model, Effects Action)
 init sendf spec =
-  ( Model (spec.name) False sendf
+  ( Model (spec.name) False "#60B5CC" sendf
   , Effects.none
   )
 
@@ -52,7 +53,7 @@ type Action
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgClick -> (model, Effects.task 
+    SvgClick -> ({ model | color <- "#f000f0"}, Effects.task 
       ((model.sendf model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
@@ -60,7 +61,6 @@ update action model =
 -- VIEW
 
 (=>) = (,)
-
 
 view : Signal.Address Action -> Model -> Html
 view address model =
@@ -76,7 +76,7 @@ view address model =
             , height "100"
             , rx "15"
             , ry "15"
-            , style "fill: #60B5CC;"
+            , style ("fill: " ++ model.color ++ ";")
             ]
             []
         , text' [ fill "white", textAnchor "middle" ] [ text model.name ]

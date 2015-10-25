@@ -88,30 +88,4 @@ view address model =
     , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
     ]
 
-{-
-view : Signal.Address Action -> Model -> Html
-view address model =
-  svg
-    [ width "200", height "200", viewBox "0 0 200 200" ]
-    [ g [ transform ("translate(100, 100)")
-        , onMouseDown (Signal.message address SvgPress)
-        , onMouseUp (Signal.message address SvgUnpress)
-        , onMouseOut (Signal.message address SvgUnpress)
-        ]
-        [ rect
-            [ x "-50"
-            , y "-50"
-            , width "100"
-            , height "100"
-            , rx "15"
-            , ry "15"
-            , style ("fill: " ++ buttColor(model.pressed) ++ ";")
-            ]
-            []
-        , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
-        ]
-    ] 
--}
--- EFFECTS
-
 

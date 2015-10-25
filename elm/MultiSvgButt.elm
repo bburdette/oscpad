@@ -96,31 +96,6 @@ init sendf spec =
 
 (=>) = (,)
 
-{-
-view : Signal.Address Action -> Model -> Html.Html
-view address model =
-  let buttl = Dict.toList model.butts in 
-  Html.div [] ([Html.text "meh", Html.text model.title, Html.text (toString (length buttl))] 
-          ++ 
-    [Svg.svg
-      [ SA.width "200", SA.height "200", SA.viewBox "0 0 200 200" ]
-      [ Svg.g [ SA.transform ("translate(100, 100)")
-          ]
-          [ Svg.rect
-              [ SA.x "-50"
-              , SA.y "-50"
-              , SA.width "100"
-              , SA.height "100"
-              , SA.rx "15"
-              , SA.ry "15"
-              , SA.style ("fill: " ++ "#757575" ++ ";")
-              ]
-              []
-          , Svg.text' [ SA.fill "white", SA.textAnchor "middle" ] [ Svg.text "blah" ]
-          ]
-      ]])
--}  
-
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   let buttl = Dict.toList model.butts in 
@@ -134,15 +109,4 @@ viewSvgButton : Signal.Address Action -> (ID, SvgButton.Model) -> Svg.Svg
 viewSvgButton address (id, model) =
   SvgButton.view (Signal.forwardTo address (BAction id)) model
 
-{-
-view : Signal.Address Action -> Model -> Html
-view address model =
-  let buttl = Dict.toList model.butts in 
-  div [] ([text "meh", text model.title, text (toString (length buttl))] 
-          ++ (List.map (viewSvgButton address) buttl)) 
 
-
-viewSvgButton : Signal.Address Action -> (ID, SvgButton.Model) -> Html
-viewSvgButton address (id, model) =
-  SvgButton.view (Signal.forwardTo address (BAction id)) model
--}

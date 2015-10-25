@@ -2,7 +2,7 @@ module Main where
 
 import Effects exposing (Never)
 import SvgButton 
-import MultiSvgButt 
+import SvgControls
 import StartApp
 import Task
 import Signal exposing (Signal)
@@ -11,6 +11,7 @@ import Keyboard
 import Char
 import String
 import WebSocket exposing (WebSocket)
+import SvgThings
 
 ---------------------------------------
 
@@ -36,32 +37,22 @@ port sending : Signal (Task x ())
 port sending = Signal.map send inputKeyboard
 
 inputKeyboard : Signal String
--- inputKeyboard = Signal.map (\c -> Char.fromCode c |> String.fromChar) Keyboard.presses
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
+
+-- inputKeyboard = Signal.map (\c -> Char.fromCode c |> String.fromChar) Keyboard.presses
 
 ---------------------------------------
 
 app =
   StartApp.start
-    { init = MultiSvgButt.init send (MultiSvgButt.Spec "mehtitle" [SvgButton.Spec "cabbage",
-                                                             SvgButton.Spec "grits"])
-    , update = MultiSvgButt.update
-    , view = MultiSvgButt.view
-    , inputs = [(Signal.map MultiSvgButt.JsonMsg listen.signal)]
+    { init = SvgControls.init send 
+        (SvgControls.Spec "mehtitle" [SvgButton.Spec "cabbage",
+                                      SvgButton.Spec "grits"])
+        (SvgThings.Rect 0 0 200 300)    
+    , update = SvgControls.update
+    , view = SvgControls.view
+    , inputs = [(Signal.map SvgControls.JsonMsg listen.signal)]
     }
-
-{-
-app =
-  StartApp.start
-    { init = BlahButton.init send (BlahButton.Spec "cabbage")
-    , update = BlahButton.update
-    , view = BlahButton.view
-    , inputs = [(Signal.map BlahButton.Reply listen.signal)]
-    -- , inputs = []
-    -- , inputs = [inputKeyboard, listen.signal, (Signal.map toString connected.signal)]
-    -- , inputs = [inputKeyboard]
-    }
--}
 
 main =
   app.html

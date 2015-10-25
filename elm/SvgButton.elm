@@ -10,18 +10,12 @@ import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+import SvgThings
 
 -- how to specify a button in json.
 type alias Spec = 
   { name: String
   }
-
-{-
-  , x: Int
-  , y: Int
-  , w: Int
-  , h: Int  
--}
 
 jsSpec : Json.Decoder Spec
 jsSpec = Json.object1 Spec ("name" := Json.string)
@@ -30,15 +24,24 @@ jsSpec = Json.object1 Spec ("name" := Json.string)
 
 type alias Model =
   { name : String
+  , x: String
+  , y: String
+  , w: String
+  , h: String  
   , pressed: Bool
   , sendf : (String -> Task.Task Never ())
   }
 
 
-init : (String -> Task.Task Never ()) -> Spec ->  
-  (Model, Effects Action)
-init sendf spec =
-  ( Model (spec.name) False sendf
+init : (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
+  -> (Model, Effects Action)
+init sendf spec rect =
+  ( Model (spec.name) 
+          (toString (rect.x + 5))
+          (toString (rect.y + 5))
+          (toString (rect.w - 5))
+          (toString (rect.h - 5))
+          False sendf
   , Effects.none
   )
 
@@ -47,7 +50,6 @@ buttColor pressed =
   case pressed of 
     True -> "#f000f0"
     False -> "#60B5CC"
-
 
 -- UPDATE
 
@@ -70,16 +72,15 @@ update action model =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
-  g [ transform ("translate(100, 100)")
-    , onMouseDown (Signal.message address SvgPress)
+  g [ onMouseDown (Signal.message address SvgPress)
     , onMouseUp (Signal.message address SvgUnpress)
     , onMouseOut (Signal.message address SvgUnpress)
     ]
     [ rect
-        [ x "-50"
-        , y "-50"
-        , width "100"
-        , height "100"
+        [ x model.x
+        , y model.y 
+        , width model.w
+        , height model.h
         , rx "15"
         , ry "15"
         , style ("fill: " ++ buttColor(model.pressed) ++ ";")

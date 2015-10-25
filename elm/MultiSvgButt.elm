@@ -99,8 +99,12 @@ init sendf spec =
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   let buttl = Dict.toList model.butts in 
-  Html.div [] ([Html.text "meh", Html.text model.title, Html.text (toString (length buttl))] 
-          ++ 
+  Html.div [] (
+    [Html.text "meh", 
+     Html.text model.title, 
+     Html.text (toString (length buttl)),
+     Html.br [] []] 
+    ++ 
     [Svg.svg
       [ SA.width "200", SA.height "200", SA.viewBox "0 0 200 200" ]
       (List.map (viewSvgButton address) buttl)])

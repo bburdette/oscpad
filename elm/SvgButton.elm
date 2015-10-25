@@ -7,7 +7,7 @@ import Html exposing (Html)
 import Http
 import Json.Decode as Json exposing ((:=))
 import Task
-import Svg exposing (svg, rect, g, text, text', Attribute)
+import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 
@@ -68,6 +68,27 @@ update action model =
 
 (=>) = (,)
 
+view : Signal.Address Action -> Model -> Svg
+view address model =
+  g [ transform ("translate(100, 100)")
+    , onMouseDown (Signal.message address SvgPress)
+    , onMouseUp (Signal.message address SvgUnpress)
+    , onMouseOut (Signal.message address SvgUnpress)
+    ]
+    [ rect
+        [ x "-50"
+        , y "-50"
+        , width "100"
+        , height "100"
+        , rx "15"
+        , ry "15"
+        , style ("fill: " ++ buttColor(model.pressed) ++ ";")
+        ]
+        []
+    , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
+    ]
+
+{-
 view : Signal.Address Action -> Model -> Html
 view address model =
   svg
@@ -90,8 +111,7 @@ view address model =
         , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
         ]
     ] 
-
-
+-}
 -- EFFECTS
 
 

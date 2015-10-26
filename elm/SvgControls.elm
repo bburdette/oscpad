@@ -14,9 +14,8 @@ import SvgThings
 
 -- json spec
 type alias Spec = 
-  {
-    title: String,
-    buttons: List SvgButton.Spec
+  { title: String
+  , buttons: List SvgButton.Spec
   }
 
 jsSpec : Json.Decoder Spec
@@ -26,13 +25,12 @@ jsSpec = Json.object2 Spec
 
 
 type alias Model =
-  {
-    title: String, 
-    butts: Dict ID SvgButton.Model,
-    mahrect: SvgThings.Rect,
-    srect: SvgThings.SRect,
-    nextID: ID,
-    mahsend : (String -> Task.Task Never ())
+  { title: String  
+  , butts: Dict ID SvgButton.Model 
+  , mahrect: SvgThings.Rect 
+  , srect: SvgThings.SRect 
+  , nextID: ID 
+  , mahsend : (String -> Task.Task Never ())
   }
 
 type alias ID = Int
@@ -108,12 +106,15 @@ view address model =
      Html.br [] []] 
     ++ 
     [Svg.svg
-      [ SA.width model.srect.w, SA.height model.srect.h, 
-      SA.viewBox (model.srect.x ++ " " 
-               ++ model.srect.y ++ " " 
-               ++ model.srect.w ++ " "
-               ++ model.srect.h) ]
-      (List.map (viewSvgButton address) buttl)])
+      [ SA.width model.srect.w
+      , SA.height model.srect.h
+      , SA.viewBox (model.srect.x ++ " " 
+                 ++ model.srect.y ++ " " 
+                 ++ model.srect.w ++ " "
+                 ++ model.srect.h)
+      ]
+      (List.map (viewSvgButton address) buttl)
+    ])
 
 viewSvgButton : Signal.Address Action -> (ID, SvgButton.Model) -> Svg.Svg 
 viewSvgButton address (id, model) =

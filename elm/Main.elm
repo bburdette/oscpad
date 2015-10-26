@@ -46,9 +46,8 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 app =
   StartApp.start
     { init = SvgControls.init send 
-        (SvgControls.Spec "mehtitle" [SvgButton.Spec "cabbage",
-                                      SvgButton.Spec "grits"])
-        (SvgThings.Rect 0 0 200 300)    
+        (SvgControls.Spec "mehtitle" [])
+        (SvgThings.Rect 0 0 500 300)    
     , update = SvgControls.update
     , view = SvgControls.view
     , inputs = [(Signal.map SvgControls.JsonMsg listen.signal)]

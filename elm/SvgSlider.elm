@@ -1,4 +1,4 @@
-module SvgButton where
+module SvgSlider where
 
 import Effects exposing (Effects, Never)
 import Html exposing (Html)
@@ -9,7 +9,7 @@ import Json.Decode as Json exposing ((:=))
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 import SvgThings
 
 -- how to specify a button in json.
@@ -24,21 +24,23 @@ jsSpec = Json.object1 Spec ("name" := Json.string)
 
 type alias Model =
   { name : String
+  , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , pressed: Bool
+  , location: Float
   , sendf : (String -> Task.Task Never ())
   }
-
 
 init : (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
   -> (Model, Effects Action)
 init sendf spec rect =
   ( Model (spec.name) 
+          rect
           (SvgThings.SRect (toString (rect.x + 5)) 
                            (toString (rect.y + 5))
                            (toString (rect.w - 5))
                            (toString (rect.h - 5)))
-          False sendf
+          False 0.5 sendf
   , Effects.none
   )
 
@@ -52,7 +54,6 @@ buttColor pressed =
 
 type Action
     = SvgPress | SvgUnpress | UselessCrap | Reply String
-
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -69,7 +70,11 @@ update action model =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
+  let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
+      sly = toString ly
+   in
   g [ onMouseDown (Signal.message address SvgPress)
+    , onMouseMove (Signal.message address SvgPress)
     , onMouseUp (Signal.message address SvgUnpress)
     , onMouseOut (Signal.message address SvgUnpress)
     ]
@@ -78,8 +83,18 @@ view address model =
         , y model.srect.y 
         , width model.srect.w
         , height model.srect.h
-        , rx "15"
-        , ry "15"
+        , rx "2"
+        , ry "2"
+        , style "fill: #010101;"
+        ]
+        []
+    , rect
+        [ x model.srect.x
+        , y sly 
+        , width model.srect.w
+        , height "3"
+        , rx "2"
+        , ry "2"
         , style ("fill: " ++ buttColor(model.pressed) ++ ";")
         ]
         []

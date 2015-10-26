@@ -3,6 +3,7 @@ module SvgControls where
 import Effects exposing (Effects, Never)
 import Html 
 import SvgButton
+import SvgSlider
 import Task
 import List exposing (..)
 import Dict exposing (..)
@@ -11,6 +12,9 @@ import Util exposing (..)
 import Svg 
 import Svg.Attributes as SA 
 import SvgThings
+
+
+
 
 -- json spec
 type alias Spec = 

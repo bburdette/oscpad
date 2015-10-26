@@ -2,6 +2,7 @@ module SvgThings where
 
 import List exposing (..)
 
+type Orientation = Vertical | Horizontal
 
 type alias Rect = 
   { x: Int  

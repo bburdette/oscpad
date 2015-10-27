@@ -14,8 +14,6 @@ import Svg.Attributes as SA
 import SvgThings
 
 
-
-
 -- json spec
 type alias Spec = 
   { title: String

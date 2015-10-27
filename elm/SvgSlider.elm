@@ -5,20 +5,22 @@ import Html exposing (Html)
 -- import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as JD exposing ((:=))
+import Json.Encode as JE 
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 import SvgThings
+import VirtualDom as VD
 
 -- how to specify a button in json.
 type alias Spec = 
   { name: String
   }
 
-jsSpec : Json.Decoder Spec
-jsSpec = Json.object1 Spec ("name" := Json.string)
+jsSpec : JD.Decoder Spec
+jsSpec = JD.object1 Spec ("name" := JD.string)
 
 -- MODEL
 
@@ -53,7 +55,7 @@ buttColor pressed =
 -- UPDATE
 
 type Action
-    = SvgPress | SvgUnpress | UselessCrap | Reply String
+    = SvgPress | SvgUnpress | UselessCrap | Reply String | ArbJson JE.Value
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -63,10 +65,17 @@ update action model =
     SvgUnpress -> ({ model | pressed <- False}, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
+    ArbJson v -> ({model | name <- (JE.encode 2 v)}, Effects.none)
 
 -- VIEW
 
 (=>) = (,)
+
+
+onClick : Signal.Address Action -> VD.Property
+onClick address =
+    VD.on "click" JD.value (\v -> Signal.message address (ArbJson v))
+
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
@@ -77,6 +86,7 @@ view address model =
     , onMouseMove (Signal.message address SvgPress)
     , onMouseUp (Signal.message address SvgUnpress)
     , onMouseOut (Signal.message address SvgUnpress)
+    , onClick address
     ]
     [ rect
         [ x model.srect.x

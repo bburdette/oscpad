@@ -103,6 +103,7 @@ view address model =
   let buttl = Dict.toList model.butts in 
   Html.div [] (
     [Html.text "meh", 
+     Html.br [] [],
      Html.text model.title, 
      Html.text (toString (length buttl)),
      Html.br [] []] 

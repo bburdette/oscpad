@@ -16,7 +16,8 @@ import SvgThings
 ---------------------------------------
 
 socket : Task x WebSocket
-socket = WebSocket.create "ws://localhost:1234"
+-- socket = WebSocket.create "ws://localhost:1234"
+socket = WebSocket.create "ws://10.1.10.185:1234"
 
 listen : Signal.Mailbox String
 listen = Signal.mailbox ""

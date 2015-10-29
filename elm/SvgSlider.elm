@@ -55,7 +55,14 @@ buttColor pressed =
 -- UPDATE
 
 type Action
-    = SvgPress | SvgUnpress | UselessCrap | Reply String | ArbJson JE.Value
+    = SvgPress 
+    | SvgUnpress 
+    | UselessCrap 
+    | Reply String 
+    | ArbJson JE.Value
+
+getY : JD.Decoder Int
+getY = "offsetY" := JD.int 
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -65,12 +72,16 @@ update action model =
     SvgUnpress -> ({ model | pressed <- False}, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
-    ArbJson v -> ({model | name <- (JE.encode 2 v)}, Effects.none)
+    ArbJson v -> 
+      case (JD.decodeValue getY v) of 
+        Ok i ->  
+          ({model | location <- (toFloat (i - model.rect.y)) / toFloat model.rect.h }, Effects.none)
+        Err e -> 
+          ({model | name <- (JE.encode 2 v)}, Effects.none)
 
 -- VIEW
 
 (=>) = (,)
-
 
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
@@ -82,7 +93,8 @@ onClick address =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
-  let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
+  -- let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
+  let ly = (floor (model.location * toFloat (model.rect.h)))
       sly = toString ly
    in
   g [ onMouseDown (Signal.message address SvgPress)
@@ -98,7 +110,7 @@ view address model =
         , height model.srect.h
         , rx "2"
         , ry "2"
-        , style "fill: #010101;"
+        , style "fill: #F1F1F1;"
         ]
         []
     , rect

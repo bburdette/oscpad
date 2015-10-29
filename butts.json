@@ -1,50 +1,13 @@
 {
   "title": "rustmeh",
-  "buttons": [
+  "controls": [
     {
+      "type": "button",
       "name": "blah1"
-    },
-    {
+    }
+  , {
+      "type": "slider",
       "name": "blah2"
-    },
-    {
-      "name": "blah3"
-    },
-    {
-      "name": "blah4"
-    },
-    {
-      "name": "blah5"
-    },
-    {
-      "name": "blah6"
-    },
-    {
-      "name": "blah7"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah8"
-    },
-    {
-      "name": "blah9"
     }
   ]
 }

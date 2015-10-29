@@ -72,6 +72,9 @@ update action model =
 (=>) = (,)
 
 
+-- try VD.onWithOptions for preventing scrolling on touchscreens and 
+-- etc. See virtualdom docs.
+
 onClick : Signal.Address Action -> VD.Property
 onClick address =
     VD.on "click" JD.value (\v -> Signal.message address (ArbJson v))

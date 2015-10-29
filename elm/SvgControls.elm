@@ -12,23 +12,23 @@ import Util exposing (..)
 import Svg 
 import Svg.Attributes as SA 
 import SvgThings
-
+import Controls
 
 -- json spec
 type alias Spec = 
   { title: String
-  , buttons: List SvgButton.Spec
+  , controls: List Controls.Spec
   }
 
 jsSpec : Json.Decoder Spec
 jsSpec = Json.object2 Spec 
   ("title" := Json.string)
-  ("buttons" := Json.list SvgButton.jsSpec)
+  ("controls" := Json.list Controls.jsSpec) 
 
 
 type alias Model =
   { title: String  
-  , butts: Dict ID SvgButton.Model 
+  , butts: Dict ID Controls.Model 
   , mahrect: SvgThings.Rect 
   , srect: SvgThings.SRect 
   , nextID: ID 
@@ -41,7 +41,7 @@ type alias ID = Int
 
 type Action
     = JsonMsg String 
-    | BAction ID SvgButton.Action 
+    | CAction ID Controls.Action 
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -51,15 +51,15 @@ update action model =
        in case t of 
           Ok spec -> init model.mahsend spec model.mahrect 
           Err e -> ({model | title <- e}, Effects.none)
-    BAction id act -> 
+    CAction id act -> 
       let bb = get id model.butts in
       case bb of 
         Just bm -> 
-          let wha = SvgButton.update act bm 
+          let wha = Controls.update act bm 
               updbutts = insert id (fst wha) model.butts
               newmod = { model | butts <- updbutts }
             in
-              (newmod, Effects.map (BAction id) (snd wha))
+              (newmod, Effects.map (CAction id) (snd wha))
         Nothing -> (model, Effects.none) 
         
 find: a -> List (a, b) -> Maybe b
@@ -83,15 +83,15 @@ replace a b ablist =
 init: (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
   -> (Model, Effects Action)
 init sendf spec rect = 
-  let rlist = SvgThings.hrects rect (List.length spec.buttons)
-      blist = List.map (\(a, b) -> SvgButton.init sendf a b) (zip spec.buttons rlist)
-      idxs = [0..(length spec.buttons)]  
+  let rlist = SvgThings.hrects rect (List.length spec.controls)
+      blist = List.map (\(a, b) -> Controls.init sendf a b) (zip spec.controls rlist)
+      idxs = [0..(length spec.controls)]  
       buttz = zip idxs (List.map fst blist) 
       fx = Effects.batch 
-             (List.map (\(i,a) -> Effects.map (BAction i) a)
+             (List.map (\(i,a) -> Effects.map (CAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (Model spec.title (Dict.fromList buttz) rect (SvgThings.toSRect rect) (length spec.buttons) sendf, fx)
+     (Model spec.title (Dict.fromList buttz) rect (SvgThings.toSRect rect) (length spec.controls) sendf, fx)
       
 
 -- VIEW
@@ -115,11 +115,11 @@ view address model =
                  ++ model.srect.w ++ " "
                  ++ model.srect.h)
       ]
-      (List.map (viewSvgButton address) buttl)
+      (List.map (viewSvgControls address) buttl)
     ])
 
-viewSvgButton : Signal.Address Action -> (ID, SvgButton.Model) -> Svg.Svg 
-viewSvgButton address (id, model) =
-  SvgButton.view (Signal.forwardTo address (BAction id)) model
+viewSvgControls : Signal.Address Action -> (ID, Controls.Model) -> Svg.Svg 
+viewSvgControls address (id, model) =
+  Controls.view (Signal.forwardTo address (CAction id)) model
 
 

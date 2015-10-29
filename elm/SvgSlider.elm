@@ -10,7 +10,7 @@ import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
+import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 import SvgThings
 import VirtualDom as VD
 
@@ -88,8 +88,7 @@ update action model =
 
 onClick : Signal.Address Action -> VD.Property
 onClick address =
-    VD.on "click" JD.value (\v -> Signal.message address (ArbJson v))
-
+    VD.onWithOptions "click" (VD.Options True True) JD.value (\v -> Signal.message address (ArbJson v))
 
 view : Signal.Address Action -> Model -> Svg
 view address model =

@@ -9,7 +9,7 @@ import Json.Decode as Json exposing ((:=))
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
 
 -- how to specify a button in json.

@@ -12,12 +12,12 @@ import Char
 import String
 import WebSocket exposing (WebSocket)
 import SvgThings
+import Window
 
 ---------------------------------------
 
 socket : Task x WebSocket
--- socket = WebSocket.create "ws://localhost:1234"
-socket = WebSocket.create "ws://10.1.10.185:1234"
+socket = WebSocket.createToHost "1234"
 
 listen : Signal.Mailbox String
 listen = Signal.mailbox ""
@@ -51,7 +51,11 @@ app =
         (SvgThings.Rect 0 0 500 300)    
     , update = SvgControls.update
     , view = SvgControls.view
-    , inputs = [(Signal.map SvgControls.JsonMsg listen.signal)]
+    , inits = [ (Signal.map SvgControls.WinDims Window.dimensions)
+              ]
+    , inputs = [ (Signal.map SvgControls.JsonMsg listen.signal)
+               , (Signal.map SvgControls.WinDims Window.dimensions)
+               ]
     }
 
 main =

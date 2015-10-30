@@ -32,6 +32,7 @@ type alias Model =
   , mahrect: SvgThings.Rect 
   , srect: SvgThings.SRect 
   , nextID: ID 
+  , spec: Spec
   , mahsend : (String -> Task.Task Never ())
   }
 
@@ -42,6 +43,7 @@ type alias ID = Int
 type Action
     = JsonMsg String 
     | CAction ID Controls.Action 
+    | WinDims (Int, Int)
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -61,6 +63,8 @@ update action model =
             in
               (newmod, Effects.map (CAction id) (snd wha))
         Nothing -> (model, Effects.none) 
+    WinDims (x,y) -> 
+      init model.mahsend model.spec (SvgThings.Rect 0 0 x y)
         
 find: a -> List (a, b) -> Maybe b
 find a ablist =
@@ -91,7 +95,7 @@ init sendf spec rect =
              (List.map (\(i,a) -> Effects.map (CAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (Model spec.title (Dict.fromList buttz) rect (SvgThings.toSRect rect) (length spec.controls) sendf, fx)
+     (Model spec.title (Dict.fromList buttz) rect (SvgThings.toSRect rect) (length spec.controls) spec sendf, fx)
       
 
 -- VIEW

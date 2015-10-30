@@ -1,6 +1,6 @@
 {
-  "htmlfile": "spin.html",
+  "htmlfile": "elm/Main.html",
   "guifile": "slitest.json",
   "ip": "localhost",
-  "wip": "100.100.100.157"
+  "wip": "localhost"
 }

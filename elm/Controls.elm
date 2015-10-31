@@ -81,12 +81,10 @@ view address model =
 
 -------------------- sizer -------------------
 
-type Orientation = Horizontal | Vertical
-
 -- json spec
 type alias SzSpec = 
   { name: String
-  , orientation: Orientation
+  , orientation: SvgThings.Orientation
   , controls: List Spec
   }
 
@@ -94,7 +92,7 @@ type alias SzSpec =
 jsSzSpec : JD.Decoder SzSpec
 jsSzSpec = JD.object3 SzSpec 
   ("name" := JD.string)
-  (("orientation" := JD.string) `JD.andThen` jsOrientation)
+  (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
   ("controls" := JD.list (lazy (\_ -> jsSpec)))
 
 -- Hack because recursion is sort of broked I guess
@@ -104,19 +102,10 @@ lazy thunk =
   JD.customDecoder JD.value
       (\js -> JD.decodeValue (thunk ()) js)
 
-jsOrientation : String -> JD.Decoder Orientation 
-jsOrientation o = 
-  case o of 
-    "vertical" -> JD.succeed Vertical
-    "horizontal" -> JD.succeed Horizontal
-
-
 type alias SzModel =
   { name: String  
   , controls: Dict ID Model 
   , szspec: SzSpec
---  , nextID: ID 
---  , mahsend : (String -> Task.Task Never ())
   }
 
 type alias ID = Int
@@ -146,8 +135,8 @@ szinit: (String -> Task.Task Never ()) -> SzSpec -> SvgThings.Rect
   -> (SzModel, Effects SzAction)
 szinit sendf szspec rect = 
   let rlist = case szspec.orientation of 
-        Horizontal -> SvgThings.hrects rect (List.length szspec.controls)
-        Vertical -> SvgThings.vrects rect (List.length szspec.controls)
+        SvgThings.Horizontal -> SvgThings.hrects rect (List.length szspec.controls)
+        SvgThings.Vertical -> SvgThings.vrects rect (List.length szspec.controls)
       blist = List.map (\(a, b) -> init sendf a b) (zip szspec.controls rlist)
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 

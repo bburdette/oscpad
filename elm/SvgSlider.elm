@@ -16,10 +16,13 @@ import VirtualDom as VD
 
 type alias Spec = 
   { name: String
+  , orientation: SvgThings.Orientation
   }
 
 jsSpec : JD.Decoder Spec
-jsSpec = JD.object1 Spec ("name" := JD.string)
+jsSpec = JD.object2 Spec 
+  ("name" := JD.string)
+  (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
 
 -- MODEL
 
@@ -27,6 +30,7 @@ type alias Model =
   { name : String
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
+  , orientation: SvgThings.Orientation
   , pressed: Bool
   , location: Float
   , sendf : (String -> Task.Task Never ())
@@ -41,6 +45,7 @@ init sendf spec rect =
                            (toString (rect.y + 5))
                            (toString (rect.w - 5))
                            (toString (rect.h - 5)))
+          spec.orientation
           False 0.5 sendf
   , Effects.none
   )
@@ -60,6 +65,9 @@ type Action
     | Reply String 
     | ArbJson JE.Value
 
+getX : JD.Decoder Int
+getX = "offsetX" := JD.int 
+
 getY : JD.Decoder Int
 getY = "offsetY" := JD.int 
 
@@ -72,11 +80,19 @@ update action model =
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
     ArbJson v -> 
-      case (JD.decodeValue getY v) of 
-        Ok i ->  
-          ({model | location <- (toFloat (i - model.rect.y)) / toFloat model.rect.h }, Effects.none)
-        Err e -> 
-          ({model | name <- (JE.encode 2 v)}, Effects.none)
+      case model.orientation of 
+        SvgThings.Horizontal ->
+          case (JD.decodeValue getX v) of 
+            Ok i ->  
+              ({model | location <- (toFloat (i - model.rect.x)) / toFloat model.rect.w }, Effects.none)
+            Err e -> 
+              ({model | name <- (JE.encode 2 v)}, Effects.none)
+        SvgThings.Vertical -> 
+          case (JD.decodeValue getY v) of 
+            Ok i ->  
+              ({model | location <- (toFloat (i - model.rect.y)) / toFloat model.rect.h }, Effects.none)
+            Err e -> 
+              ({model | name <- (JE.encode 2 v)}, Effects.none)
 
 -- VIEW
 
@@ -91,8 +107,17 @@ onClick address =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
-  let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
-      sly = toString ly
+  let (sx, sy, sw, sh) = case model.orientation of 
+     SvgThings.Vertical -> 
+        (model.srect.x
+        ,toString ((round (model.location * toFloat (model.rect.h))) + model.rect.y)
+        ,model.srect.w
+        ,"3")
+     SvgThings.Horizontal -> 
+        (toString ((round (model.location * toFloat (model.rect.w))) + model.rect.x)
+        ,model.srect.y
+        ,"3"
+        ,model.srect.h)
    in
   g [ onMouseDown (Signal.message address SvgPress)
     , onMouseMove (Signal.message address SvgPress)
@@ -111,10 +136,10 @@ view address model =
         ]
         []
     , rect
-        [ x model.srect.x
-        , y sly 
-        , width model.srect.w
-        , height "3"
+        [ x sx 
+        , y sy 
+        , width sw
+        , height sh 
         , rx "2"
         , ry "2"
         , style ("fill: " ++ buttColor(model.pressed) ++ ";")

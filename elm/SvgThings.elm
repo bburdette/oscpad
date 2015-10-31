@@ -1,8 +1,16 @@
 module SvgThings where
 
 import List exposing (..)
+import Json.Decode as JD exposing ((:=))
 
 type Orientation = Vertical | Horizontal
+
+jsOrientation : String -> JD.Decoder Orientation 
+jsOrientation o = 
+  case o of 
+    "vertical" -> JD.succeed Vertical
+    "horizontal" -> JD.succeed Horizontal
+
 
 type alias Rect = 
   { x: Int  

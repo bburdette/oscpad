@@ -15,15 +15,19 @@
            "name": "szname",
            "controls": [
              { "type": "slider"
+             , "orientation": "vertical"
              , "name": "blah"
              }
             ,{ "type": "slider"
+             , "orientation": "vertical"
              , "name": "blah"
              }
             ,{ "type": "slider"
+             , "orientation": "vertical"
              , "name": "blah"
              }
             ,{ "type": "slider"
+             , "orientation": "horizontal"
              , "name": "blah"
              }
             ]

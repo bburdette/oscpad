@@ -32,8 +32,21 @@ hrects rct count =
       w = round (toFloat rct.w / count)
       idxs = [0..(count-1)]
    in
-     map (mekr rct w) idxs
+     map (mekhr rct w) idxs
 
 
-mekr: Rect -> Int -> Int -> Rect
-mekr br w i = Rect (w * i) br.y w br.h 
+mekhr: Rect -> Int -> Int -> Rect
+mekhr br w i = Rect (w * i) br.y w br.h 
+
+-- make a number of vertically evenly spaced rects.
+vrects: Rect -> Int -> List Rect
+vrects rct count = 
+  let h: Int
+      h = round (toFloat rct.h / count)
+      idxs = [0..(count-1)]
+   in
+     map (mekvr rct h) idxs
+
+
+mekvr: Rect -> Int -> Int -> Rect
+mekvr br h i = Rect br.x (h * i) br.w h 

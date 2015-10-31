@@ -3,6 +3,7 @@ module Main where
 import Effects exposing (Never)
 import SvgButton 
 import SvgControls
+import Controls
 import StartApp
 import Task
 import Signal exposing (Signal)
@@ -47,7 +48,7 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 app =
   StartApp.start
     { init = SvgControls.init send 
-        (SvgControls.Spec "mehtitle" [])
+        (SvgControls.Spec "mehtitle" (Controls.CsButton (SvgButton.Spec "blah")))
         (SvgThings.Rect 0 0 500 300)    
     , update = SvgControls.update
     , view = SvgControls.view

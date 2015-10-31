@@ -1,0 +1,20 @@
+{
+  "title": "rustmeh",
+  "rootControl": 
+    {
+       "type": "sizer",
+       "name": "szname",
+       "controls": [
+         { "type": "button"
+         , "name": "blah"
+         }
+        ,{ "type": "slider"
+         , "name": "blah"
+         }
+        ]
+
+    }
+}
+
+
+

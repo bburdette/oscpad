@@ -14,7 +14,6 @@ import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMo
 import SvgThings
 import VirtualDom as VD
 
--- how to specify a button in json.
 type alias Spec = 
   { name: String
   }
@@ -92,8 +91,7 @@ onClick address =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
-  -- let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
-  let ly = (floor (model.location * toFloat (model.rect.h)))
+  let ly = (round (model.location * toFloat (model.rect.h))) + model.rect.y
       sly = toString ly
    in
   g [ onMouseDown (Signal.message address SvgPress)

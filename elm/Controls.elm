@@ -17,6 +17,8 @@ import Html
 -- Two things (objects?) in this file; control container 
 -- and sizer.  They are mutually recursive so they have to
 -- both be in a single file.  
+
+
 -------------------- control container -------------------
 
 type Spec = CsButton SvgButton.Spec 
@@ -84,14 +86,15 @@ type Orientation = Horizontal | Vertical
 -- json spec
 type alias SzSpec = 
   { name: String
+  , orientation: Orientation
   , controls: List Spec
   }
 
-  --  , orientation: Orientation
 
 jsSzSpec : JD.Decoder SzSpec
-jsSzSpec = JD.object2 SzSpec 
+jsSzSpec = JD.object3 SzSpec 
   ("name" := JD.string)
+  (("orientation" := JD.string) `JD.andThen` jsOrientation)
   ("controls" := JD.list (lazy (\_ -> jsSpec)))
 
 -- Hack because recursion is sort of broked I guess
@@ -100,6 +103,12 @@ lazy : (() -> JD.Decoder a) -> JD.Decoder a
 lazy thunk =
   JD.customDecoder JD.value
       (\js -> JD.decodeValue (thunk ()) js)
+
+jsOrientation : String -> JD.Decoder Orientation 
+jsOrientation o = 
+  case o of 
+    "vertical" -> JD.succeed Vertical
+    "horizontal" -> JD.succeed Horizontal
 
 
 type alias SzModel =
@@ -136,7 +145,9 @@ szupdate action model =
 szinit: (String -> Task.Task Never ()) -> SzSpec -> SvgThings.Rect 
   -> (SzModel, Effects SzAction)
 szinit sendf szspec rect = 
-  let rlist = SvgThings.hrects rect (List.length szspec.controls)
+  let rlist = case szspec.orientation of 
+        Horizontal -> SvgThings.hrects rect (List.length szspec.controls)
+        Vertical -> SvgThings.vrects rect (List.length szspec.controls)
       blist = List.map (\(a, b) -> init sendf a b) (zip szspec.controls rlist)
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 

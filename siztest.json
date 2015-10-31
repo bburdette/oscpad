@@ -2,17 +2,34 @@
   "title": "rustmeh",
   "rootControl": 
     {
-       "type": "sizer",
-       "name": "szname",
-       "controls": [
-         { "type": "button"
-         , "name": "blah"
-         }
-        ,{ "type": "slider"
-         , "name": "blah"
-         }
-        ]
+      "type": "sizer",
+      "orientation": "vertical",
+      "name": "szname",
+      "controls": [
+        { "type": "button"
+        , "name": "blah"
+        }
+      , {
+           "type": "sizer",
+           "orientation": "horizontal",
+           "name": "szname",
+           "controls": [
+             { "type": "slider"
+             , "name": "blah"
+             }
+            ,{ "type": "slider"
+             , "name": "blah"
+             }
+            ,{ "type": "slider"
+             , "name": "blah"
+             }
+            ,{ "type": "slider"
+             , "name": "blah"
+             }
+            ]
 
+        }
+        ]
     }
 }
 

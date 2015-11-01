@@ -57,18 +57,18 @@ update action model =
       let (a,b) = (szupdate act m) in
         (CmSizer a, Effects.map CaSizer b)
 
-init : (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
+init : (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
-init sendf spec rect =
+init sendf rect cid spec =
   case spec of 
     CsButton s -> 
-      let (a,b) = (SvgButton.init sendf s rect) in
+      let (a,b) = (SvgButton.init sendf rect cid s) in
         (CmButton a, Effects.map CaButton b)
     CsSlider s -> 
-      let (a,b) = (SvgSlider.init sendf s rect) in
+      let (a,b) = (SvgSlider.init sendf rect cid s) in
         (CmSlider a, Effects.map CaSlider b)
     CsSizer s -> 
-      let (a,b) = (szinit sendf s rect) in
+      let (a,b) = (szinit sendf rect cid s) in
         (CmSizer a, Effects.map CaSizer b)
 
 
@@ -104,6 +104,7 @@ lazy thunk =
 
 type alias SzModel =
   { name: String  
+  , cid: SvgThings.ControlId
   , controls: Dict ID Model 
   , szspec: SzSpec
   }
@@ -131,20 +132,22 @@ szupdate action model =
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 
         
-szinit: (String -> Task.Task Never ()) -> SzSpec -> SvgThings.Rect 
+szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
   -> (SzModel, Effects SzAction)
-szinit sendf szspec rect = 
+szinit sendf rect cid szspec = 
   let rlist = case szspec.orientation of 
         SvgThings.Horizontal -> SvgThings.hrects rect (List.length szspec.controls)
         SvgThings.Vertical -> SvgThings.vrects rect (List.length szspec.controls)
-      blist = List.map (\(a, b) -> init sendf a b) (zip szspec.controls rlist)
+      blist = List.map 
+                (\(spec, rect, idx) -> init sendf rect (cid ++ [idx]) spec) 
+                (map3 (,,) szspec.controls rlist idxs)
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 
       fx = Effects.batch 
              (List.map (\(i,a) -> Effects.map (SzCAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (SzModel szspec.name (Dict.fromList controlz) szspec, fx)
+     (SzModel szspec.name cid (Dict.fromList controlz) szspec, fx)
       
 
 -- VIEW

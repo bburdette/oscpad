@@ -26,6 +26,7 @@ jsSpec = JD.object2 Spec
 
 type alias Model =
   { name : String
+  , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , orientation: SvgThings.Orientation
@@ -34,10 +35,11 @@ type alias Model =
   , sendf : (String -> Task.Task Never ())
   }
 
-init : (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
+init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
-init sendf spec rect =
+init sendf rect cid spec =
   ( Model (spec.name) 
+          cid 
           rect
           (SvgThings.SRect (toString (rect.x + 5)) 
                            (toString (rect.y + 5))

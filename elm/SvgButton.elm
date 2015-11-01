@@ -24,16 +24,18 @@ jsSpec = Json.object1 Spec ("name" := Json.string)
 
 type alias Model =
   { name : String
+  , cid: SvgThings.ControlId 
   , srect: SvgThings.SRect
   , pressed: Bool
   , sendf : (String -> Task.Task Never ())
   }
 
 
-init : (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
+init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
-init sendf spec rect =
+init sendf rect cid spec =
   ( Model (spec.name) 
+          cid 
           (SvgThings.SRect (toString (rect.x + 5)) 
                            (toString (rect.y + 5))
                            (toString (rect.w - 5))

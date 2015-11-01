@@ -50,7 +50,7 @@ update action model =
     JsonMsg s -> 
       let t = Json.decodeString jsSpec s
        in case t of 
-          Ok spec -> init model.mahsend spec model.mahrect 
+          Ok spec -> init model.mahsend model.mahrect spec 
           Err e -> ({model | title <- e}, Effects.none)
     CAction act -> 
       let wha = Controls.update act model.control 
@@ -58,13 +58,13 @@ update action model =
         in
           (newmod, Effects.map CAction (snd wha))
     WinDims (x,y) -> 
-      init model.mahsend model.spec (SvgThings.Rect 0 0 x y)
+      init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
 
 
-init: (String -> Task.Task Never ()) -> Spec -> SvgThings.Rect 
+init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)
-init sendf spec rect = 
-  let (conmod, conevt) = Controls.init sendf spec.rootControl rect
+init sendf rect spec = 
+  let (conmod, conevt) = Controls.init sendf rect [] spec.rootControl
       fx = Effects.map CAction conevt
     in
      (Model spec.title rect (SvgThings.toSRect rect) spec conmod sendf, fx)

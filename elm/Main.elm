@@ -48,8 +48,8 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 app =
   StartApp.start
     { init = SvgControls.init send 
-        (SvgControls.Spec "mehtitle" (Controls.CsButton (SvgButton.Spec "blah")))
         (SvgThings.Rect 0 0 500 300)    
+        (SvgControls.Spec "mehtitle" (Controls.CsButton (SvgButton.Spec "blah")))
     , update = SvgControls.update
     , view = SvgControls.view
     , inits = [ (Signal.map SvgControls.WinDims Window.dimensions)

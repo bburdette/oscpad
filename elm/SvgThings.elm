@@ -2,6 +2,7 @@ module SvgThings where
 
 import List exposing (..)
 import Json.Decode as JD exposing ((:=))
+import Json.Encode as JE
 
 type Orientation = Vertical | Horizontal
 
@@ -10,6 +11,12 @@ jsOrientation o =
   case o of 
     "vertical" -> JD.succeed Vertical
     "horizontal" -> JD.succeed Horizontal
+
+type alias ControlId = List Int
+
+encodeControlId: ControlId -> JD.Value
+encodeControlId cid = 
+  JE.string (toString cid) 
 
 
 type alias Rect = 

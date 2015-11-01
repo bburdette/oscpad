@@ -6,8 +6,18 @@
       "orientation": "vertical",
       "name": "szname",
       "controls": [
-        { "type": "button"
-        , "name": "blah"
+        { "type": "slider"
+        , "orientation": "horizontal"
+        , "name": "hs1"
+        }
+      , { "type": "button"
+        , "name": "b1"
+        }
+      , { "type": "button"
+        , "name": "b2"
+        }
+      , { "type": "button"
+        , "name": "b3"
         }
       , {
            "type": "sizer",
@@ -16,19 +26,19 @@
            "controls": [
              { "type": "slider"
              , "orientation": "vertical"
-             , "name": "blah"
+             , "name": "hs1"
              }
             ,{ "type": "slider"
              , "orientation": "vertical"
-             , "name": "blah"
+             , "name": "hs2"
              }
             ,{ "type": "slider"
              , "orientation": "vertical"
-             , "name": "blah"
+             , "name": "hs3"
              }
             ,{ "type": "slider"
-             , "orientation": "horizontal"
-             , "name": "blah"
+             , "orientation": "vertical"
+             , "name": "hs4"
              }
             ]
 

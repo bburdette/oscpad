@@ -2,8 +2,6 @@ module SvgSlider where
 
 import Effects exposing (Effects, Never)
 import Html exposing (Html)
--- import Html.Attributes exposing (style)
--- import Html.Events exposing (onClick)
 import Http
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE 
@@ -59,11 +57,11 @@ buttColor pressed =
 -- UPDATE
 
 type Action
-    = SvgPress 
-    | SvgUnpress 
+    = SvgPress JE.Value
+    | SvgUnpress JE.Value 
     | UselessCrap 
     | Reply String 
-    | ArbJson JE.Value
+    | SvgMoved JE.Value
 
 getX : JD.Decoder Int
 getX = "offsetX" := JD.int 
@@ -71,28 +69,88 @@ getX = "offsetX" := JD.int
 getY : JD.Decoder Int
 getY = "offsetY" := JD.int 
 
+type UpdateType 
+  = Press
+  | Move
+  | Unpress
+
+type alias UpdateMessage = 
+  { updateType: UpdateType
+  , location: Float
+  }
+
+encodeUpdateMessage: UpdateMessage -> JD.Value
+encodeUpdateMessage um = 
+  JE.object [ ("updateType", encodeUpdateType um.updateType) 
+            , ("location", (JE.float um.location))
+            ]
+  
+encodeUpdateType: UpdateType -> JD.Value
+encodeUpdateType ut = 
+  case ut of 
+    Press -> JE.string "Press"
+    Move -> JE.string "Move"
+    Unpress -> JE.string "Unpress"
+
+-- get mouse/whatever location from the json message, 
+-- compute slider location from that.
+getLocation: Model -> JD.Value -> Result String Float
+getLocation model v = 
+  case model.orientation of 
+    SvgThings.Horizontal ->
+      case (JD.decodeValue getX v) of 
+        Ok i -> Ok ((toFloat (i - model.rect.x)) 
+                    / toFloat model.rect.w)
+        Err e -> Err e
+    SvgThings.Vertical -> 
+      case (JD.decodeValue getY v) of 
+        Ok i -> Ok ((toFloat (i - model.rect.y)) 
+                    / toFloat model.rect.h)
+        Err e -> Err e
+
+{-
+updLoc: Model -> JD.Value -> (Model, Effects Action) 
+
+      case (getLocation model v) of 
+        Ok l -> ({model | location <- l}, Effects.none)
+        _ -> (model, Effects.none)
+-}
+
+
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgPress -> ({ model | pressed <- True}, Effects.task 
-      ((model.sendf model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
-    SvgUnpress -> ({ model | pressed <- False}, Effects.none)
+    SvgPress v -> 
+      case (getLocation model v) of 
+        Ok l -> 
+          let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage Press l)) in
+            ( {model | location <- l, pressed <- True}
+            , Effects.task 
+                ((model.sendf um) `Task.andThen` 
+                (\_ -> Task.succeed UselessCrap)))
+        _ -> (model, Effects.none)
+    SvgUnpress v -> 
+      let um = JE.encode 0 (encodeUpdateMessage 
+                (UpdateMessage Unpress model.location)) in
+        ( { model | pressed <- False }
+        , Effects.task 
+            ((model.sendf um) `Task.andThen` 
+            (\_ -> Task.succeed UselessCrap)))
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
-    ArbJson v -> 
-      case model.orientation of 
-        SvgThings.Horizontal ->
-          case (JD.decodeValue getX v) of 
-            Ok i ->  
-              ({model | location <- (toFloat (i - model.rect.x)) / toFloat model.rect.w }, Effects.none)
-            Err e -> 
-              ({model | name <- (JE.encode 2 v)}, Effects.none)
-        SvgThings.Vertical -> 
-          case (JD.decodeValue getY v) of 
-            Ok i ->  
-              ({model | location <- (toFloat (i - model.rect.y)) / toFloat model.rect.h }, Effects.none)
-            Err e -> 
-              ({model | name <- (JE.encode 2 v)}, Effects.none)
+    SvgMoved v ->
+      case model.pressed of 
+        True -> 
+          case (getLocation model v) of 
+            Ok l -> 
+              let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage Move l)) in
+                ( {model | location <- l}
+                , Effects.task 
+                    ((model.sendf um) `Task.andThen` 
+                    (\_ -> Task.succeed UselessCrap)))
+            _ -> (model, Effects.none)
+        False -> (model, Effects.none)
+
 
 -- VIEW
 
@@ -101,9 +159,17 @@ update action model =
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
 
-onClick : Signal.Address Action -> VD.Property
-onClick address =
-    VD.onWithOptions "click" (VD.Options True True) JD.value (\v -> Signal.message address (ArbJson v))
+
+sliderEvt: String -> (JD.Value -> Action) -> Signal.Address Action -> VD.Property
+sliderEvt evtname mkaction address =
+    VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> Signal.message address (mkaction v))
+
+-- onClick = sliderEvt "click" SvgMoved
+--  , onClick address
+onMouseMove = sliderEvt "mousemove" SvgMoved
+onMouseLeave = sliderEvt "mouseleave" SvgUnpress
+onMouseDown = sliderEvt "mousedown" SvgPress
+onMouseUp = sliderEvt "mouseup" SvgUnpress
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
@@ -119,11 +185,10 @@ view address model =
         ,"3"
         ,model.srect.h)
    in
-  g [ onMouseDown (Signal.message address SvgPress)
-    , onMouseMove (Signal.message address SvgPress)
-    , onMouseUp (Signal.message address SvgUnpress)
-    , onMouseOut (Signal.message address SvgUnpress)
-    , onClick address
+  g [ onMouseDown address 
+    , onMouseUp address 
+    , onMouseLeave address 
+    , onMouseMove address 
     ]
     [ rect
         [ x model.srect.x

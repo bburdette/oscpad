@@ -134,12 +134,15 @@ update action model =
                 (\_ -> Task.succeed UselessCrap)))
         _ -> (model, Effects.none)
     SvgUnpress v -> 
-      let um = JE.encode 0 (encodeUpdateMessage 
-                (UpdateMessage model.cid Unpress model.location)) in
-        ( { model | pressed <- False }
-        , Effects.task 
-            ((model.sendf um) `Task.andThen` 
-            (\_ -> Task.succeed UselessCrap)))
+      case model.pressed of 
+        True -> 
+          let um = JE.encode 0 (encodeUpdateMessage 
+                    (UpdateMessage model.cid Unpress model.location)) in
+            ( { model | pressed <- False }
+            , Effects.task 
+                ((model.sendf um) `Task.andThen` 
+                (\_ -> Task.succeed UselessCrap)))
+        False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
     SvgMoved v ->

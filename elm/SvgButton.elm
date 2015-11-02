@@ -5,7 +5,8 @@ import Html exposing (Html)
 -- import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as JD exposing ((:=))
+import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
@@ -17,8 +18,8 @@ type alias Spec =
   { name: String
   }
 
-jsSpec : Json.Decoder Spec
-jsSpec = Json.object1 Spec ("name" := Json.string)
+jsSpec : JD.Decoder Spec
+jsSpec = JD.object1 Spec ("name" := JD.string)
 
 -- MODEL
 
@@ -55,12 +56,35 @@ buttColor pressed =
 type Action
     = SvgPress | SvgUnpress | UselessCrap | Reply String
 
+type UpdateType 
+  = Press
+  | Unpress
+
+type alias UpdateMessage = 
+  { controlId: SvgThings.ControlId
+  , updateType: UpdateType
+  }
+
+encodeUpdateMessage: UpdateMessage -> JD.Value
+encodeUpdateMessage um = 
+  JE.object [ ("controlId", SvgThings.encodeControlId um.controlId) 
+            , ("updateType", encodeUpdateType um.updateType) 
+            ]
+  
+encodeUpdateType: UpdateType -> JD.Value
+encodeUpdateType ut = 
+  case ut of 
+    Press -> JE.string "Press"
+    Unpress -> JE.string "Unpress"
+
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgPress -> ({ model | pressed <- True}, Effects.task 
-      ((model.sendf model.name) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+    SvgPress -> 
+      let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Press)) in
+      ({ model | pressed <- True}, Effects.task 
+        ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
     SvgUnpress -> ({ model | pressed <- False}, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)

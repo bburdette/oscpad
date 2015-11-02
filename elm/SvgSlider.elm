@@ -77,13 +77,15 @@ type UpdateType
   | Unpress
 
 type alias UpdateMessage = 
-  { updateType: UpdateType
+  { controlId: SvgThings.ControlId
+  , updateType: UpdateType
   , location: Float
   }
 
 encodeUpdateMessage: UpdateMessage -> JD.Value
 encodeUpdateMessage um = 
-  JE.object [ ("updateType", encodeUpdateType um.updateType) 
+  JE.object [ ("controlId", SvgThings.encodeControlId um.controlId) 
+            , ("updateType", encodeUpdateType um.updateType) 
             , ("location", (JE.float um.location))
             ]
   
@@ -125,7 +127,7 @@ update action model =
     SvgPress v -> 
       case (getLocation model v) of 
         Ok l -> 
-          let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage Press l)) in
+          let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Press l)) in
             ( {model | location <- l, pressed <- True}
             , Effects.task 
                 ((model.sendf um) `Task.andThen` 
@@ -133,7 +135,7 @@ update action model =
         _ -> (model, Effects.none)
     SvgUnpress v -> 
       let um = JE.encode 0 (encodeUpdateMessage 
-                (UpdateMessage Unpress model.location)) in
+                (UpdateMessage model.cid Unpress model.location)) in
         ( { model | pressed <- False }
         , Effects.task 
             ((model.sendf um) `Task.andThen` 
@@ -145,7 +147,7 @@ update action model =
         True -> 
           case (getLocation model v) of 
             Ok l -> 
-              let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage Move l)) in
+              let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Move l)) in
                 ( {model | location <- l}
                 , Effects.task 
                     ((model.sendf um) `Task.andThen` 

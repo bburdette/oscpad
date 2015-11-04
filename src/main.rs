@@ -1,3 +1,5 @@
+#![feature(custom_derive)]
+
 extern crate websocket;
 
 use std::thread;
@@ -16,6 +18,8 @@ use std::os;
 use std::env;
 use std::io::Read;
 use std::string::*;
+
+mod controls;
 
 extern crate serde_json;
 use serde_json::Value;
@@ -79,6 +83,15 @@ fn main() {
         guistring = loadString(&guifilename[..]).unwrap();
 
         println!("config: {:?}", data);
+
+        // deserialize! 
+        let guival: Value = serde_json::from_str(&guistring[..]).unwrap();
+        let blah = controls::deserializeRoot(&guival).unwrap();
+
+        //println!("postsereialsis");
+        // let meh = String::new() + blah.rootControl.controlType();  
+
+        println!("title: {} count: {} ", blah.title, "meh");
 
         ip = String::new() + 
           obj.get("ip").unwrap().as_string().unwrap();

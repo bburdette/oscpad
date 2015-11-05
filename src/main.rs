@@ -52,7 +52,6 @@ fn loadString(file_name: &str) -> Option<String>
 
 fn main() {
 
-
     // going to serve up html 
     let mut htmlstring = String::new();
     // on connect, send up json

@@ -26,7 +26,7 @@ pub trait Control : Debug {
 
 #[derive(Debug)]
 pub struct Slider {
-//  controlid: String,
+  controlId: Vec<i32>,
   name: String,
   pressed: bool,
   location: f32,
@@ -38,7 +38,7 @@ impl Control for Slider {
 
 #[derive(Debug)]
 pub struct Button { 
-//  controlid: String,
+  controlId: Vec<i32>,
   name: String,
   pressed: bool,
 }
@@ -49,7 +49,7 @@ impl Control for Button {
 
 #[derive(Debug)]
 pub struct Sizer { 
-  // controlid: String,
+  controlId: Vec<i32>,
   controls: Vec<Box<Control>>,
 }
 
@@ -71,30 +71,27 @@ pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
 
   let rc = obj.get("rootControl").unwrap();
 
-
-  let rootcontrol = deserializeControl(rc).unwrap();
+  
+  let rootcontrol = deserializeControl(Vec::new(), rc).unwrap();
 
   Some(Box::new(Root { title: String::new() + title, rootControl: rootcontrol }))
 }
 
-fn deserializeControl(data: &Value) -> Option<Box<Control>>
+fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
 {
   // what's the type?
   let obj = data.as_object().unwrap();
   let objtype = 
     obj.get("type").unwrap().as_string().unwrap();
 
-  let mut x = 0;  
-
-  // match objtype&[..] {
   match objtype {
     "slider" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Slider { name: String::new() + name, pressed: false, location: 0.5 }))
+      Some(Box::new(Slider { controlId: aVId.clone(), name: String::new() + name, pressed: false, location: 0.5 }))
       },
     "button" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Button { name: String::new() + name, pressed: false }))
+      Some(Box::new(Button { controlId: aVId.clone(), name: String::new() + name, pressed: false }))
       },
     "sizer" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
@@ -103,11 +100,14 @@ fn deserializeControl(data: &Value) -> Option<Box<Control>>
       let mut controlv = Vec::new();
 
       for (i, v) in controls.into_iter().enumerate() {
-          let c = deserializeControl(v).unwrap();
+          let mut id = aVId.clone();
+          // let newid = i32::from(i);
+          id.push(i as i32); 
+          let c = deserializeControl(id, v).unwrap();
           controlv.push(c);
       }
       // loop through controls, makin controls.
-      Some(Box::new(Sizer { controls: controlv }))
+      Some(Box::new(Sizer { controlId: aVId.clone(), controls: controlv }))
       },
     _ => None,
     }

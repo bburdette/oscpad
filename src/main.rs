@@ -91,7 +91,9 @@ fn main() {
         //println!("postsereialsis");
         // let meh = String::new() + blah.rootControl.controlType();  
 
-        println!("title: {} count: {} ", blah.title, "meh");
+        println!("title: {} count: {} ", blah.title, blah.rootControl.controlType());
+
+        println!("controls: {:?}", blah.rootControl);
 
         ip = String::new() + 
           obj.get("ip").unwrap().as_string().unwrap();

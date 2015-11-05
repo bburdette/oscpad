@@ -10,6 +10,7 @@ extern crate serde;
 use serde_json::Value;
 
 use std::collections;
+use std::fmt::Debug;
 // extern crate collections;
 
 // use collections::vec;
@@ -18,16 +19,12 @@ use std::collections;
 // update individual controls from state update msgs.
 // create a json message containing the state of all ctrls.
 
-trait Control {
-  fn controlType<T>(&self, on: T) -> &'static str where Self: Sized ;
-// fn controlType() -> String;
-// fn foo<T>(&self, on: T) where Self: Sized;
-  // tojson
-  // fromjson
-  // updatefromjson
+pub trait Control : Debug {
+  fn controlType(&self) -> &'static str; 
 }
 
 
+#[derive(Debug)]
 pub struct Slider {
 //  controlid: String,
   name: String,
@@ -36,17 +33,10 @@ pub struct Slider {
 }
 
 impl Control for Slider {
-  fn controlType<T>(&self, on: T) -> &'static str where Self: Sized { "slider" }
+  fn controlType(&self) -> &'static str { "slider" } 
 }
 
-/*
-impl Control for Slider {
-  // tojson
-  // fromjson
-  // updatefromjson
-}
-*/
-
+#[derive(Debug)]
 pub struct Button { 
 //  controlid: String,
   name: String,
@@ -54,22 +44,24 @@ pub struct Button {
 }
 
 impl Control for Button { 
-  fn controlType<T>(&self, on: T) -> &'static str where Self: Sized { "button" }
+  fn controlType(&self) -> &'static str { "button" } 
 }
 
+#[derive(Debug)]
 pub struct Sizer { 
   // controlid: String,
   controls: Vec<Box<Control>>,
 }
 
 impl Control for Sizer { 
-  fn controlType<T>(&self, on: T) -> &'static str where Self: Sized { "sizer" }
+  fn controlType(&self) -> &'static str { "sizer" } 
 }
 
 // root is not a Control!
+// #[derive(Debug)]
 pub struct Root {
   pub title: String,
-  rootControl: Box<Control>,
+  pub rootControl: Box<Control>,
 }
 
 pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
@@ -119,8 +111,6 @@ fn deserializeControl(data: &Value) -> Option<Box<Control>>
       },
     _ => None,
     }
-
-//  Box::new(Slider { controlid: "blah", name: "blah", pressed: true })
   
 }
 

@@ -43,7 +43,7 @@ pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
 //pub trait Control : Debug + Clone {
 pub trait Control : Debug {
   fn controlType(&self) -> &'static str; 
-//  fn controlId(&self) -> &Vec<i32>;
+  fn controlId(&self) -> &Vec<i32>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
 }
 
@@ -58,7 +58,7 @@ pub struct Slider {
 
 impl Control for Slider {
   fn controlType(&self) -> &'static str { "slider" } 
-//  fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn controlId(&self) -> &Vec<i32> { &self.controlId }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 
@@ -72,7 +72,7 @@ pub struct Button {
 
 impl Control for Button { 
   fn controlType(&self) -> &'static str { "button" } 
-//  fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn controlId(&self) -> &Vec<i32> { &self.controlId }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 
@@ -85,7 +85,7 @@ pub struct Sizer {
 
 impl Control for Sizer { 
   fn controlType(&self) -> &'static str { "sizer" } 
-//  fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn controlId(&self) -> &Vec<i32> { &self.controlId }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 

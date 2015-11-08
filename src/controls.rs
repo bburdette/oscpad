@@ -40,14 +40,13 @@ pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
 // controls.
 // --------------------------------------------------------
 
-//pub trait Control : Debug + Clone {
 pub trait Control : Debug {
   fn controlType(&self) -> &'static str; 
   fn controlId(&self) -> &Vec<i32>;
+  fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
 }
 
-//#[derive(Debug, Clone)]
 #[derive(Debug)]
 pub struct Slider {
   controlId: Vec<i32>,
@@ -59,10 +58,16 @@ pub struct Slider {
 impl Control for Slider {
   fn controlType(&self) -> &'static str { "slider" } 
   fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  // fn cloneTrol(&self) -> Box<Control> { Box::new( Slider { *self } ) }
+  fn cloneTrol(&self) -> Box<Control> { 
+    Box::new( 
+      Slider { controlId: self.controlId.clone(), 
+              name: self.name.clone(), 
+              pressed: self.pressed.clone(), 
+              location: self.location.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 
-//#[derive(Debug, Clone)]
 #[derive(Debug)]
 pub struct Button { 
   controlId: Vec<i32>,
@@ -73,6 +78,11 @@ pub struct Button {
 impl Control for Button { 
   fn controlType(&self) -> &'static str { "button" } 
   fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn cloneTrol(&self) -> Box<Control> { 
+    Box::new( 
+      Button { controlId: self.controlId.clone(), 
+              name: self.name.clone(), 
+              pressed: self.pressed.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 
@@ -86,6 +96,10 @@ pub struct Sizer {
 impl Control for Sizer { 
   fn controlType(&self) -> &'static str { "sizer" } 
   fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn cloneTrol(&self) -> Box<Control> { 
+    Box::new( 
+      Sizer { controlId: self.controlId.clone(), 
+              controls: Vec::new() } ) } 
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
 }
 
@@ -125,16 +139,35 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
 }
 
 // --------------------------------------------------------
-// control state map.
+// control state map.  copies all the controls.
 // --------------------------------------------------------
 
-/*
-fn makeControlMap (control: &Control, map: BTreeMap<Vec<i32>,Box<Control>>) -> BTreeMap<Vec<i32>,Box<Control>> {
+pub fn makeControlMap (control: &Control) -> BTreeMap<Vec<i32>,Box<Control>> {
+  //.let mut btm = BTreeMap<Vec<i32>,Box<Control>>::new();
+  let mut btm = BTreeMap::new();
 
-  let v = control.subControls();
+  makeControlMap_impl(control, btm)
+}
 
-//  map.insert(control.controlId().clone(), Box::new(control.clone()));
+fn makeControlMap_impl (control: &Control, mut map: BTreeMap<Vec<i32>,Box<Control>>) -> BTreeMap<Vec<i32>,Box<Control>> {
+
+  map.insert(control.controlId().clone(), control.cloneTrol());
+
+  match control.subControls() {
+    Some(trols) => {
+      let mut item = trols.into_iter();
+
+      loop {
+          match item.next() {
+            Some(x) => {
+              map = makeControlMap_impl(&**x, map)
+              },
+            None => { break },
+          }
+        }
+      }
+    None => {} 
+    }
 
   map
 }
-*/

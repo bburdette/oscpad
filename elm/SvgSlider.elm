@@ -84,7 +84,8 @@ type alias UpdateMessage =
 
 encodeUpdateMessage: UpdateMessage -> JD.Value
 encodeUpdateMessage um = 
-  JE.object [ ("controlId", SvgThings.encodeControlId um.controlId) 
+  JE.object [ ("controlType", JE.string "slider") 
+            , ("controlId", SvgThings.encodeControlId um.controlId) 
             , ("updateType", encodeUpdateType um.updateType) 
             , ("location", (JE.float um.location))
             ]

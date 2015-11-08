@@ -100,7 +100,7 @@ impl Control for Sizer {
     Box::new( 
       Sizer { controlId: self.controlId.clone(), 
               controls: Vec::new() } ) } 
-  fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
+  fn subControls(&self) -> Option<&Vec<Box<Control>>> { Some(&self.controls) } 
 }
 
 fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>

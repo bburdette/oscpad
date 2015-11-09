@@ -191,7 +191,19 @@ fn winsockets_main(ipaddr: String, aSConfig: String, scm: sharedControlMap ) {
 						let message = Message::Pong(data);
 						sender.send_message(message).unwrap();
 					}
-					// _ => sender.send_message(message).unwrap(),
+          Message::Text(texxt) => {
+            let jsonval: Value = serde_json::from_str(&texxt[..]).unwrap();
+            let s_um = controls::decodeUpdateMessage(&jsonval);
+            match s_um { 
+              Some(controls::UpdateMsg::Button{ controlId: cid, updateType: ut }) => {
+                println!("button msg {:?} ", cid)
+                },
+              Some(controls::UpdateMsg::Slider{ controlId: cid, updateType: ut, location: l}) => {
+                println!("slider msg {:?} location: {}", cid, l)
+                },
+              _ => println!("uknown msg"),
+              }
+            },
 					_ => { 
             println!("sending replyy");
             sender.send_message(replyy).unwrap()

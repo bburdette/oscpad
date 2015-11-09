@@ -164,18 +164,18 @@ macro_rules! try_opt {
   } 
 }
 
-enum ButtonUpType { 
+pub enum ButtonUpType { 
   Pressed,
   Unpressed
   }
 
-enum SliderUpType { 
+pub enum SliderUpType { 
   Pressed,
   Moved,
   Unpressed
   }
 
-enum UpdateMsg { 
+pub enum UpdateMsg { 
   Button  { controlId: Vec<i32>
           , updateType: ButtonUpType
           },
@@ -190,13 +190,13 @@ fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
 }
 
 
-fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
+pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   let obj = try_opt!(data.as_object());
   
   let contype = try_opt!(try_opt!(obj.get("controlType")).as_string());
   let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
   let utstring = try_opt!(try_opt!(obj.get("updateType")).as_string());
-  
+ 
   match contype {
     "slider" => {
       let location = try_opt!(try_opt!(obj.get("location")).as_f64());

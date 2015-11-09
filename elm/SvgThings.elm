@@ -16,7 +16,7 @@ type alias ControlId = List Int
 
 encodeControlId: ControlId -> JD.Value
 encodeControlId cid = 
-  JE.string (toString cid) 
+  JE.list (List.map JE.int cid)
 
 
 type alias Rect = 

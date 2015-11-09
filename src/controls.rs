@@ -40,7 +40,7 @@ pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
 // controls.
 // --------------------------------------------------------
 
-pub trait Control : Debug {
+pub trait Control : Debug + Send {
   fn controlType(&self) -> &'static str; 
   fn controlId(&self) -> &Vec<i32>;
   fn cloneTrol(&self) -> Box<Control>;
@@ -139,18 +139,103 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
 }
 
 // --------------------------------------------------------
+// control update messages.
+// --------------------------------------------------------
+
+/*
+
+i  JE.object [ ("controlType", JE.string "button")
+            , ("controlId", SvgThings.encodeControlId um.controlId)
+            , ("updateType", encodeUpdateType um.updateType)
+            ]
+
+  JE.object [ ("controlType", JE.string "slider")
+            , ("controlId", SvgThings.encodeControlId um.controlId)
+            , ("updateType", encodeUpdateType um.updateType)
+            , ("location", (JE.float um.location))
+
+*/
+macro_rules! try_opt { 
+  ($e: expr) => { 
+    match $e { 
+      Some(x) => x, 
+      None => return None 
+      } 
+  } 
+}
+
+enum ButtonUpType { 
+  Pressed,
+  Unpressed
+  }
+
+enum SliderUpType { 
+  Pressed,
+  Moved,
+  Unpressed
+  }
+
+enum UpdateMsg { 
+  Button  { controlId: Vec<i32>
+          , updateType: ButtonUpType
+          },
+  Slider  { controlId: Vec<i32>
+          , updateType: SliderUpType 
+          , location: f64
+          }
+}
+
+fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
+  inp.into_iter().map(|x|{x.as_i64().unwrap() as i32}).collect()
+}
+
+
+fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
+  let obj = try_opt!(data.as_object());
+  
+  let contype = try_opt!(try_opt!(obj.get("controlType")).as_string());
+  let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
+  let utstring = try_opt!(try_opt!(obj.get("updateType")).as_string());
+  
+  match contype {
+    "slider" => {
+      let location = try_opt!(try_opt!(obj.get("location")).as_f64());
+      let ut = try_opt!(match utstring 
+        { "Press" => Some( SliderUpType::Pressed ) 
+        , "Move" => Some( SliderUpType::Moved ) 
+        , "Unpress" => Some( SliderUpType::Unpressed )
+        , _ => None
+        });
+      Some( UpdateMsg::Slider { controlId: conid, updateType: ut, location: location } )
+      },
+    "button" => {
+      let ut = try_opt!(match utstring 
+        { "Press" => Some( ButtonUpType::Pressed ) 
+        , "Unpress" => Some( ButtonUpType::Unpressed ) 
+        , _ => None
+        });
+        
+      Some( UpdateMsg::Button { controlId: conid, updateType: ut } )
+      },
+    _ => None
+    }
+}
+
+// --------------------------------------------------------
 // control state map.  copies all the controls.
 // --------------------------------------------------------
 
-pub fn makeControlMap (control: &Control) -> BTreeMap<Vec<i32>,Box<Control>> {
-  //.let mut btm = BTreeMap<Vec<i32>,Box<Control>>::new();
+pub type controlMap = BTreeMap<Vec<i32>,Box<Control>>;
+
+pub fn makeControlMap (control: &Control) -> controlMap {
   let mut btm = BTreeMap::new();
 
   makeControlMap_impl(control, btm)
 }
 
-fn makeControlMap_impl (control: &Control, mut map: BTreeMap<Vec<i32>,Box<Control>>) -> BTreeMap<Vec<i32>,Box<Control>> {
-
+fn makeControlMap_impl (control: &Control, mut map: controlMap) 
+  -> controlMap 
+{ 
   map.insert(control.controlId().clone(), control.cloneTrol());
 
   match control.subControls() {

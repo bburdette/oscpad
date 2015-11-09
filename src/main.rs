@@ -11,6 +11,7 @@ use std::os;
 use std::env;
 use std::io::Read;
 use std::string::*;
+use std::collections::BTreeMap;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
@@ -112,16 +113,19 @@ fn startserver(config: Value)
     println!("controls: {:?}", blah.rootControl);
 
     // from control tree, make a map of ids->controls.
-    let mut controlmap = controls::makeControlMap(&*blah.rootControl);
+    let sharemap = 
+      Arc::new(
+        Mutex::new(
+          controls::makeControlMap(&*blah.rootControl)));  
 
-    let sharemap = Arc::new(Mutex::new(controlmap));  
+    println!("\n\nsharemap: {:?}", sharemap);
 
     let q = String::new() + &guistring[..];
 
     let ipnport = String::new() + &ip[..] + ":3030";
 
     thread::spawn(move || { 
-      winsockets_main(ip, q);
+      winsockets_main(ip, q, sharemap);
       });
 
     Iron::new(move |req: &mut Request| {
@@ -130,8 +134,9 @@ fn startserver(config: Value)
     }).http(&ipnport[..]).unwrap();
 }
 
+type sharedControlMap = Arc< Mutex< controls::controlMap > >;
 
-fn winsockets_main(ipaddr: String, aSConfig: String) {
+fn winsockets_main(ipaddr: String, aSConfig: String, scm: sharedControlMap ) {
   let ipnport = ipaddr + ":1234";
 	let server = Server::bind(&ipnport[..]).unwrap();
 

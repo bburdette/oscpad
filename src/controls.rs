@@ -45,6 +45,7 @@ pub trait Control : Debug + Send {
   fn controlId(&self) -> &Vec<i32>;
   fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
+  fn update(&mut self, &UpdateMsg); 
 }
 
 #[derive(Debug)]
@@ -58,7 +59,6 @@ pub struct Slider {
 impl Control for Slider {
   fn controlType(&self) -> &'static str { "slider" } 
   fn controlId(&self) -> &Vec<i32> { &self.controlId }
-  // fn cloneTrol(&self) -> Box<Control> { Box::new( Slider { *self } ) }
   fn cloneTrol(&self) -> Box<Control> { 
     Box::new( 
       Slider { controlId: self.controlId.clone(), 
@@ -66,6 +66,16 @@ impl Control for Slider {
               pressed: self.pressed.clone(), 
               location: self.location.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
+  fn update(&mut self, um: &UpdateMsg) {
+    match um { 
+      &UpdateMsg::Slider { controlId: _, updateType: ref ut, location: l} => {
+        self.pressed = match ut { &SliderUpType::Moved => true, &SliderUpType::Pressed => true, &SliderUpType::Unpressed => false };
+        self.location = l as f32;
+        ()
+        }
+      _ => ()
+      }
+    }
 }
 
 #[derive(Debug)]
@@ -84,6 +94,15 @@ impl Control for Button {
               name: self.name.clone(), 
               pressed: self.pressed.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
+  fn update(&mut self, um: &UpdateMsg) {
+    match um { 
+      &UpdateMsg::Button { controlId: _, updateType: ref ut } => {
+        self.pressed = match ut { &ButtonUpType::Pressed => true, &ButtonUpType::Unpressed => false };
+        ()
+        }
+      _ => ()
+      }
+    }
 }
 
 //#[derive(Debug, Clone)]
@@ -101,6 +120,7 @@ impl Control for Sizer {
       Sizer { controlId: self.controlId.clone(), 
               controls: Vec::new() } ) } 
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { Some(&self.controls) } 
+  fn update(&mut self, um: &UpdateMsg) {}
 }
 
 fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
@@ -184,6 +204,14 @@ pub enum UpdateMsg {
           , location: f64
           }
 }
+
+pub fn getUmId(um: &UpdateMsg) -> &Vec<i32> {
+  match um { 
+    &UpdateMsg::Button { controlId: ref cid, updateType: _ } => &cid,
+    &UpdateMsg::Slider { controlId: ref cid, updateType: _, location: _ } => &cid, 
+    }
+}
+
 
 fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
   inp.into_iter().map(|x|{x.as_i64().unwrap() as i32}).collect()

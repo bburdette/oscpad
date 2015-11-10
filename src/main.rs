@@ -98,6 +98,7 @@ fn startserver(config: Value)
 
     println!("config: {:?}", config);
 
+
     //println!("postsereialsis");
     // let meh = String::new() + blah.rootControl.controlType();  
 
@@ -113,19 +114,14 @@ fn startserver(config: Value)
     println!("controls: {:?}", blah.rootControl);
 
     // from control tree, make a map of ids->controls.
-    let sharemap = 
-      Arc::new(
-        Mutex::new(
-          controls::makeControlMap(&*blah.rootControl)));  
-
-    println!("\n\nsharemap: {:?}", sharemap);
+    let mapp = controls::makeControlMap(&*blah.rootControl);
 
     let q = String::new() + &guistring[..];
 
     let ipnport = String::new() + &ip[..] + ":3030";
 
     thread::spawn(move || { 
-      winsockets_main(ip, q, sharemap);
+      winsockets_main(ip, q, mapp);
       });
 
     Iron::new(move |req: &mut Request| {
@@ -134,15 +130,17 @@ fn startserver(config: Value)
     }).http(&ipnport[..]).unwrap();
 }
 
-type sharedControlMap = Arc< Mutex< controls::controlMap > >;
-
-fn winsockets_main(ipaddr: String, aSConfig: String, scm: sharedControlMap ) {
+fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
   let ipnport = ipaddr + ":1234";
 	let server = Server::bind(&ipnport[..]).unwrap();
+
+  let shareblah = Arc::new(Mutex::new(cm));
 
 	for connection in server {
 		// Spawn a new thread for each connection.
     let blah = String::new() + &aSConfig[..];
+    
+    let scm = shareblah.clone();
 		
     thread::spawn(move || {
 			let request = connection.unwrap().read_request().unwrap(); // Get the request
@@ -195,11 +193,16 @@ fn winsockets_main(ipaddr: String, aSConfig: String, scm: sharedControlMap ) {
             let jsonval: Value = serde_json::from_str(&texxt[..]).unwrap();
             let s_um = controls::decodeUpdateMessage(&jsonval);
             match s_um { 
-              Some(controls::UpdateMsg::Button{ controlId: cid, updateType: ut }) => {
-                println!("button msg {:?} ", cid)
-                },
-              Some(controls::UpdateMsg::Slider{ controlId: cid, updateType: ut, location: l}) => {
-                println!("slider msg {:?} location: {}", cid, l)
+              Some(updmsg) => {
+                let mut scmun = scm.lock().unwrap();
+                let cntrl = scmun.get_mut(controls::getUmId(&updmsg));
+                match cntrl {
+                  Some(x) => {
+                    (*x).update(&updmsg);
+                    println!("some x: {:?}", *x)
+                    },
+                  None => println!("none"),
+                  }
                 },
               _ => println!("uknown msg"),
               }

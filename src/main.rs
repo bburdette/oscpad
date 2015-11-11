@@ -141,7 +141,7 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
     let blah = String::new() + &aSConfig[..];
     
     let scm = shareblah.clone();
-		
+
     thread::spawn(move || {
 			let request = connection.unwrap().read_request().unwrap(); // Get the request
 			let headers = request.headers.clone(); // Keep the headers so we can check them

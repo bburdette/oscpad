@@ -7,7 +7,7 @@ import SvgSlider
 import Task
 import List exposing (..)
 import Dict exposing (..)
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as JD exposing ((:=))
 import Util exposing (..)
 import Svg 
 import Svg.Attributes as SA 
@@ -20,11 +20,10 @@ type alias Spec =
   , rootControl: Controls.Spec
   }
 
-jsSpec : Json.Decoder Spec
-jsSpec = Json.object2 Spec 
-  ("title" := Json.string)
+jsSpec : JD.Decoder Spec
+jsSpec = JD.object2 Spec 
+  ("title" := JD.string)
   ("rootControl" := Controls.jsSpec) 
-
 
 type alias Model =
   { title: String  
@@ -44,14 +43,28 @@ type Action
     | CAction Controls.Action 
     | WinDims (Int, Int)
 
+type JsMessage 
+  = JmSpec Spec
+  | JmUpdate Action
+
+jsMessage: JD.Decoder JsMessage
+jsMessage = JD.oneOf
+  [ jsSpec `JD.andThen` (\x -> JD.succeed (JmSpec x))
+  , Controls.jsUpdateMessage `JD.andThen` 
+      (\x -> JD.succeed (JmUpdate (CAction x)))
+  ] 
+
+
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     JsonMsg s -> 
-      let t = Json.decodeString jsSpec s
-       in case t of 
-          Ok spec -> init model.mahsend model.mahrect spec 
-          Err e -> ({model | title <- e}, Effects.none)
+      case (JD.decodeString jsMessage s) of 
+        Ok (JmSpec spec) -> 
+          init model.mahsend model.mahrect spec 
+        Ok (JmUpdate jmact) -> 
+          update jmact model
+        Err e -> ({model | title <- e}, Effects.none)
     CAction act -> 
       let wha = Controls.update act model.control 
           newmod = { model | control <- fst wha }
@@ -59,7 +72,6 @@ update action model =
           (newmod, Effects.map CAction (snd wha))
     WinDims (x,y) -> 
       init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
-
 
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)

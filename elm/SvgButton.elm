@@ -54,7 +54,11 @@ buttColor pressed =
 -- UPDATE
 
 type Action
-    = SvgPress | SvgUnpress | UselessCrap | Reply String
+    = SvgPress 
+    | SvgUnpress 
+    | UselessCrap 
+    | Reply String
+    | SvgUpdate UpdateMessage
 
 type UpdateType 
   = Press
@@ -79,6 +83,19 @@ encodeUpdateType ut =
     Unpress -> JE.string "Unpress"
 
 
+jsUpdateMessage : JD.Decoder UpdateMessage
+jsUpdateMessage = JD.object2 UpdateMessage 
+  ("controlId" := SvgThings.decodeControlId) 
+  (("updateType" := JD.string) `JD.andThen` jsUpdateType)
+  
+jsUpdateType : String -> JD.Decoder UpdateType 
+jsUpdateType ut = 
+  case ut of 
+    "Press" -> JD.succeed Press
+    "Unpress" -> JD.succeed Unpress 
+
+
+
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
@@ -95,6 +112,15 @@ update action model =
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
     Reply s -> ({model | name <- s}, Effects.none)
+    SvgUpdate um -> 
+      -- sanity check for ids?  or don't.
+      let pressedup = case um.updateType of 
+                      Press -> True
+                      Unpress -> False
+        in
+      ({ model | pressed <- pressedup }
+       , Effects.none )
+
 
 -- VIEW
 

@@ -18,7 +18,6 @@ import Html
 -- and sizer.  They are mutually recursive so they have to
 -- both be in a single file.  
 
-
 -------------------- control container -------------------
 
 type Spec = CsButton SvgButton.Spec 
@@ -43,6 +42,51 @@ jsCs t =
     "button" -> SvgButton.jsSpec `JD.andThen` (\a -> JD.succeed (CsButton a))
     "slider" -> SvgSlider.jsSpec `JD.andThen` (\a -> JD.succeed (CsSlider a))
     "sizer" -> jsSzSpec `JD.andThen` (\a -> JD.succeed (CsSizer a))
+
+jsUpdateMessage: JD.Decoder Action
+jsUpdateMessage = 
+  ("controlType" := JD.string) `JD.andThen` jsUmType
+
+jsUmType: String -> JD.Decoder Action 
+jsUmType wat = 
+  case wat of 
+    "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (CaSlider (SvgSlider.SvgUpdate x)))
+    "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (CaButton (SvgButton.SvgUpdate x)))
+
+myTail: List a -> List a
+myTail lst = 
+  let tl = tail lst in 
+  case tl of 
+    Just l -> l
+    Nothing -> []
+
+toCtrlAction: SvgThings.ControlId -> Action -> Action
+toCtrlAction id action = 
+  case (head id) of 
+    Nothing -> action
+    Just x -> CaSizer (SzCAction x (toCtrlAction (myTail id) action))
+
+
+{-
+type UpdateMessage 
+  = SliderUp SvgSlider.UpdateMessage
+  | ButtonUp SvgButton.UpdateMessage
+
+jsUpdateMessage: JD.Decoder UpdateMessage
+jsUpdateMessage = 
+  ("controlType" := JD.string) `JD.andThen` jsUmType
+
+jsUmType: String -> JD.Decoder UpdateMessage
+jsUmType wat = 
+  case wat of 
+    "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (SliderUp x))
+    "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (ButtonUp x))
+-}
+
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -87,7 +131,6 @@ type alias SzSpec =
   , orientation: SvgThings.Orientation
   , controls: List Spec
   }
-
 
 jsSzSpec : JD.Decoder SzSpec
 jsSzSpec = JD.object3 SzSpec 

@@ -64,6 +64,7 @@ type Action
     | UselessCrap 
     | Reply String 
     | SvgMoved JE.Value
+    | SvgUpdate UpdateMessage
 
 getX : JD.Decoder Int
 getX = "offsetX" := JD.int 
@@ -96,6 +97,21 @@ encodeUpdateType ut =
     Press -> JE.string "Press"
     Move -> JE.string "Move"
     Unpress -> JE.string "Unpress"
+
+jsUpdateMessage : JD.Decoder UpdateMessage
+jsUpdateMessage = JD.object3 UpdateMessage 
+  ("controlId" := SvgThings.decodeControlId) 
+  (("updateType" := JD.string) `JD.andThen` jsUpdateType)
+  ("location" := JD.float)
+  
+jsUpdateType : String -> JD.Decoder UpdateType 
+jsUpdateType ut = 
+  case ut of 
+    "Press" -> JD.succeed Press
+    "Move" -> JD.succeed Move
+    "Unpress" -> JD.succeed Unpress 
+
+
 
 -- get mouse/whatever location from the json message, 
 -- compute slider location from that.
@@ -158,7 +174,15 @@ update action model =
                     (\_ -> Task.succeed UselessCrap)))
             _ -> (model, Effects.none)
         False -> (model, Effects.none)
-
+    SvgUpdate um -> 
+      -- sanity check for ids?  or don't.
+      let pressedup = case um.updateType of 
+                      Press -> True
+                      Move -> True
+                      Unpress -> False
+        in
+      ({ model | pressed <- pressedup, location <- um.location }
+       , Effects.none )
 
 -- VIEW
 

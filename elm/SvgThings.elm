@@ -18,6 +18,8 @@ encodeControlId: ControlId -> JD.Value
 encodeControlId cid = 
   JE.list (List.map JE.int cid)
 
+decodeControlId: JD.Decoder (List Int) 
+decodeControlId = JD.list JD.int
 
 type alias Rect = 
   { x: Int  

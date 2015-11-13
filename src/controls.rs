@@ -134,11 +134,11 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
     "slider" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
       Some(Box::new(Slider { controlId: aVId.clone(), name: String::new() + name, pressed: false, location: 0.5 }))
-      },
+    },
     "button" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
       Some(Box::new(Button { controlId: aVId.clone(), name: String::new() + name, pressed: false }))
-      },
+    },
     "sizer" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
       let controls = obj.get("controls").unwrap().as_array().unwrap();  
@@ -153,9 +153,9 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
           }
       // loop through controls, makin controls.
       Some(Box::new(Sizer { controlId: aVId.clone(), controls: controlv }))
-      },
+    },
     _ => None,
-    }
+  }
 }
 
 // --------------------------------------------------------

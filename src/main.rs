@@ -43,42 +43,41 @@ fn loadString(file_name: &str) -> Option<String>
         Err(e) => {
           println!("err: {:?}", e);
           None
-          },
+        },
         Ok(len) => { 
           println!("read {} bytes", len);
           Some(result)
-          }, 
+        }, 
       } 
-      },
+    },
     Err(e) => {
       println!("err: {:?}", e);
       None
-      },
-    }
- }
+    },
+  }
+}
 
 
 fn main() {
+  // read in the settings json.
+  let args = env::args();
+  let mut iter = args.skip(1); // skip the program name
+  match iter.next() {
+    Some(file_name) => {
+      
+      println!("loading config file: {}", file_name);
+      let config = loadString(&file_name).unwrap();
+      
+      // read config file as json
+      let data: Value = serde_json::from_str(&config[..]).unwrap();
 
-    // read in the settings json.
-    let args = env::args();
-    let mut iter = args.skip(1); // skip the program name
-    match iter.next() {
-      Some(file_name) => {
-        
-        println!("loading config file: {}", file_name);
-        let config = loadString(&file_name).unwrap();
-        
-        // read config file as json
-        let data: Value = serde_json::from_str(&config[..]).unwrap();
+      startserver(data)
 
-        startserver(data)
-
-        }
-      None => {
-        println!("no args!");
-        }
     }
+    None => {
+      println!("no args!");
+    }
+  }
 }
 
 fn startserver(config: Value) 
@@ -94,7 +93,6 @@ fn startserver(config: Value)
     let guistring = loadString(&guifilename[..]).unwrap();
 
     println!("config: {:?}", config);
-
 
     let ip = String::new() + 
       obj.get("ip").unwrap().as_string().unwrap();
@@ -123,9 +121,6 @@ fn startserver(config: Value)
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
     }).http(&ipnport[..]).unwrap();
 }
-
-
-
 
 fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
   let ipnport = ipaddr + ":1234";
@@ -210,18 +205,18 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
                     (*x).update(&updmsg);
                     println!("some x: {:?}", *x);
                     broadcaster.broadcast_others(&ip, Message::Text(texxt))
-                    },
+                  },
                   None => println!("none"),
-                  }
-                },
+                }
+              },
               _ => println!("uknown msg"),
-              }
-            },
+            }
+          },
 					_ => { 
             println!("sending replyy");
             let mut sender = sendmeh.lock().unwrap();
             sender.send_message(replyy).unwrap()
-            }
+          }
 				}
 			}
 		});

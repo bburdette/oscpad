@@ -51,9 +51,9 @@ jsUmType: String -> JD.Decoder Action
 jsUmType wat = 
   case wat of 
     "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (CaSlider (SvgSlider.SvgUpdate x)))
+                  (\x -> JD.succeed (toCtrlAction x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
     "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (CaButton (SvgButton.SvgUpdate x)))
+                  (\x -> JD.succeed (toCtrlAction x.controlId (CaButton (SvgButton.SvgUpdate x))))
 
 myTail: List a -> List a
 myTail lst = 
@@ -68,26 +68,6 @@ toCtrlAction id action =
     Nothing -> action
     Just x -> CaSizer (SzCAction x (toCtrlAction (myTail id) action))
 
-
-{-
-type UpdateMessage 
-  = SliderUp SvgSlider.UpdateMessage
-  | ButtonUp SvgButton.UpdateMessage
-
-jsUpdateMessage: JD.Decoder UpdateMessage
-jsUpdateMessage = 
-  ("controlType" := JD.string) `JD.andThen` jsUmType
-
-jsUmType: String -> JD.Decoder UpdateMessage
-jsUmType wat = 
-  case wat of 
-    "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (SliderUp x))
-    "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (ButtonUp x))
--}
-
-
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case (action,model) of 
@@ -100,6 +80,7 @@ update action model =
     (CaSizer act, CmSizer m) -> 
       let (a,b) = (szupdate act m) in
         (CmSizer a, Effects.map CaSizer b)
+    _ -> (model, Effects.none)    -- should probably produce an error.  to the user??
 
 init : (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)

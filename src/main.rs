@@ -27,6 +27,7 @@ use iron::status;
 use iron::mime::Mime;
 
 mod controls;
+mod broadcaster;
 
 extern crate serde_json;
 use serde_json::Value;
@@ -134,73 +135,7 @@ fn startserver(config: Value)
     }).http(&ipnport[..]).unwrap();
 }
 
-type sendBlah = Arc<Mutex<sender::Sender<WebSocketStream>>>;
 
-
-#[derive(Clone)]
-struct Broadcaster {
-    tvs : Arc<Mutex<Vec<sendBlah >>>
-}
-
-fn test (sa: &SocketAddr) -> bool { 
-  match sa {
-    &SocketAddr::V4(sav4) => true,
-    _ => false,
-  }
-}
-
-fn mysockeq(saleft: &SocketAddr, saright: &SocketAddr) -> bool {
-  match (saleft, saright) {
-    (&SocketAddr::V4(l),&SocketAddr::V4(r)) => l == r,
-    (&SocketAddr::V6(l),&SocketAddr::V6(r)) => l == r,
-    _ => false,
-  }
-}
-
-
-impl Broadcaster {
-    fn new() -> Broadcaster {
-        Broadcaster {
-            tvs : Arc::new(Mutex::new(Vec::new()))
-        }
-    }
-
-    fn register(&mut self, sender : sendBlah) {
-        let mut tvs = self.tvs.lock().unwrap();
-
-        tvs.push(sender);
-    }
-
-    fn broadcast(&mut self, msg : Message) {
-        let mut tvs = self.tvs.lock().unwrap();
-
-        for tv in tvs.iter_mut() {
-            let mut tvsend = tv.lock().unwrap();
-            match tvsend.send_message(msg.clone()) {
-                Err(e) => {},
-                _ => {}
-            }
-        }
-    }
-   
-    fn broadcast_others(&mut self, sa: &SocketAddr , msg : Message) {
-      let mut tvs = self.tvs.lock().unwrap();
-
-      for tv in tvs.iter_mut() {
-        let mut tvsend = tv.lock().unwrap();
-        match tvsend.get_mut().peer_addr() { 
-          Ok(sa_send) => 
-            if !mysockeq(sa,&sa_send) {
-              match tvsend.send_message(msg.clone()) {
-                Err(e) => {},
-                _ => {}
-              }
-            },
-          Err(e) => {},
-        }
-      }
-    }
-}
 
 
 fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
@@ -215,7 +150,7 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
     
     let scm = shareblah.clone();
 
-    let mut broadcaster = Broadcaster::new();
+    let mut broadcaster = broadcaster::Broadcaster::new();
 
     thread::spawn(move || {
       // Get the request

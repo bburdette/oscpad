@@ -60,14 +60,6 @@ fn loadString(file_name: &str) -> Option<String>
 
 fn main() {
 
-    // going to serve up html 
-    let mut htmlstring = String::new();
-    // on connect, send up json
-    let mut guistring = String::new();
-
-    // ip address.  I guess!
-    let mut ip = String::new();
-
     // read in the settings json.
     let args = env::args();
     let mut iter = args.skip(1); // skip the program name
@@ -103,9 +95,6 @@ fn startserver(config: Value)
 
     println!("config: {:?}", config);
 
-
-    //println!("postsereialsis");
-    // let meh = String::new() + blah.rootControl.controlType();  
 
     let ip = String::new() + 
       obj.get("ip").unwrap().as_string().unwrap();
@@ -143,6 +132,8 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
 	let server = Server::bind(&ipnport[..]).unwrap();
 
   let shareblah = Arc::new(Mutex::new(cm));
+    
+  let mut broadcaster = broadcaster::Broadcaster::new();
 
 	for connection in server {
 		// Spawn a new thread for each connection.
@@ -150,7 +141,7 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
     
     let scm = shareblah.clone();
 
-    let mut broadcaster = broadcaster::Broadcaster::new();
+    let mut broadcaster = broadcaster.clone();
 
     thread::spawn(move || {
       // Get the request
@@ -181,7 +172,7 @@ fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) 
       let message = Message::Text(blah);
 			client.send_message(message.clone()).unwrap();
 			
-			let (mut sender, mut receiver) = client.split();
+			let (sender, mut receiver) = client.split();
 
       let sendmeh = Arc::new(Mutex::new(sender));
       

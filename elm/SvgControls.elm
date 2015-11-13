@@ -8,7 +8,6 @@ import Task
 import List exposing (..)
 import Dict exposing (..)
 import Json.Decode as JD exposing ((:=))
-import Util exposing (..)
 import Svg 
 import Svg.Attributes as SA 
 import SvgThings

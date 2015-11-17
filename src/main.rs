@@ -2,7 +2,6 @@
 
 extern crate websocket;
 
-
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::fmt::format;
@@ -123,41 +122,43 @@ fn startserver(config: Value)
 
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
-    let cm = Arc::new(Mutex::new(mapp));
-    let oscsocket = UdpSocket::bind(&oscrecvip[..]).unwrap();
-    let mut bc = broadcaster::Broadcaster::new();
 
-    let wsoscsocket = oscsocket.try_clone().unwrap();
-    let wscm = cm.clone();
-    let wsbc = bc.clone();
+    let cm = Arc::new(Mutex::new(mapp));
 
     let guijson = String::new() + &guistring[..];
 
+    // let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
+    let oscsocket = UdpSocket::bind(&oscrecvip[..]).unwrap();
+    let mut bc = broadcaster::Broadcaster::new();
+    let wsos = oscsocket.try_clone().unwrap();
+    let wscm = cm.clone();
+    let wsbc = bc.clone();
+
     thread::spawn(move || { 
-      websockets_main(wip, guijson, wscm, wsbc, wsoscsocket);
+      oscmain(oscsocket, oscsendip, bc, cm)
+      }); 
+
+    thread::spawn(move || { 
+      websockets_main(wip, guijson, wscm, wsbc, wsos);
       });
 
-    let ipnport = String::new() + &ip[..] + ":3030";
-    
     Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
-    }).http(&ipnport[..]).unwrap();
+    }).http(&ip[..]).unwrap();
 }
 
-// fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
 fn websockets_main( ipaddr: String, 
                     aSConfig: String, 
                     cm: Arc<Mutex<controls::controlMap>>,
-                    broadcaster: broadcaster::Broadcaster,
+                    broadcaster: broadcaster::Broadcaster, 
                     oscsocket: UdpSocket ) 
 {
-  // let ipnport = ipaddr + ":1234";
 	let server = Server::bind(&ipaddr[..]).unwrap();
 
-    
-
 	for connection in server {
+
+    println!("new websockets connection!");
 		// Spawn a new thread for each connection.
     let blah = String::new() + &aSConfig[..];
     
@@ -250,7 +251,6 @@ fn websockets_main( ipaddr: String,
 	}
 }
 
-
 fn oscmain( socket: UdpSocket, 
             sendip: String, 
             bc: broadcaster::Broadcaster, 
@@ -258,7 +258,6 @@ fn oscmain( socket: UdpSocket,
               -> Result<String, Error> 
 { 
   let mut buf = [0; 100];
-  println!("cyclopass");
 
   loop { 
     let (amt, src) = try!(socket.recv_from(&mut buf));
@@ -271,8 +270,8 @@ fn oscmain( socket: UdpSocket,
         },
       };
 
-    println!("message recieved {} {:?}", inmsg.path, inmsg.arguments );
-  }
+    println!("osc message received {} {:?}", inmsg.path, inmsg.arguments );
+  }    
+}
 
-  Ok("blah".to_string())  
-} 
+

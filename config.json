@@ -1,7 +1,7 @@
 {
   "htmlfile": "elm/Main.html",
   "guifile": "siztest.json",
-  "ip": "localhost",
+  "ip": "localhost:3030",
   "wip": "localhost:1234",
   "oscrecvip": "localhost:9000",
   "oscsendip": "localhost:9000"

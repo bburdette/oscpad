@@ -33,6 +33,9 @@ use iron::mime::Mime;
 mod controls;
 mod broadcaster;
 
+extern crate tinyosc;
+use tinyosc as osc;
+
 extern crate serde_json;
 use serde_json::Value;
 
@@ -104,6 +107,12 @@ fn startserver(config: Value)
     let wip = String::new() + 
       obj.get("wip").unwrap().as_string().unwrap();
 
+    let oscrecvip = String::new() + 
+      obj.get("oscrecvip").unwrap().as_string().unwrap();
+
+    let oscsendip = String::new() + 
+      obj.get("oscsendip").unwrap().as_string().unwrap();
+
     // deserialize the gui string into json.
     let guival: Value = serde_json::from_str(&guistring[..]).unwrap();
     let blah = controls::deserializeRoot(&guival).unwrap();
@@ -115,17 +124,21 @@ fn startserver(config: Value)
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
     let cm = Arc::new(Mutex::new(mapp));
+    let oscsocket = UdpSocket::bind(&oscrecvip[..]).unwrap();
+    let mut bc = broadcaster::Broadcaster::new();
 
-    let q = String::new() + &guistring[..];
+    let wsoscsocket = oscsocket.try_clone().unwrap();
+    let wscm = cm.clone();
+    let wsbc = bc.clone();
 
-    let ipnport = String::new() + &ip[..] + ":3030";
+    let guijson = String::new() + &guistring[..];
 
-    let mut broadcaster = broadcaster::Broadcaster::new();
-    
     thread::spawn(move || { 
-      winsockets_main(wip, q, cm, broadcaster);
+      websockets_main(wip, guijson, wscm, wsbc, wsoscsocket);
       });
 
+    let ipnport = String::new() + &ip[..] + ":3030";
+    
     Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
@@ -133,10 +146,11 @@ fn startserver(config: Value)
 }
 
 // fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
-fn winsockets_main( ipaddr: String, 
+fn websockets_main( ipaddr: String, 
                     aSConfig: String, 
                     cm: Arc<Mutex<controls::controlMap>>,
-                    broadcaster: broadcaster::Broadcaster)
+                    broadcaster: broadcaster::Broadcaster,
+                    oscsocket: UdpSocket ) 
 {
   // let ipnport = ipaddr + ":1234";
 	let server = Server::bind(&ipaddr[..]).unwrap();
@@ -236,3 +250,29 @@ fn winsockets_main( ipaddr: String,
 	}
 }
 
+
+fn oscmain( socket: UdpSocket, 
+            sendip: String, 
+            bc: broadcaster::Broadcaster, 
+            cm: Arc<Mutex<controls::controlMap>>) 
+              -> Result<String, Error> 
+{ 
+  let mut buf = [0; 100];
+  println!("cyclopass");
+
+  loop { 
+    let (amt, src) = try!(socket.recv_from(&mut buf));
+
+    println!("length: {}", amt);
+    let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
+      Ok(m) => m,
+      Err(e) => {
+          return Err(Error::new(ErrorKind::Other, "oh no!"));
+        },
+      };
+
+    println!("message recieved {} {:?}", inmsg.path, inmsg.arguments );
+  }
+
+  Ok("blah".to_string())  
+} 

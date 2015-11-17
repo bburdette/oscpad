@@ -2,17 +2,21 @@
 
 extern crate websocket;
 
+
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::fmt::format;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::os;
 use std::env;
 use std::io::Read;
+use std::io::{Error,ErrorKind};
 use std::string::*;
 use std::collections::BTreeMap;
 
+use std::net::UdpSocket;
 use std::net::SocketAddr;
 
 use websocket::{Server, Message, Sender, Receiver};
@@ -97,6 +101,9 @@ fn startserver(config: Value)
     let ip = String::new() + 
       obj.get("ip").unwrap().as_string().unwrap();
 
+    let wip = String::new() + 
+      obj.get("wip").unwrap().as_string().unwrap();
+
     // deserialize the gui string into json.
     let guival: Value = serde_json::from_str(&guistring[..]).unwrap();
     let blah = controls::deserializeRoot(&guival).unwrap();
@@ -107,13 +114,16 @@ fn startserver(config: Value)
 
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
+    let cm = Arc::new(Mutex::new(mapp));
 
     let q = String::new() + &guistring[..];
 
     let ipnport = String::new() + &ip[..] + ":3030";
 
+    let mut broadcaster = broadcaster::Broadcaster::new();
+    
     thread::spawn(move || { 
-      winsockets_main(ip, q, mapp);
+      winsockets_main(wip, q, cm, broadcaster);
       });
 
     Iron::new(move |req: &mut Request| {
@@ -122,19 +132,22 @@ fn startserver(config: Value)
     }).http(&ipnport[..]).unwrap();
 }
 
-fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
-  let ipnport = ipaddr + ":1234";
-	let server = Server::bind(&ipnport[..]).unwrap();
+// fn winsockets_main(ipaddr: String, aSConfig: String, cm: controls::controlMap ) {
+fn winsockets_main( ipaddr: String, 
+                    aSConfig: String, 
+                    cm: Arc<Mutex<controls::controlMap>>,
+                    broadcaster: broadcaster::Broadcaster)
+{
+  // let ipnport = ipaddr + ":1234";
+	let server = Server::bind(&ipaddr[..]).unwrap();
 
-  let shareblah = Arc::new(Mutex::new(cm));
     
-  let mut broadcaster = broadcaster::Broadcaster::new();
 
 	for connection in server {
 		// Spawn a new thread for each connection.
     let blah = String::new() + &aSConfig[..];
     
-    let scm = shareblah.clone();
+    let scm = cm.clone();
 
     let mut broadcaster = broadcaster.clone();
 

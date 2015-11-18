@@ -38,6 +38,24 @@ use tinyosc as osc;
 extern crate serde_json;
 use serde_json::Value;
 
+macro_rules! try_opt { 
+  ($e: expr) => { 
+    match $e { 
+      Some(x) => x, 
+      None => return None 
+      } 
+  } 
+}
+
+macro_rules! try_opt_res { 
+  ($e: expr, $s: expr) => { 
+    match $e { 
+      Some(x) => x, 
+      None => return Err(Error::new(ErrorKind::Other, $s)) 
+      } 
+  } 
+}
+
 fn loadString(file_name: &str) -> Option<String>
 {
   let path = &Path::new(&file_name);
@@ -133,13 +151,14 @@ fn startserver(config: Value)
     let wsos = oscsocket.try_clone().unwrap();
     let wscm = cm.clone();
     let wsbc = bc.clone();
+    let wsoscsendip = oscsendip.clone();
 
     thread::spawn(move || { 
       oscmain(oscsocket, oscsendip, bc, cm)
       }); 
 
     thread::spawn(move || { 
-      websockets_main(wip, guijson, wscm, wsbc, wsos);
+      websockets_main(wip, guijson, wscm, wsbc, wsoscsendip, wsos);
       });
 
     Iron::new(move |req: &mut Request| {
@@ -152,6 +171,7 @@ fn websockets_main( ipaddr: String,
                     aSConfig: String, 
                     cm: Arc<Mutex<controls::controlMap>>,
                     broadcaster: broadcaster::Broadcaster, 
+                    oscsendip: String, 
                     oscsocket: UdpSocket ) 
 {
 	let server = Server::bind(&ipaddr[..]).unwrap();
@@ -163,6 +183,9 @@ fn websockets_main( ipaddr: String,
     let blah = String::new() + &aSConfig[..];
     
     let scm = cm.clone();
+    
+    let osock = oscsocket.try_clone().unwrap();
+    let osend = oscsendip.clone();
 
     let mut broadcaster = broadcaster.clone();
 
@@ -232,7 +255,12 @@ fn websockets_main( ipaddr: String,
                   Some(x) => {
                     (*x).update(&updmsg);
                     println!("some x: {:?}", *x);
-                    broadcaster.broadcast_others(&ip, Message::Text(texxt))
+                    broadcaster.broadcast_others(&ip, Message::Text(texxt));
+                    match ctrlUpdateToOsc(&updmsg, &**x) { 
+                      Ok(v) => osock.send_to(&v, &osend[..]),
+                      _ => Err(Error::new(ErrorKind::Other, "meh")) 
+                    };
+                    ()
                   },
                   None => println!("none"),
                 }
@@ -251,8 +279,43 @@ fn websockets_main( ipaddr: String,
 	}
 }
 
+fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
+{
+  match um {
+    &controls::UpdateMsg::Button { controlId: ref id
+             , updateType: ref ut
+             } => { 
+      // find the control in the map.
+      let mut arghs = Vec::new();
+      arghs.push (
+        match ut { 
+          &controls::ButtonUpType::Pressed => osc::Argument::i(1),
+          &controls::ButtonUpType::Unpressed => osc::Argument::i(0),
+        });
+      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
+      msg.serialize() 
+    },
+    &controls::UpdateMsg::Slider  { controlId: ref id
+            , updateType: ref ut
+            , location: ref loc
+            } => {
+      let mut arghs = Vec::new();
+      arghs.push (
+        match ut { 
+          &controls::SliderUpType::Pressed => osc::Argument::s("pressed"),
+          &controls::SliderUpType::Moved => osc::Argument::s("moved"),
+          &controls::SliderUpType::Unpressed => osc::Argument::s("unpressed"),
+        });
+      let l = *loc as f32;
+      arghs.push(osc::Argument::f(l));
+      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
+      msg.serialize() 
+    },
+  } 
+} 
+
 fn oscmain( socket: UdpSocket, 
-            sendip: String, 
+            oscsendip: String, 
             bc: broadcaster::Broadcaster, 
             cm: Arc<Mutex<controls::controlMap>>) 
               -> Result<String, Error> 

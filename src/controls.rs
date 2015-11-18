@@ -6,7 +6,6 @@
 extern crate serde_json;
 extern crate serde;
 
-
 use serde_json::Value;
 
 use std::collections;
@@ -46,6 +45,7 @@ pub trait Control : Debug + Send {
   fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
   fn update(&mut self, &UpdateMsg); 
+  fn oscname(&self) -> &str;
 }
 
 #[derive(Debug)]
@@ -62,9 +62,9 @@ impl Control for Slider {
   fn cloneTrol(&self) -> Box<Control> { 
     Box::new( 
       Slider { controlId: self.controlId.clone(), 
-              name: self.name.clone(), 
-              pressed: self.pressed.clone(), 
-              location: self.location.clone() } ) }
+               name: self.name.clone(), 
+               pressed: self.pressed.clone(), 
+               location: self.location.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
   fn update(&mut self, um: &UpdateMsg) {
     match um { 
@@ -76,6 +76,7 @@ impl Control for Slider {
       _ => ()
       }
     }
+  fn oscname(&self) -> &str { &self.name[..] }
 }
 
 #[derive(Debug)]
@@ -103,6 +104,7 @@ impl Control for Button {
       _ => ()
       }
     }
+  fn oscname(&self) -> &str { &self.name[..] }
 }
 
 //#[derive(Debug, Clone)]
@@ -121,6 +123,7 @@ impl Control for Sizer {
               controls: Vec::new() } ) } 
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { Some(&self.controls) } 
   fn update(&mut self, um: &UpdateMsg) {}
+  fn oscname(&self) -> &str { "" }
 }
 
 fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
@@ -211,7 +214,6 @@ pub fn getUmId(um: &UpdateMsg) -> &Vec<i32> {
     &UpdateMsg::Slider { controlId: ref cid, updateType: _, location: _ } => &cid, 
     }
 }
-
 
 fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
   inp.into_iter().map(|x|{x.as_i64().unwrap() as i32}).collect()

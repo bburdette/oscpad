@@ -10,8 +10,11 @@ use std::fs::File;
 use std::path::Path;
 use std::os;
 use std::env;
+use std::convert;
+
 use std::io::Read;
 use std::io::{Error,ErrorKind};
+use std::error;
 use std::string::*;
 use std::collections::BTreeMap;
 
@@ -48,14 +51,42 @@ macro_rules! try_opt {
   } 
 }
 
-macro_rules! try_opt_res { 
+macro_rules! try_opt_resbox { 
+
   ($e: expr, $s: expr) => { 
     match $e { 
       Some(x) => x, 
-      None => return Err(Error::new(ErrorKind::Other, $s)) 
+      None => return Err(Box::new(Error::new(ErrorKind::Other, $s))), 
       } 
   } 
 }
+
+macro_rules! try_opt_res {
+  ($e: expr, $s: expr) =>  
+    (match $e {
+      Some(val) => val,
+      None => {
+          let err = Error::new(ErrorKind::Other, $s) ;
+          return Err(std::convert::From::from(err))
+      },
+    })
+}
+
+/*
+
+hmmm not getting why this doesn't work... want it to be like the try! macro.
+
+macro_rules! try_opt_res {
+  ($e: expr, $s: expr) =>  
+    (match $e {
+      Some(val) => val,
+      None => {
+          let err = Err(Error::new(ErrorKind::Other, $s)) ;
+          return $crate::result::Result::Err($crate::convert::From::from(err))
+      },
+    })
+}
+*/
 
 fn loadString(file_name: &str) -> Option<String>
 {
@@ -90,50 +121,80 @@ fn main() {
   match iter.next() {
     Some(file_name) => {
       
-      println!("loading config file: {}", file_name);
-      let config = loadString(&file_name).unwrap();
-      
-      // read config file as json
-      let data: Value = serde_json::from_str(&config[..]).unwrap();
-
-      startserver(data)
+      match startserver(&file_name) {
+        Err(e) => println!("error starting server: {:?}", e),
+        _ => (),
+      }
 
     }
     None => {
-      println!("no args!");
+      println!("oscpad syntax: ");
+      println!("oscpad <json config file>");
     }
   }
 }
 
-fn startserver(config: Value) 
+
+
+fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
-    let obj = config.as_object().unwrap();
+    println!("loading config file: {}", file_name);
+    let configstring = try_opt_resbox!(loadString(&file_name), 
+                                       "error reading config file");
+
+    // read config file as json
+    let configval: Value = try!(serde_json::from_str(&configstring[..]));
+
+    let obj = configval.as_object().unwrap();
     
     let htmlfilename = 
-      obj.get("htmlfile").unwrap().as_string().unwrap();
-    let htmlstring = loadString(&htmlfilename[..]).unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("htmlfile"), 
+                        "'htmlfile' not found in config file").as_string(), 
+        "failed to convert to string");
+    let htmlstring = 
+        try_opt_resbox!(loadString(&htmlfilename[..]), 
+                       "error loading html file!");
 
     let guifilename = 
-      obj.get("guifile").unwrap().as_string().unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("guifile"), 
+                        "'guifile' not found in config file").as_string(), 
+        "failed to convert to string");
     let guistring = loadString(&guifilename[..]).unwrap();
-
-    println!("config: {:?}", config);
+        try_opt_resbox!(loadString(&guifilename[..]), 
+                       "error loading gui file!");
 
     let ip = String::new() + 
-      obj.get("ip").unwrap().as_string().unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("ip"), 
+                       "'ip' not found!").as_string(), 
+        "'ip' not a string!");
 
     let wip = String::new() + 
-      obj.get("wip").unwrap().as_string().unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("wip"), 
+                       "'wip' not found!").as_string(), 
+        "'wip' not a string!");
 
     let oscrecvip = String::new() + 
-      obj.get("oscrecvip").unwrap().as_string().unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("oscrecvip"), 
+                       "'oscrecvip' not found!").as_string(), 
+        "'oscrecvip' not a string!");
 
     let oscsendip = String::new() + 
-      obj.get("oscsendip").unwrap().as_string().unwrap();
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("oscsendip"), 
+                       "'oscsendip' not found!").as_string(), 
+        "'oscsendip' not a string!");
 
     // deserialize the gui string into json.
-    let guival: Value = serde_json::from_str(&guistring[..]).unwrap();
-    let blah = controls::deserializeRoot(&guival).unwrap();
+    let guival: Value = try!(serde_json::from_str(&guistring[..])); 
+
+    let blah = try_opt_resbox!(
+      controls::deserializeRoot(&guival),
+      "gui file is valid json, but failed to read controls.");
 
     println!("title: {} count: {} ", 
       blah.title, blah.rootControl.controlType());
@@ -147,14 +208,12 @@ fn startserver(config: Value)
 
     let guijson = String::new() + &guistring[..];
 
-    // let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
-    let oscsocket = UdpSocket::bind(&oscrecvip[..]).unwrap();
+    let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
     let mut bc = broadcaster::Broadcaster::new();
-    let wsos = oscsocket.try_clone().unwrap();
+    let wsos = try!(oscsocket.try_clone());
     let wscm = cm.clone();
     let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
-
 
     thread::spawn(move || { 
       oscmain(oscsocket, oscsendip, bc, cm, cnm)
@@ -164,10 +223,12 @@ fn startserver(config: Value)
       websockets_main(wip, guijson, wscm, wsbc, wsoscsendip, wsos);
       });
 
-    Iron::new(move |req: &mut Request| {
+    try!(Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
-    }).http(&ip[..]).unwrap();
+    }).http(&ip[..]));
+
+    Ok(())
 }
 
 fn websockets_main( ipaddr: String, 
@@ -317,7 +378,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
   } 
 } 
 
-fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<controls::UpdateMsg, Error>
+fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
   let cid = try_opt_res!(cnm.get(om.path), "control name not found!");
@@ -335,7 +396,7 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
           Ok(controls::UpdateMsg::Button 
             { controlId: cid.clone(), updateType: controls::ButtonUpType::Unpressed })
         },
-        _ => Err(Error::new(ErrorKind::Other, "invalid button event")),
+        _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid button event"))),
       }
     },
     2 => {
@@ -358,10 +419,10 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
               updateType: controls::SliderUpType::Unpressed,
               location: loc as f64 })
         },
-        _ => Err(Error::new(ErrorKind::Other, "invalid slider event")),
+        _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid slider event"))),
       }
     },
-    _ => Err(Error::new(ErrorKind::Other, "invalid slider event")),
+    _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid osc message"))),
   } 
 }
 

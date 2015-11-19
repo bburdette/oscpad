@@ -5,9 +5,9 @@ This is my 'getting to know you' project for elm and rust.
 
 The idea is to have a simple way to configure a set of touch enabled buttons, sliders, and labels, which are presented on a web page.  When the user manipulates the controls, websocket messages are sent to the server, which in turn sends out OSC messages to one or more target IP addresses.  Incoming OSC messages can also change the control state, which is reflected in the clients.  OSC is an easy protocol to support, good for 'internet of things' activities, such as robots, lamps, electronic instruments, etc.
 
-Currently the button and slider controls are functional, but they aren't touch enabled yet.  The control configuration is read from json and sent up to the elm client, which draws the controls.  Shared state is working now.  Next up is sending and receiving OSC messages.  
+Basically the controls and etc are working now.  Pressing a button or a slider results in an outgoing OSC message on the server, and updates the state of any other clients connected to the same server.  Incoming OSC messages update the control state on the server and send updates to all clients.  
 
-Once the basic controls are working I'll put some nifty examples up, like a control config that makes control configs for instance.  Meta!  
+Next up: a label control, touch enabled controls, uploading the current state to newly connected clients.  Also code cleanup, sending to multiple OSC ip addresses, accepting a new control configuration as an OSC message.  Also hopefully some cool examples.  
 
 Ultimately I'll probably break out the control server into a library separate from oscpad itself.  For now everything is smushed together into a single project.  
 

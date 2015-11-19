@@ -26,19 +26,19 @@
            "controls": [
              { "type": "slider"
              , "orientation": "vertical"
-             , "name": "hs1"
+             , "name": "vs1"
              }
             ,{ "type": "slider"
              , "orientation": "vertical"
-             , "name": "hs2"
+             , "name": "vs2"
              }
             ,{ "type": "slider"
              , "orientation": "vertical"
-             , "name": "hs3"
+             , "name": "vs3"
              }
             ,{ "type": "slider"
              , "orientation": "vertical"
-             , "name": "hs4"
+             , "name": "vs4"
              }
             ]
 

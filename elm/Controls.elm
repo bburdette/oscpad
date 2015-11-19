@@ -96,7 +96,6 @@ init sendf rect cid spec =
       let (a,b) = (szinit sendf rect cid s) in
         (CmSizer a, Effects.map CaSizer b)
 
-
 view : Signal.Address Action -> Model -> Svg
 view address model = 
   case model of 

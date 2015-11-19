@@ -215,11 +215,41 @@ pub fn getUmId(um: &UpdateMsg) -> &Vec<i32> {
     }
 }
 
+fn convi32array(inp: &Vec<i32>) -> Vec<Value> {
+  inp.into_iter().map(|x|{Value::I64(*x as i64)}).collect()
+}
+
 fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
   inp.into_iter().map(|x|{x.as_i64().unwrap() as i32}).collect()
 }
 
-
+pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value { 
+  match um { 
+    &UpdateMsg::Button { controlId: ref cid, updateType: ref ut } => {
+      let mut btv = BTreeMap::new();
+      btv.insert(String::from("controlType"), Value::String(String::from("button")));
+      btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
+      btv.insert(String::from("updateType"), 
+        Value::String(String::from( 
+          (match ut { &ButtonUpType::Pressed => "Press", 
+                      &ButtonUpType::Unpressed => "Unpress" }))));
+      Value::Object(btv)
+    }, 
+    &UpdateMsg::Slider { controlId: ref cid, updateType: ref ut, location: ref loc } => {
+      let mut btv = BTreeMap::new();
+      btv.insert(String::from("controlType"), Value::String(String::from("slider")));
+      btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
+      btv.insert(String::from("updateType"), 
+        Value::String(String::from( 
+          (match ut { &SliderUpType::Pressed => "Press",
+                      &SliderUpType::Moved => "Move", 
+                      &SliderUpType::Unpressed => "Unpress" }))));
+      btv.insert(String::from("location"), Value::F64(*loc));
+      Value::Object(btv)
+    },
+  } 
+}
+ 
 pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   let obj = try_opt!(data.as_object());
   
@@ -286,3 +316,25 @@ fn makeControlMap_impl (control: &Control, mut map: controlMap)
 
   map
 }
+
+pub type controlNameMap = BTreeMap<String, Vec<i32>>;
+
+pub fn controlMapToNameMap(cmap: &controlMap) -> controlNameMap 
+{
+  let mut iter = cmap.iter();
+  let mut cnm = BTreeMap::new();
+
+  loop {
+    match iter.next() {
+      Some((key,val)) => { 
+        let s = String::new() + &*val.oscname(); 
+        cnm.insert(s, key.clone());
+        ()
+      }, 
+      None => break
+    }
+  }
+
+  cnm
+}
+

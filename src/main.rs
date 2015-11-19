@@ -37,6 +37,7 @@ use tinyosc as osc;
 
 extern crate serde_json;
 use serde_json::Value;
+use serde_json::ser;
 
 macro_rules! try_opt { 
   ($e: expr) => { 
@@ -140,6 +141,7 @@ fn startserver(config: Value)
 
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
+    let cnm = controls::controlMapToNameMap(&mapp);
 
     let cm = Arc::new(Mutex::new(mapp));
 
@@ -153,8 +155,9 @@ fn startserver(config: Value)
     let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
 
+
     thread::spawn(move || { 
-      oscmain(oscsocket, oscsendip, bc, cm)
+      oscmain(oscsocket, oscsendip, bc, cm, cnm)
       }); 
 
     thread::spawn(move || { 
@@ -289,8 +292,8 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       let mut arghs = Vec::new();
       arghs.push (
         match ut { 
-          &controls::ButtonUpType::Pressed => osc::Argument::i(1),
-          &controls::ButtonUpType::Unpressed => osc::Argument::i(0),
+          &controls::ButtonUpType::Pressed => osc::Argument::s("b_pressed"),
+          &controls::ButtonUpType::Unpressed => osc::Argument::s("b_unpressed"),
         });
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
@@ -302,9 +305,9 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       let mut arghs = Vec::new();
       arghs.push (
         match ut { 
-          &controls::SliderUpType::Pressed => osc::Argument::s("pressed"),
-          &controls::SliderUpType::Moved => osc::Argument::s("moved"),
-          &controls::SliderUpType::Unpressed => osc::Argument::s("unpressed"),
+          &controls::SliderUpType::Pressed => osc::Argument::s("s_pressed"),
+          &controls::SliderUpType::Moved => osc::Argument::s("s_moved"),
+          &controls::SliderUpType::Unpressed => osc::Argument::s("s_unpressed"),
         });
       let l = *loc as f32;
       arghs.push(osc::Argument::f(l));
@@ -314,13 +317,62 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
   } 
 } 
 
+fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<controls::UpdateMsg, Error>
+{
+  // find the control by name.  
+  let cid = try_opt_res!(cnm.get(om.path), "control name not found!");
+
+  match om.arguments.len() {
+    1 => {
+      let evt = &om.arguments[0];
+      match evt {
+        &osc::Argument::s("b_pressed") => {
+          // blah
+          Ok(controls::UpdateMsg::Button 
+            { controlId: cid.clone(), updateType: controls::ButtonUpType::Pressed })
+        }, 
+        &osc::Argument::s("b_unpressed") => {
+          Ok(controls::UpdateMsg::Button 
+            { controlId: cid.clone(), updateType: controls::ButtonUpType::Unpressed })
+        },
+        _ => Err(Error::new(ErrorKind::Other, "invalid button event")),
+      }
+    },
+    2 => {
+      match (&om.arguments[0], &om.arguments[1]) {
+        (&osc::Argument::s("s_pressed"), &osc::Argument::f(loc))  => {
+          Ok(controls::UpdateMsg::Slider 
+            { controlId: cid.clone(), 
+              updateType: controls::SliderUpType::Pressed,
+              location: loc as f64 })
+        },
+        (&osc::Argument::s("s_moved"), &osc::Argument::f(loc))  => {
+          Ok(controls::UpdateMsg::Slider 
+            { controlId: cid.clone(), 
+              updateType: controls::SliderUpType::Moved,
+              location: loc as f64 })
+        },
+        (&osc::Argument::s("s_unpressed"), &osc::Argument::f(loc))  => {
+          Ok(controls::UpdateMsg::Slider 
+            { controlId: cid.clone(), 
+              updateType: controls::SliderUpType::Unpressed,
+              location: loc as f64 })
+        },
+        _ => Err(Error::new(ErrorKind::Other, "invalid slider event")),
+      }
+    },
+    _ => Err(Error::new(ErrorKind::Other, "invalid slider event")),
+  } 
+}
+
 fn oscmain( socket: UdpSocket, 
             oscsendip: String, 
-            bc: broadcaster::Broadcaster, 
-            cm: Arc<Mutex<controls::controlMap>>) 
+            mut bc: broadcaster::Broadcaster, 
+            cm: Arc<Mutex<controls::controlMap>>, 
+            cnm: controls::controlNameMap)
               -> Result<String, Error> 
 { 
-  let mut buf = [0; 100];
+  let mut buf = [0; 1000];
 
   loop { 
     let (amt, src) = try!(socket.recv_from(&mut buf));
@@ -329,10 +381,31 @@ fn oscmain( socket: UdpSocket,
     let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
       Ok(m) => m,
       Err(e) => {
-          return Err(Error::new(ErrorKind::Other, "oh no!"));
+          return Err(Error::new(ErrorKind::Other, "invalid osc message!"));
         },
       };
 
+    match oscToCtrlUpdate(&inmsg, &cnm) {
+      Ok(updmsg) => { 
+        let mut cmunlock = cm.lock().unwrap();
+        match cmunlock.get_mut(controls::getUmId(&updmsg)) {
+          Some(ctl) => {
+            (*ctl).update(&updmsg);
+          
+            let val = controls::encodeUpdateMessage(&updmsg); 
+            println!("sending control update {:?}", val);
+            match serde_json::ser::to_string(&val) { 
+              Ok(s) => bc.broadcast(Message::Text(s)), 
+              Err(_) => ()
+            }
+            ()
+           },
+          None => (),
+        }
+      },
+      Err(e) => println!("osc decode error: {:?}", e),
+    };
+ 
     println!("osc message received {} {:?}", inmsg.path, inmsg.arguments );
   }    
 }

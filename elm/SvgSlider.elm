@@ -176,13 +176,12 @@ update action model =
         False -> (model, Effects.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
-      let pressedup = case um.updateType of 
-                      Press -> True
-                      Move -> True
-                      Unpress -> False
+      let mod = case um.updateType of 
+          Press -> { model | pressed <- True, location <- um.location }
+          Move -> { model | location <- um.location }
+          Unpress -> { model | pressed <- False, location <- um.location }
         in
-      ({ model | pressed <- pressedup, location <- um.location }
-       , Effects.none )
+      (mod, Effects.none )
 
 -- VIEW
 

@@ -32,7 +32,7 @@ pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
 
   let rootcontrol = deserializeControl(Vec::new(), rc).unwrap();
 
-  Some(Box::new(Root { title: String::new() + title, rootControl: rootcontrol }))
+  Some(Box::new(Root { title: String::from(title), rootControl: rootcontrol }))
 }
 
 // --------------------------------------------------------
@@ -136,11 +136,11 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
   match objtype {
     "slider" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Slider { controlId: aVId.clone(), name: String::new() + name, pressed: false, location: 0.5 }))
+      Some(Box::new(Slider { controlId: aVId.clone(), name: String::from(name), pressed: false, location: 0.5 }))
     },
     "button" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Button { controlId: aVId.clone(), name: String::new() + name, pressed: false }))
+      Some(Box::new(Button { controlId: aVId.clone(), name: String::from(name), pressed: false }))
     },
     "sizer" => { 
       let name = obj.get("name").unwrap().as_string().unwrap();
@@ -327,7 +327,7 @@ pub fn controlMapToNameMap(cmap: &controlMap) -> controlNameMap
   loop {
     match iter.next() {
       Some((key,val)) => { 
-        let s = String::new() + &*val.oscname(); 
+        let s = String::from(&*val.oscname()); 
         cnm.insert(s, key.clone());
         ()
       }, 

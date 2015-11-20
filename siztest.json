@@ -6,9 +6,20 @@
       "orientation": "vertical",
       "name": "szname",
       "controls": [
-        { "type": "slider"
-        , "orientation": "horizontal"
-        , "name": "hs1"
+        {
+           "type": "sizer",
+           "orientation": "horizontal",
+           "name": "szname",
+           "controls": [
+             { "type": "slider"
+             , "orientation": "horizontal"
+             , "name": "hs1"
+             }
+            ,{ "type": "slider"
+             , "orientation": "horizontal"
+             , "name": "hs2"
+             }
+            ]
         }
       , { "type": "button"
         , "name": "b1"
@@ -41,7 +52,6 @@
              , "name": "vs4"
              }
             ]
-
         }
         ]
     }

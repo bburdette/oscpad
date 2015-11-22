@@ -14,6 +14,7 @@ import String
 import WebSocket exposing (WebSocket)
 import SvgThings
 import Window
+import Touch
 
 ---------------------------------------
 
@@ -41,8 +42,6 @@ port sending = Signal.map send inputKeyboard
 inputKeyboard : Signal String
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
--- inputKeyboard = Signal.map (\c -> Char.fromCode c |> String.fromChar) Keyboard.presses
-
 ---------------------------------------
 
 app =
@@ -56,6 +55,7 @@ app =
               ]
     , inputs = [ (Signal.map SvgControls.JsonMsg listen.signal)
                , (Signal.map SvgControls.WinDims Window.dimensions)
+               , (Signal.map SvgControls.Touche Touch.touches)
                ]
     }
 

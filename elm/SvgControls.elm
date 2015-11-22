@@ -12,6 +12,7 @@ import Svg
 import Svg.Attributes as SA 
 import SvgThings
 import Controls
+import Touch
 
 -- json spec
 type alias Spec = 
@@ -41,6 +42,7 @@ type Action
     = JsonMsg String 
     | CAction Controls.Action 
     | WinDims (Int, Int)
+    | Touche (List Touch.Touch)
 
 type JsMessage 
   = JmSpec Spec
@@ -71,6 +73,8 @@ update action model =
           (newmod, Effects.map CAction (snd wha))
     WinDims (x,y) -> 
       init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
+    Touche touchlist -> 
+      ({model | title <- toString (length touchlist) }, Effects.none)
 
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)

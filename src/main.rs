@@ -134,8 +134,6 @@ fn main() {
   }
 }
 
-
-
 fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);

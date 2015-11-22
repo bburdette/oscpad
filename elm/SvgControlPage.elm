@@ -1,36 +1,36 @@
-module SvgControls where
+module SvgControlPage where
 
 import Effects exposing (Effects, Never)
 import Html 
 import SvgButton
 import SvgSlider
+import SvgControl
+import SvgThings
 import Task
 import List exposing (..)
 import Dict exposing (..)
 import Json.Decode as JD exposing ((:=))
 import Svg 
 import Svg.Attributes as SA 
-import SvgThings
-import Controls
 import Touch
 
 -- json spec
 type alias Spec = 
   { title: String
-  , rootControl: Controls.Spec
+  , rootControl: SvgControl.Spec
   }
 
 jsSpec : JD.Decoder Spec
 jsSpec = JD.object2 Spec 
   ("title" := JD.string)
-  ("rootControl" := Controls.jsSpec) 
+  ("rootControl" := SvgControl.jsSpec) 
 
 type alias Model =
   { title: String  
   , mahrect: SvgThings.Rect 
   , srect: SvgThings.SRect 
   , spec: Spec
-  , control: Controls.Model
+  , control: SvgControl.Model
   , mahsend : (String -> Task.Task Never ())
   }
 
@@ -40,7 +40,7 @@ type alias ID = Int
 
 type Action
     = JsonMsg String 
-    | CAction Controls.Action 
+    | CAction SvgControl.Action 
     | WinDims (Int, Int)
     | Touche (List Touch.Touch)
 
@@ -51,7 +51,7 @@ type JsMessage
 jsMessage: JD.Decoder JsMessage
 jsMessage = JD.oneOf
   [ jsSpec `JD.andThen` (\x -> JD.succeed (JmSpec x))
-  , Controls.jsUpdateMessage `JD.andThen` 
+  , SvgControl.jsUpdateMessage `JD.andThen` 
       (\x -> JD.succeed (JmUpdate (CAction x)))
   ] 
 
@@ -67,7 +67,7 @@ update action model =
           update jmact model
         Err e -> ({model | title <- e}, Effects.none)
     CAction act -> 
-      let wha = Controls.update act model.control 
+      let wha = SvgControl.update act model.control 
           newmod = { model | control <- fst wha }
         in
           (newmod, Effects.map CAction (snd wha))
@@ -79,7 +79,7 @@ update action model =
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)
 init sendf rect spec = 
-  let (conmod, conevt) = Controls.init sendf rect [] spec.rootControl
+  let (conmod, conevt) = SvgControl.init sendf rect [] spec.rootControl
       fx = Effects.map CAction conevt
     in
      (Model spec.title rect (SvgThings.toSRect rect) spec conmod sendf, fx)
@@ -108,8 +108,8 @@ view address model =
       [(viewSvgControl address model.control)]
     ])
 
-viewSvgControl : Signal.Address Action -> Controls.Model -> Svg.Svg 
+viewSvgControl : Signal.Address Action -> SvgControl.Model -> Svg.Svg 
 viewSvgControl address conmodel =
-  Controls.view (Signal.forwardTo address CAction) conmodel
+  SvgControl.view (Signal.forwardTo address CAction) conmodel
 
 

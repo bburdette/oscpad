@@ -2,8 +2,8 @@ module Main where
 
 import Effects exposing (Never)
 import SvgButton 
-import SvgControls
-import Controls
+import SvgControlPage
+import SvgControl 
 import StartApp
 import Task
 import Signal exposing (Signal)
@@ -46,16 +46,16 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 app =
   StartApp.start
-    { init = SvgControls.init send 
+    { init = SvgControlPage.init send 
         (SvgThings.Rect 0 0 500 300)    
-        (SvgControls.Spec "mehtitle" (Controls.CsButton (SvgButton.Spec "blah")))
-    , update = SvgControls.update
-    , view = SvgControls.view
-    , inits = [ (Signal.map SvgControls.WinDims Window.dimensions)
+        (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah")))
+    , update = SvgControlPage.update
+    , view = SvgControlPage.view
+    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
               ]
-    , inputs = [ (Signal.map SvgControls.JsonMsg listen.signal)
-               , (Signal.map SvgControls.WinDims Window.dimensions)
-               , (Signal.map SvgControls.Touche Touch.touches)
+    , inputs = [ (Signal.map SvgControlPage.JsonMsg listen.signal)
+               , (Signal.map SvgControlPage.WinDims Window.dimensions)
+               , (Signal.map SvgControlPage.Touche Touch.touches)
                ]
     }
 

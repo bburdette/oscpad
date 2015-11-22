@@ -1,4 +1,4 @@
-module Controls where 
+module SvgControl where 
 
 import SvgButton
 import SvgSlider

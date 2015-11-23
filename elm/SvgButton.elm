@@ -26,17 +26,21 @@ jsSpec = JD.object1 Spec ("name" := JD.string)
 type alias Model =
   { name : String
   , cid: SvgThings.ControlId 
+  , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , pressed: Bool
   , sendf : (String -> Task.Task Never ())
   }
 
+containsXY: Model -> Int -> Int -> Bool
+containsXY mod x y = SvgThings.containsXY mod.rect x y
 
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init sendf rect cid spec =
   ( Model (spec.name) 
-          cid 
+          cid
+          rect 
           (SvgThings.SRect (toString (rect.x + 5)) 
                            (toString (rect.y + 5))
                            (toString (rect.w - 5))

@@ -73,8 +73,15 @@ update action model =
           (newmod, Effects.map CAction (snd wha))
     WinDims (x,y) -> 
       init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
-    Touche touchlist -> 
-      ({model | title <- toString (length touchlist) }, Effects.none)
+    Touche touchlist ->
+      case head touchlist of 
+        Nothing -> ({model | title <- "no touches" }, Effects.none)
+        Just touch -> 
+          case SvgControl.findControl touch.x touch.y model.control of
+            Just control ->  
+              ({model | title <- SvgControl.controlName control }, Effects.none)
+            Nothing -> ({model | title <- "no touches" }, Effects.none)
+
 
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)

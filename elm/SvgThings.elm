@@ -28,6 +28,14 @@ type alias Rect =
   , h: Int
   }
 
+containsXY: Rect -> Int -> Int -> Bool
+containsXY rect x y = 
+  (rect.x <= x &&
+   rect.w >= (x - rect.x) &&
+   rect.y <= y &&
+   rect.h >= (y - rect.y))
+
+
 type alias SRect = 
   { x: String  
   , y: String

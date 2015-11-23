@@ -32,6 +32,29 @@ type Action = CaButton SvgButton.Action
             | CaSlider SvgSlider.Action
             | CaSizer SzAction
 
+findControl: Int -> Int -> Model -> Maybe Model
+findControl x y mod = 
+  case mod of 
+    CmButton bmod -> 
+      if (SvgButton.containsXY bmod x y) then
+        Just mod
+      else
+        Nothing
+    CmSlider smod -> 
+      if (SvgSlider.containsXY smod x y) then
+        Just mod
+      else
+        Nothing
+    CmSizer szmod -> szFindControl szmod x y
+      
+controlName: Model -> String
+controlName mod = 
+  case mod of 
+    CmButton bmod -> bmod.name
+    CmSlider smod -> smod.name
+    CmSizer szmod -> szmod.name
+      
+  
 jsSpec : JD.Decoder Spec 
 jsSpec = 
   ("type" := JD.string) `JD.andThen` jsCs
@@ -128,11 +151,31 @@ lazy thunk =
 type alias SzModel =
   { name: String  
   , cid: SvgThings.ControlId
+  , rect: SvgThings.Rect
   , controls: Dict ID Model 
   , szspec: SzSpec
   }
 
 type alias ID = Int
+
+szFindControl: SzModel -> Int -> Int -> Maybe Model
+szFindControl mod x y = 
+  if (SvgThings.containsXY mod.rect x y) then
+    firstJust (findControl x y) (values mod.controls)
+  else
+    Nothing 
+   
+
+firstJust : (a -> Maybe b) -> List a -> Maybe b
+firstJust f xs =
+  case head xs of 
+    Nothing -> Nothing
+    Just x -> 
+      case f x of 
+        Just v -> Just v
+        Nothing -> Maybe.andThen (tail xs) (firstJust f) 
+
+
 
 -- UPDATE
 
@@ -170,7 +213,7 @@ szinit sendf rect cid szspec =
              (List.map (\(i,a) -> Effects.map (SzCAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (SzModel szspec.name cid (Dict.fromList controlz) szspec, fx)
+     (SzModel szspec.name cid rect (Dict.fromList controlz) szspec, fx)
       
 
 -- VIEW

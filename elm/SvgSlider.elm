@@ -35,6 +35,9 @@ type alias Model =
   , sendf : (String -> Task.Task Never ())
   }
 
+containsXY: Model -> Int -> Int -> Bool
+containsXY mod x y = SvgThings.containsXY mod.rect x y
+
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init sendf rect cid spec =

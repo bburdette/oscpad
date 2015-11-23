@@ -196,11 +196,15 @@ update action model =
           SvgThings.Horizontal -> 
             let locsum = List.foldl (+) 0 (List.map (\t -> t.x) touches)
                 locavg = (toFloat locsum) / (toFloat (List.length touches))
+                loc = (locavg - (toFloat model.rect.x)) 
+                       / toFloat model.rect.w in 
+            ({ model | pressed <- True, location <- loc }, Effects.none )
+          SvgThings.Vertical -> 
+            let locsum = List.foldl (+) 0 (List.map (\t -> t.y) touches)
+                locavg = (toFloat locsum) / (toFloat (List.length touches))
                 loc = (locavg - (toFloat model.rect.y)) 
                        / toFloat model.rect.h in 
             ({ model | pressed <- True, location <- loc }, Effects.none )
-          SvgThings.Vertical -> 
-            ({ model | pressed <- True }, Effects.none )
 
 
 -- VIEW

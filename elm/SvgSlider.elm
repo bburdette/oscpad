@@ -11,6 +11,8 @@ import Svg.Attributes exposing (..)
 import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 import SvgThings
 import VirtualDom as VD
+import Touch
+
 
 type alias Spec = 
   { name: String
@@ -68,6 +70,7 @@ type Action
     | Reply String 
     | SvgMoved JE.Value
     | SvgUpdate UpdateMessage
+    | SvgTouch (List Touch.Touch)
 
 getX : JD.Decoder Int
 getX = "offsetX" := JD.int 
@@ -185,6 +188,20 @@ update action model =
           Unpress -> { model | pressed <- False, location <- um.location }
         in
       (mod, Effects.none )
+    SvgTouch touches -> 
+      if List.isEmpty touches then
+        ({ model | pressed <- False }, Effects.none )
+      else
+        case model.orientation of 
+          SvgThings.Horizontal -> 
+            let locsum = List.foldl (+) 0 (List.map (\t -> t.x) touches)
+                locavg = (toFloat locsum) / (toFloat (List.length touches))
+                loc = (locavg - (toFloat model.rect.y)) 
+                       / toFloat model.rect.h in 
+            ({ model | pressed <- True, location <- loc }, Effects.none )
+          SvgThings.Vertical -> 
+            ({ model | pressed <- True }, Effects.none )
+
 
 -- VIEW
 

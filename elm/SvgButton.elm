@@ -12,6 +12,7 @@ import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
+import Touch
 
 -- how to specify a button in json.
 type alias Spec = 
@@ -63,6 +64,7 @@ type Action
     | UselessCrap 
     | Reply String
     | SvgUpdate UpdateMessage
+    | SvgTouch (List Touch.Touch)
 
 type UpdateType 
   = Press
@@ -124,6 +126,11 @@ update action model =
         in
       ({ model | pressed <- pressedup }
        , Effects.none )
+    SvgTouch touches -> 
+      if List.isEmpty touches then
+        ({ model | pressed <- False }, Effects.none )
+      else
+        ({ model | pressed <- True }, Effects.none )
 
 
 -- VIEW

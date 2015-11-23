@@ -12,6 +12,7 @@ import Svg.Attributes as SA
 import SvgThings
 import Signal
 import Html
+import Touch
 
 ----------------------------------------------------------
 -- Two things (objects?) in this file; control container 
@@ -47,13 +48,28 @@ findControl x y mod =
         Nothing
     CmSizer szmod -> szFindControl szmod x y
       
+controlId: Model -> SvgThings.ControlId 
+controlId mod = 
+  case mod of 
+    CmButton bmod -> bmod.cid
+    CmSlider smod -> smod.cid
+    CmSizer szmod -> szmod.cid
+      
 controlName: Model -> String
 controlName mod = 
   case mod of 
     CmButton bmod -> bmod.name
     CmSlider smod -> smod.name
     CmSizer szmod -> szmod.name
-      
+
+type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
+    
+controlTouchActionMaker: Model -> ControlTam 
+controlTouchActionMaker ctrl = 
+  case ctrl of
+    CmButton _ -> (\t -> Just (CaButton (SvgButton.SvgTouch t)))
+    CmSlider _ -> (\t -> Just (CaSlider (SvgSlider.SvgTouch t)))
+    CmSizer _ -> (\t -> Nothing)
   
 jsSpec : JD.Decoder Spec 
 jsSpec = 

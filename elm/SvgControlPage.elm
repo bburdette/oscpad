@@ -31,6 +31,7 @@ type alias Model =
   , srect: SvgThings.SRect 
   , spec: Spec
   , control: SvgControl.Model
+  , prevtouches: Dict SvgThings.ControlId SvgControl.ControlTam
   , mahsend : (String -> Task.Task Never ())
   }
 
@@ -74,6 +75,45 @@ update action model =
     WinDims (x,y) -> 
       init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
     Touche touchlist ->
+      let tdict = touchDict model.control touchlist
+          curtouches = Dict.map (\_ v -> fst v) tdict
+          prevs = Dict.diff model.prevtouches curtouches in 
+      ({model | prevtouches <- curtouches}, Effects.batch 
+        (
+          (List.map (\t -> Effects.task (Task.succeed (CAction t)))
+              (List.filterMap (\(cid, (tam, tl)) -> 
+                Maybe.map (SvgControl.toCtrlAction cid) (tam tl)) 
+                (Dict.toList tdict)))
+          ++
+          (List.map (\t -> Effects.task (Task.succeed (CAction t)))
+              (List.filterMap (\(cid, tam) -> 
+                Maybe.map (SvgControl.toCtrlAction cid) (tam [])) 
+                (Dict.toList prevs)))))
+          
+
+-- build a dict of controls -> touches.
+
+
+touchDict: SvgControl.Model -> (List Touch.Touch) -> 
+    Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch))
+touchDict root touches = 
+  let meh = List.filterMap (\t -> Maybe.andThen (SvgControl.findControl t.x t.y root) (\c -> Just (c,t))) touches in
+  List.foldl updict Dict.empty meh 
+
+updict: (SvgControl.Model, Touch.Touch) 
+      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch)) 
+      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch))
+updict mt dict =
+  Dict.update (SvgControl.controlId (fst mt)) 
+              (\mbpair -> case mbpair of 
+                Nothing -> Just (SvgControl.controlTouchActionMaker (fst mt), [(snd mt)])
+                Just (a,b) -> Just (a, (snd mt) :: b))
+              dict
+
+
+{-
+
+    Touche touchlist ->
       case head touchlist of 
         Nothing -> ({model | title <- "no touches" }, Effects.none)
         Just touch -> 
@@ -83,13 +123,23 @@ update action model =
             Nothing -> ({model | title <- "no touches" }, Effects.none)
 
 
+-}
+
+-- Now update the controls from the dict?  
+
+
+
+-- Ok could make a touch event list.  
+
+
+
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)
 init sendf rect spec = 
   let (conmod, conevt) = SvgControl.init sendf rect [] spec.rootControl
       fx = Effects.map CAction conevt
     in
-     (Model spec.title rect (SvgThings.toSRect rect) spec conmod sendf, fx)
+     (Model spec.title rect (SvgThings.toSRect rect) spec conmod Dict.empty sendf, fx)
       
 
 -- VIEW

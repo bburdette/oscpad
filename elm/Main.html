@@ -14789,8 +14789,7 @@ Elm.SvgButton.make = function (_elm) {
             return $Json$Decode.succeed(Press);
             case "Unpress":
             return $Json$Decode.succeed(Unpress);}
-         _U.badCase($moduleName,
-         "between lines 99 and 101");
+         return $Json$Decode.succeed(Unpress);
       }();
    };
    var jsUpdateMessage = A3($Json$Decode.object2,
@@ -14815,6 +14814,27 @@ Elm.SvgButton.make = function (_elm) {
       return {ctor: "Reply",_0: a};
    };
    var UselessCrap = {ctor: "UselessCrap"};
+   var pressup = F2(function (model,
+   ut) {
+      return function () {
+         var um = A2($Json$Encode.encode,
+         0,
+         encodeUpdateMessage(A2(UpdateMessage,
+         model.cid,
+         ut)));
+         return {ctor: "_Tuple2"
+                ,_0: _U.replace([["pressed"
+                                 ,_U.eq(ut,Press)]],
+                model)
+                ,_1: $Effects.task(A2($Task.andThen,
+                model.sendf(um),
+                function (_v2) {
+                   return function () {
+                      return $Task.succeed(UselessCrap);
+                   }();
+                }))};
+      }();
+   });
    var update = F2(function (action,
    model) {
       return function () {
@@ -14826,34 +14846,19 @@ Elm.SvgButton.make = function (_elm) {
                    model)
                    ,_1: $Effects.none};
             case "SvgPress":
-            return function () {
-                 var um = A2($Json$Encode.encode,
-                 0,
-                 encodeUpdateMessage(A2(UpdateMessage,
-                 model.cid,
-                 Press)));
-                 return {ctor: "_Tuple2"
-                        ,_0: _U.replace([["pressed"
-                                         ,true]],
-                        model)
-                        ,_1: $Effects.task(A2($Task.andThen,
-                        model.sendf(um),
-                        function (_v6) {
-                           return function () {
-                              return $Task.succeed(UselessCrap);
-                           }();
-                        }))};
-              }();
+            return A2(pressup,model,Press);
             case "SvgTouch":
-            return $List.isEmpty(action._0) ? {ctor: "_Tuple2"
-                                              ,_0: _U.replace([["pressed"
-                                                               ,false]],
-                                              model)
-                                              ,_1: $Effects.none} : {ctor: "_Tuple2"
-                                                                    ,_0: _U.replace([["pressed"
-                                                                                     ,true]],
-                                                                    model)
-                                                                    ,_1: $Effects.none};
+            return $List.isEmpty(action._0) ? _U.eq(model.pressed,
+              true) ? A2(pressup,
+              model,
+              Unpress) : {ctor: "_Tuple2"
+                         ,_0: model
+                         ,_1: $Effects.none} : _U.eq(model.pressed,
+              false) ? A2(pressup,
+              model,
+              Press) : {ctor: "_Tuple2"
+                       ,_0: model
+                       ,_1: $Effects.none};
             case "SvgUnpress":
             return function () {
                  var _v8 = model.pressed;
@@ -14862,40 +14867,25 @@ Elm.SvgButton.make = function (_elm) {
                     return {ctor: "_Tuple2"
                            ,_0: model
                            ,_1: $Effects.none};
-                    case true: return function () {
-                         var um = A2($Json$Encode.encode,
-                         0,
-                         encodeUpdateMessage(A2(UpdateMessage,
-                         model.cid,
-                         Unpress)));
-                         return {ctor: "_Tuple2"
-                                ,_0: _U.replace([["pressed"
-                                                 ,false]],
-                                model)
-                                ,_1: $Effects.task(A2($Task.andThen,
-                                model.sendf(um),
-                                function (_v9) {
-                                   return function () {
-                                      return $Task.succeed(UselessCrap);
-                                   }();
-                                }))};
-                      }();}
+                    case true: return A2(pressup,
+                      model,
+                      Unpress);}
                  _U.badCase($moduleName,
-                 "between lines 113 and 119");
+                 "between lines 111 and 114");
               }();
             case "SvgUpdate":
             return function () {
-                 var pressedup = function () {
-                    var _v11 = action._0.updateType;
-                    switch (_v11.ctor)
+                 var pressedupdate = function () {
+                    var _v9 = action._0.updateType;
+                    switch (_v9.ctor)
                     {case "Press": return true;
                        case "Unpress": return false;}
                     _U.badCase($moduleName,
-                    "between lines 123 and 126");
+                    "between lines 118 and 121");
                  }();
                  return {ctor: "_Tuple2"
                         ,_0: _U.replace([["pressed"
-                                         ,pressedup]],
+                                         ,pressedupdate]],
                         model)
                         ,_1: $Effects.none};
               }();
@@ -14904,7 +14894,7 @@ Elm.SvgButton.make = function (_elm) {
                    ,_0: model
                    ,_1: $Effects.none};}
          _U.badCase($moduleName,
-         "between lines 107 and 133");
+         "between lines 108 and 134");
       }();
    });
    var SvgUnpress = {ctor: "SvgUnpress"};
@@ -15017,6 +15007,7 @@ Elm.SvgButton.make = function (_elm) {
                            ,jsUpdateMessage: jsUpdateMessage
                            ,jsUpdateType: jsUpdateType
                            ,update: update
+                           ,pressup: pressup
                            ,view: view};
    return _elm.SvgButton.values;
 };Elm.SvgControl = Elm.SvgControl || {};
@@ -15078,12 +15069,12 @@ Elm.SvgControl.make = function (_elm) {
                       $List.tail(xs),
                       firstJust(f));}
                  _U.badCase($moduleName,
-                 "between lines 190 and 192");
+                 "between lines 192 and 194");
               }();
             case "Nothing":
             return $Maybe.Nothing;}
          _U.badCase($moduleName,
-         "between lines 187 and 192");
+         "between lines 189 and 194");
       }();
    });
    var SzModel = F5(function (a,
@@ -15124,7 +15115,7 @@ Elm.SvgControl.make = function (_elm) {
                case "Nothing":
                return _L.fromArray([]);}
             _U.badCase($moduleName,
-            "between lines 100 and 102");
+            "between lines 102 and 104");
          }();
       }();
    };
@@ -15205,7 +15196,7 @@ Elm.SvgControl.make = function (_elm) {
               action)));
             case "Nothing": return action;}
          _U.badCase($moduleName,
-         "between lines 106 and 108");
+         "between lines 108 and 110");
       }();
    });
    var CaSlider = function (a) {
@@ -15254,8 +15245,9 @@ Elm.SvgControl.make = function (_elm) {
                  x.controlId,
                  CaSlider($SvgSlider.SvgUpdate(x))));
               });}
-         _U.badCase($moduleName,
-         "between lines 91 and 95");
+         return $Json$Decode.fail(A2($Basics._op["++"],
+         "unknown update type",
+         wat));
       }();
    };
    var jsUpdateMessage = A2($Json$Decode.andThen,
@@ -15286,7 +15278,7 @@ Elm.SvgControl.make = function (_elm) {
               CaSlider),
               model._0);}
          _U.badCase($moduleName,
-         "between lines 140 and 143");
+         "between lines 142 and 145");
       }();
    });
    var szview = F2(function (address,
@@ -15310,7 +15302,7 @@ Elm.SvgControl.make = function (_elm) {
               SzCAction(_v29._0)),
               _v29._1);}
          _U.badCase($moduleName,
-         "on line 246, column 3 to 55");
+         "on line 248, column 3 to 55");
       }();
    });
    var CmSizer = function (a) {
@@ -15422,11 +15414,11 @@ Elm.SvgControl.make = function (_elm) {
                               ,_0: model
                               ,_1: $Effects.none};}
                     _U.badCase($moduleName,
-                    "between lines 208 and 216");
+                    "between lines 210 and 218");
                  }();
               }();}
          _U.badCase($moduleName,
-         "between lines 205 and 216");
+         "between lines 207 and 218");
       }();
    });
    var init = F4(function (sendf,
@@ -15481,7 +15473,7 @@ Elm.SvgControl.make = function (_elm) {
                         b)};
               }();}
          _U.badCase($moduleName,
-         "between lines 127 and 136");
+         "between lines 129 and 138");
       }();
    });
    var szinit = F4(function (sendf,
@@ -15503,7 +15495,7 @@ Elm.SvgControl.make = function (_elm) {
                  rect,
                  $List.length(szspec.controls));}
             _U.badCase($moduleName,
-            "between lines 220 and 223");
+            "between lines 222 and 225");
          }();
          var blist = A2($List.map,
          function (_v52) {
@@ -15517,7 +15509,7 @@ Elm.SvgControl.make = function (_elm) {
                     _L.fromArray([_v52._2])),
                     _v52._0);}
                _U.badCase($moduleName,
-               "on line 224, column 40 to 75");
+               "on line 226, column 40 to 75");
             }();
          },
          A4($List.map3,
@@ -15544,7 +15536,7 @@ Elm.SvgControl.make = function (_elm) {
                     SzCAction(_v57._0),
                     _v57._1);}
                _U.badCase($moduleName,
-               "on line 229, column 35 to 62");
+               "on line 231, column 35 to 62");
             }();
          },
          A2(zip,
@@ -15595,8 +15587,9 @@ Elm.SvgControl.make = function (_elm) {
               function (a) {
                  return $Json$Decode.succeed(CsSlider(a));
               });}
-         _U.badCase($moduleName,
-         "between lines 80 and 83");
+         return $Json$Decode.fail(A2($Basics._op["++"],
+         "unkown type: ",
+         t));
       }();
    };
    var jsSzSpec = A4($Json$Decode.object3,
@@ -16095,8 +16088,7 @@ Elm.SvgSlider.make = function (_elm) {
             return $Json$Decode.succeed(Press);
             case "Unpress":
             return $Json$Decode.succeed(Unpress);}
-         _U.badCase($moduleName,
-         "between lines 115 and 118");
+         return $Json$Decode.succeed(Unpress);
       }();
    };
    var jsUpdateMessage = A4($Json$Decode.object3,
@@ -16134,7 +16126,7 @@ Elm.SvgSlider.make = function (_elm) {
                     case "Ok":
                     return $Result.Ok($Basics.toFloat(_v3._0 - model.rect.x) / $Basics.toFloat(model.rect.w));}
                  _U.badCase($moduleName,
-                 "between lines 128 and 132");
+                 "between lines 129 and 133");
               }();
             case "Vertical":
             return function () {
@@ -16147,10 +16139,10 @@ Elm.SvgSlider.make = function (_elm) {
                     case "Ok":
                     return $Result.Ok($Basics.toFloat(_v6._0 - model.rect.y) / $Basics.toFloat(model.rect.h));}
                  _U.badCase($moduleName,
-                 "between lines 133 and 144");
+                 "between lines 134 and 145");
               }();}
          _U.badCase($moduleName,
-         "between lines 126 and 144");
+         "between lines 127 and 145");
       }();
    });
    var SvgTouch = function (a) {
@@ -16172,6 +16164,31 @@ Elm.SvgSlider.make = function (_elm) {
       return {ctor: "Reply",_0: a};
    };
    var UselessCrap = {ctor: "UselessCrap"};
+   var updsend = F3(function (model,
+   ut,
+   loc) {
+      return function () {
+         var um = A2($Json$Encode.encode,
+         0,
+         encodeUpdateMessage(A3(UpdateMessage,
+         model.cid,
+         ut,
+         loc)));
+         return {ctor: "_Tuple2"
+                ,_0: _U.replace([["location"
+                                 ,loc]
+                                ,["pressed"
+                                 ,!_U.eq(ut,Unpress)]],
+                model)
+                ,_1: $Effects.task(A2($Task.andThen,
+                model.sendf(um),
+                function (_v9) {
+                   return function () {
+                      return $Task.succeed(UselessCrap);
+                   }();
+                }))};
+      }();
+   });
    var update = F2(function (action,
    model) {
       return function () {
@@ -16184,42 +16201,27 @@ Elm.SvgSlider.make = function (_elm) {
                    ,_1: $Effects.none};
             case "SvgMoved":
             return function () {
-                 var _v16 = model.pressed;
-                 switch (_v16)
+                 var _v18 = model.pressed;
+                 switch (_v18)
                  {case false:
                     return {ctor: "_Tuple2"
                            ,_0: model
                            ,_1: $Effects.none};
                     case true: return function () {
-                         var _v17 = A2(getLocation,
+                         var _v19 = A2(getLocation,
                          model,
                          action._0);
-                         switch (_v17.ctor)
-                         {case "Ok": return function () {
-                                 var um = A2($Json$Encode.encode,
-                                 0,
-                                 encodeUpdateMessage(A3(UpdateMessage,
-                                 model.cid,
-                                 Move,
-                                 _v17._0)));
-                                 return {ctor: "_Tuple2"
-                                        ,_0: _U.replace([["location"
-                                                         ,_v17._0]],
-                                        model)
-                                        ,_1: $Effects.task(A2($Task.andThen,
-                                        model.sendf(um),
-                                        function (_v19) {
-                                           return function () {
-                                              return $Task.succeed(UselessCrap);
-                                           }();
-                                        }))};
-                              }();}
+                         switch (_v19.ctor)
+                         {case "Ok": return A3(updsend,
+                              model,
+                              Move,
+                              _v19._0);}
                          return {ctor: "_Tuple2"
                                 ,_0: model
                                 ,_1: $Effects.none};
                       }();}
                  _U.badCase($moduleName,
-                 "between lines 172 and 183");
+                 "between lines 162 and 168");
               }();
             case "SvgPress":
             return function () {
@@ -16227,38 +16229,23 @@ Elm.SvgSlider.make = function (_elm) {
                  model,
                  action._0);
                  switch (_v21.ctor)
-                 {case "Ok": return function () {
-                         var um = A2($Json$Encode.encode,
-                         0,
-                         encodeUpdateMessage(A3(UpdateMessage,
-                         model.cid,
-                         Press,
-                         _v21._0)));
-                         return {ctor: "_Tuple2"
-                                ,_0: _U.replace([["location"
-                                                 ,_v21._0]
-                                                ,["pressed",true]],
-                                model)
-                                ,_1: $Effects.task(A2($Task.andThen,
-                                model.sendf(um),
-                                function (_v23) {
-                                   return function () {
-                                      return $Task.succeed(UselessCrap);
-                                   }();
-                                }))};
-                      }();}
+                 {case "Ok": return A3(updsend,
+                      model,
+                      Press,
+                      _v21._0);}
                  return {ctor: "_Tuple2"
                         ,_0: model
                         ,_1: $Effects.none};
               }();
             case "SvgTouch":
-            return $List.isEmpty(action._0) ? {ctor: "_Tuple2"
-                                              ,_0: _U.replace([["pressed"
-                                                               ,false]],
-                                              model)
-                                              ,_1: $Effects.none} : function () {
-                 var _v25 = model.orientation;
-                 switch (_v25.ctor)
+            return $List.isEmpty(action._0) ? model.pressed ? A3(updsend,
+              model,
+              Unpress,
+              model.location) : {ctor: "_Tuple2"
+                                ,_0: model
+                                ,_1: $Effects.none} : function () {
+                 var _v23 = model.orientation;
+                 switch (_v23.ctor)
                  {case "Horizontal":
                     return function () {
                          var locsum = A3($List.foldl,
@@ -16273,12 +16260,13 @@ Elm.SvgSlider.make = function (_elm) {
                          action._0));
                          var locavg = $Basics.toFloat(locsum) / $Basics.toFloat($List.length(action._0));
                          var loc = (locavg - $Basics.toFloat(model.rect.x)) / $Basics.toFloat(model.rect.w);
-                         return {ctor: "_Tuple2"
-                                ,_0: _U.replace([["pressed"
-                                                 ,true]
-                                                ,["location",loc]],
-                                model)
-                                ,_1: $Effects.none};
+                         return model.pressed ? A3(updsend,
+                         model,
+                         Press,
+                         loc) : A3(updsend,
+                         model,
+                         Move,
+                         loc);
                       }();
                     case "Vertical":
                     return function () {
@@ -16294,51 +16282,37 @@ Elm.SvgSlider.make = function (_elm) {
                          action._0));
                          var locavg = $Basics.toFloat(locsum) / $Basics.toFloat($List.length(action._0));
                          var loc = (locavg - $Basics.toFloat(model.rect.y)) / $Basics.toFloat(model.rect.h);
-                         return {ctor: "_Tuple2"
-                                ,_0: _U.replace([["pressed"
-                                                 ,true]
-                                                ,["location",loc]],
-                                model)
-                                ,_1: $Effects.none};
+                         return model.pressed ? A3(updsend,
+                         model,
+                         Press,
+                         loc) : A3(updsend,
+                         model,
+                         Move,
+                         loc);
                       }();}
                  _U.badCase($moduleName,
-                 "between lines 195 and 207");
+                 "between lines 183 and 201");
               }();
             case "SvgUnpress":
             return function () {
-                 var _v26 = model.pressed;
-                 switch (_v26)
+                 var _v24 = model.pressed;
+                 switch (_v24)
                  {case false:
                     return {ctor: "_Tuple2"
                            ,_0: model
                            ,_1: $Effects.none};
-                    case true: return function () {
-                         var um = A2($Json$Encode.encode,
-                         0,
-                         encodeUpdateMessage(A3(UpdateMessage,
-                         model.cid,
-                         Unpress,
-                         model.location)));
-                         return {ctor: "_Tuple2"
-                                ,_0: _U.replace([["pressed"
-                                                 ,false]],
-                                model)
-                                ,_1: $Effects.task(A2($Task.andThen,
-                                model.sendf(um),
-                                function (_v27) {
-                                   return function () {
-                                      return $Task.succeed(UselessCrap);
-                                   }();
-                                }))};
-                      }();}
+                    case true: return A3(updsend,
+                      model,
+                      Unpress,
+                      model.location);}
                  _U.badCase($moduleName,
-                 "between lines 160 and 169");
+                 "between lines 156 and 159");
               }();
             case "SvgUpdate":
             return function () {
                  var mod = function () {
-                    var _v29 = action._0.updateType;
-                    switch (_v29.ctor)
+                    var _v25 = action._0.updateType;
+                    switch (_v25.ctor)
                     {case "Move":
                        return _U.replace([["location"
                                           ,action._0.location]],
@@ -16356,7 +16330,7 @@ Elm.SvgSlider.make = function (_elm) {
                                           ,action._0.location]],
                          model);}
                     _U.badCase($moduleName,
-                    "between lines 185 and 189");
+                    "between lines 170 and 174");
                  }();
                  return {ctor: "_Tuple2"
                         ,_0: mod
@@ -16367,7 +16341,7 @@ Elm.SvgSlider.make = function (_elm) {
                    ,_0: model
                    ,_1: $Effects.none};}
          _U.badCase($moduleName,
-         "between lines 149 and 207");
+         "between lines 150 and 201");
       }();
    });
    var SvgUnpress = function (a) {
@@ -16400,8 +16374,8 @@ Elm.SvgSlider.make = function (_elm) {
    model) {
       return function () {
          var $ = function () {
-            var _v31 = model.orientation;
-            switch (_v31.ctor)
+            var _v27 = model.orientation;
+            switch (_v27.ctor)
             {case "Horizontal":
                return {ctor: "_Tuple4"
                       ,_0: $Basics.toString($Basics.round(model.location * $Basics.toFloat(model.rect.w)) + model.rect.x)
@@ -16415,7 +16389,7 @@ Elm.SvgSlider.make = function (_elm) {
                       ,_2: model.srect.w
                       ,_3: "3"};}
             _U.badCase($moduleName,
-            "between lines 231 and 242");
+            "between lines 233 and 244");
          }(),
          sx = $._0,
          sy = $._1,
@@ -16541,6 +16515,7 @@ Elm.SvgSlider.make = function (_elm) {
                            ,jsUpdateType: jsUpdateType
                            ,getLocation: getLocation
                            ,update: update
+                           ,updsend: updsend
                            ,sliderEvt: sliderEvt
                            ,onMouseMove: onMouseMove
                            ,onMouseLeave: onMouseLeave

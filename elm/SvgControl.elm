@@ -211,7 +211,7 @@ szupdate action model =
         Just bm -> 
           let wha = update act bm 
               updcontrols = insert id (fst wha) model.controls
-              newmod = { model | controls = updcontrols }
+              newmod = { model | controls <- updcontrols }
             in
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 

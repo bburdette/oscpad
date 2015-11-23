@@ -106,35 +106,42 @@ jsUpdateType ut =
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SvgPress -> 
-      let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Press)) in
-      ({ model | pressed = True}, Effects.task ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+    SvgPress -> pressup model Press
     SvgUnpress ->
       case model.pressed of
-        True ->  
-          let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Unpress)) in
-          ({ model | pressed = False}, Effects.task 
-            ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+        True ->  pressup model Unpress
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name = s}, Effects.none)
+    Reply s -> ({model | name <- s}, Effects.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
-      let pressedup = case um.updateType of 
+      let pressedupdate = case um.updateType of 
                       Press -> True
                       Unpress -> False
         in
-      ({ model | pressed = pressedup }
+      ({ model | pressed <- pressedupdate }
        , Effects.none )
     SvgTouch touches -> 
       if List.isEmpty touches then
-        ({ model | pressed = False }, Effects.none )
+        if model.pressed == True then 
+          pressup model Unpress
+        else
+          (model , Effects.none )
       else
-        ({ model | pressed = True }, Effects.none )
+        if model.pressed == False then 
+          pressup model Press
+        else
+          (model , Effects.none )
+
+pressup: Model -> UpdateType -> (Model, Effects Action) 
+pressup model ut = 
+  let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
+  ({ model | pressed <- (ut == Press)}
+    , Effects.task ((model.sendf um) 
+         `Task.andThen` (\_ -> Task.succeed UselessCrap)))
 
 
 -- VIEW
-
 (=>) = (,)
 
 view : Signal.Address Action -> Model -> Svg

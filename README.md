@@ -13,7 +13,7 @@ Ultimately I'll probably break out the control server into a library separate fr
 
 ### Some notes on elm compiling.
 
-I've already compiled the elm to elm/Main.html, so an elm compiler isn't needed just to run oscpad.  But if you want to build it yourself (I used elm 0.16) there are a few items to note.
+I've already compiled the elm to elm/Main.html, so an elm compiler isn't needed just to run oscpad.  But if you want to build it yourself (as of now you still need 0.15.1) there are a few items to note.
 
 First, the 'official' elm websockets library is actually a socketio library which is not supported on the rust side. So, this project depends on this somewhat fly-by-night elm websockets library:
 

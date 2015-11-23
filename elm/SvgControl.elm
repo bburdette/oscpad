@@ -71,7 +71,7 @@ controlTouchActionMaker ctrl =
     CmSlider _ -> (\t -> Just (CaSlider (SvgSlider.SvgTouch t)))
     CmSizer _ -> (\t -> Nothing)
   
-jsSpec : JD.Decoder Spec 
+jsSpec : JD.Decoder Spec
 jsSpec = 
   ("type" := JD.string) `JD.andThen` jsCs
 
@@ -81,18 +81,20 @@ jsCs t =
     "button" -> SvgButton.jsSpec `JD.andThen` (\a -> JD.succeed (CsButton a))
     "slider" -> SvgSlider.jsSpec `JD.andThen` (\a -> JD.succeed (CsSlider a))
     "sizer" -> jsSzSpec `JD.andThen` (\a -> JD.succeed (CsSizer a))
+    _ -> JD.fail ("unkown type: " ++ t)
 
 jsUpdateMessage: JD.Decoder Action
 jsUpdateMessage = 
   ("controlType" := JD.string) `JD.andThen` jsUmType
 
-jsUmType: String -> JD.Decoder Action 
+jsUmType: String -> JD.Decoder Action
 jsUmType wat = 
   case wat of 
     "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
                   (\x -> JD.succeed (toCtrlAction x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
     "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
                   (\x -> JD.succeed (toCtrlAction x.controlId (CaButton (SvgButton.SvgUpdate x))))
+    _ -> JD.fail ("unknown update type" ++ wat)
 
 myTail: List a -> List a
 myTail lst = 
@@ -152,10 +154,10 @@ type alias SzSpec =
   }
 
 jsSzSpec : JD.Decoder SzSpec
-jsSzSpec = JD.object3 SzSpec 
+jsSzSpec = JD.object3 SzSpec
   ("name" := JD.string)
   (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
-  ("controls" := JD.list (lazy (\_ -> jsSpec)))
+  ("controls" := (JD.list (lazy (\_ -> jsSpec))))
 
 -- Hack because recursion is sort of broked I guess
 -- have to use this above instead of plain jsSpec.
@@ -209,7 +211,7 @@ szupdate action model =
         Just bm -> 
           let wha = update act bm 
               updcontrols = insert id (fst wha) model.controls
-              newmod = { model | controls <- updcontrols }
+              newmod = { model | controls = updcontrols }
             in
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 

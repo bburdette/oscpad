@@ -116,6 +116,7 @@ jsUpdateType ut =
     "Press" -> JD.succeed Press
     "Move" -> JD.succeed Move
     "Unpress" -> JD.succeed Unpress 
+    _ -> JD.succeed Unpress 
 
 
 
@@ -139,7 +140,7 @@ getLocation model v =
 updLoc: Model -> JD.Value -> (Model, Effects Action) 
 
       case (getLocation model v) of 
-        Ok l -> ({model | location <- l}, Effects.none)
+        Ok l -> ({model | location = l}, Effects.none)
         _ -> (model, Effects.none)
 -}
 
@@ -151,7 +152,7 @@ update action model =
       case (getLocation model v) of 
         Ok l -> 
           let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Press l)) in
-            ( {model | location <- l, pressed <- True}
+            ( {model | location = l, pressed = True}
             , Effects.task 
                 ((model.sendf um) `Task.andThen` 
                 (\_ -> Task.succeed UselessCrap)))
@@ -161,20 +162,20 @@ update action model =
         True -> 
           let um = JE.encode 0 (encodeUpdateMessage 
                     (UpdateMessage model.cid Unpress model.location)) in
-            ( { model | pressed <- False }
+            ( { model | pressed = False }
             , Effects.task 
                 ((model.sendf um) `Task.andThen` 
                 (\_ -> Task.succeed UselessCrap)))
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name <- s}, Effects.none)
+    Reply s -> ({model | name = s}, Effects.none)
     SvgMoved v ->
       case model.pressed of 
         True -> 
           case (getLocation model v) of 
             Ok l -> 
               let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Move l)) in
-                ( {model | location <- l}
+                ( {model | location = l}
                 , Effects.task 
                     ((model.sendf um) `Task.andThen` 
                     (\_ -> Task.succeed UselessCrap)))
@@ -183,14 +184,14 @@ update action model =
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let mod = case um.updateType of 
-          Press -> { model | pressed <- True, location <- um.location }
-          Move -> { model | location <- um.location }
-          Unpress -> { model | pressed <- False, location <- um.location }
+          Press -> { model | pressed = True, location = um.location }
+          Move -> { model | location = um.location }
+          Unpress -> { model | pressed = False, location = um.location }
         in
       (mod, Effects.none )
     SvgTouch touches -> 
       if List.isEmpty touches then
-        ({ model | pressed <- False }, Effects.none )
+        ({ model | pressed = False }, Effects.none )
       else
         case model.orientation of 
           SvgThings.Horizontal -> 
@@ -198,13 +199,13 @@ update action model =
                 locavg = (toFloat locsum) / (toFloat (List.length touches))
                 loc = (locavg - (toFloat model.rect.x)) 
                        / toFloat model.rect.w in 
-            ({ model | pressed <- True, location <- loc }, Effects.none )
+            ({ model | pressed = True, location = loc }, Effects.none )
           SvgThings.Vertical -> 
             let locsum = List.foldl (+) 0 (List.map (\t -> t.y) touches)
                 locavg = (toFloat locsum) / (toFloat (List.length touches))
                 loc = (locavg - (toFloat model.rect.y)) 
                        / toFloat model.rect.h in 
-            ({ model | pressed <- True, location <- loc }, Effects.none )
+            ({ model | pressed = True, location = loc }, Effects.none )
 
 
 -- VIEW

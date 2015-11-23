@@ -99,6 +99,7 @@ jsUpdateType ut =
   case ut of 
     "Press" -> JD.succeed Press
     "Unpress" -> JD.succeed Unpress 
+    _ -> JD.succeed Unpress 
 
 
 
@@ -107,30 +108,29 @@ update action model =
   case action of
     SvgPress -> 
       let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Press)) in
-      ({ model | pressed <- True}, Effects.task 
-        ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+      ({ model | pressed = True}, Effects.task ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
     SvgUnpress ->
       case model.pressed of
         True ->  
           let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid Unpress)) in
-          ({ model | pressed <- False}, Effects.task 
+          ({ model | pressed = False}, Effects.task 
             ((model.sendf um) `Task.andThen` (\_ -> Task.succeed UselessCrap)))
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name <- s}, Effects.none)
+    Reply s -> ({model | name = s}, Effects.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let pressedup = case um.updateType of 
                       Press -> True
                       Unpress -> False
         in
-      ({ model | pressed <- pressedup }
+      ({ model | pressed = pressedup }
        , Effects.none )
     SvgTouch touches -> 
       if List.isEmpty touches then
-        ({ model | pressed <- False }, Effects.none )
+        ({ model | pressed = False }, Effects.none )
       else
-        ({ model | pressed <- True }, Effects.none )
+        ({ model | pressed = True }, Effects.none )
 
 
 -- VIEW

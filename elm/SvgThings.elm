@@ -11,6 +11,7 @@ jsOrientation o =
   case o of 
     "vertical" -> JD.succeed Vertical
     "horizontal" -> JD.succeed Horizontal
+    _ -> JD.succeed Horizontal
 
 type alias ControlId = List Int
 

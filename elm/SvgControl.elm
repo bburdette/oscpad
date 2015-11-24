@@ -2,6 +2,7 @@ module SvgControl where
 
 import SvgButton
 import SvgSlider
+import SvgLabel
 import Json.Decode as JD exposing ((:=))
 import Effects exposing (Effects, Never)
 import Task
@@ -23,14 +24,17 @@ import Touch
 
 type Spec = CsButton SvgButton.Spec 
           | CsSlider SvgSlider.Spec
+          | CsLabel SvgLabel.Spec
           | CsSizer SzSpec
 
 type Model = CmButton SvgButton.Model
            | CmSlider SvgSlider.Model
+           | CmLabel SvgLabel.Model
            | CmSizer SzModel
 
 type Action = CaButton SvgButton.Action
             | CaSlider SvgSlider.Action
+            | CaLabel SvgLabel.Action
             | CaSizer SzAction
 
 findControl: Int -> Int -> Model -> Maybe Model
@@ -46,6 +50,7 @@ findControl x y mod =
         Just mod
       else
         Nothing
+    CmLabel smod -> Nothing 
     CmSizer szmod -> szFindControl szmod x y
       
 controlId: Model -> SvgThings.ControlId 
@@ -53,6 +58,7 @@ controlId mod =
   case mod of 
     CmButton bmod -> bmod.cid
     CmSlider smod -> smod.cid
+    CmLabel smod -> smod.cid
     CmSizer szmod -> szmod.cid
       
 controlName: Model -> String
@@ -60,6 +66,7 @@ controlName mod =
   case mod of 
     CmButton bmod -> bmod.name
     CmSlider smod -> smod.name
+    CmLabel smod -> smod.name
     CmSizer szmod -> szmod.name
 
 type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
@@ -69,6 +76,7 @@ controlTouchActionMaker ctrl =
   case ctrl of
     CmButton _ -> (\t -> Just (CaButton (SvgButton.SvgTouch t)))
     CmSlider _ -> (\t -> Just (CaSlider (SvgSlider.SvgTouch t)))
+    CmLabel _ -> (\t -> Nothing) 
     CmSizer _ -> (\t -> Nothing)
   
 jsSpec : JD.Decoder Spec
@@ -80,6 +88,7 @@ jsCs t =
   case t of 
     "button" -> SvgButton.jsSpec `JD.andThen` (\a -> JD.succeed (CsButton a))
     "slider" -> SvgSlider.jsSpec `JD.andThen` (\a -> JD.succeed (CsSlider a))
+    "label" -> SvgLabel.jsSpec `JD.andThen` (\a -> JD.succeed (CsLabel a))
     "sizer" -> jsSzSpec `JD.andThen` (\a -> JD.succeed (CsSizer a))
     _ -> JD.fail ("unkown type: " ++ t)
 
@@ -90,10 +99,12 @@ jsUpdateMessage =
 jsUmType: String -> JD.Decoder Action
 jsUmType wat = 
   case wat of 
-    "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (toCtrlAction x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
     "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
                   (\x -> JD.succeed (toCtrlAction x.controlId (CaButton (SvgButton.SvgUpdate x))))
+    "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (toCtrlAction x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
+    "label" -> SvgLabel.jsUpdateMessage `JD.andThen` 
+                  (\x -> JD.succeed (toCtrlAction x.controlId (CaLabel (SvgLabel.SvgUpdate x))))
     _ -> JD.fail ("unknown update type" ++ wat)
 
 myTail: List a -> List a
@@ -118,6 +129,9 @@ update action model =
     (CaSlider act, CmSlider m) -> 
       let (a,b) = (SvgSlider.update act m) in
         (CmSlider a, Effects.map CaSlider b)
+    (CaLabel act, CmLabel m) -> 
+      let (a,b) = (SvgLabel.update act m) in
+        (CmLabel a, Effects.map CaLabel b)
     (CaSizer act, CmSizer m) -> 
       let (a,b) = (szupdate act m) in
         (CmSizer a, Effects.map CaSizer b)
@@ -133,6 +147,9 @@ init sendf rect cid spec =
     CsSlider s -> 
       let (a,b) = (SvgSlider.init sendf rect cid s) in
         (CmSlider a, Effects.map CaSlider b)
+    CsLabel s -> 
+      let (a,b) = (SvgLabel.init rect cid s) in
+        (CmLabel a, Effects.map CaLabel b)
     CsSizer s -> 
       let (a,b) = (szinit sendf rect cid s) in
         (CmSizer a, Effects.map CaSizer b)
@@ -142,6 +159,7 @@ view address model =
   case model of 
     CmButton m -> SvgButton.view (Signal.forwardTo address CaButton)  m
     CmSlider m -> SvgSlider.view (Signal.forwardTo address CaSlider)  m
+    CmLabel m -> SvgLabel.view (Signal.forwardTo address CaLabel)  m
     CmSizer m -> szview (Signal.forwardTo address CaSizer)  m
 
 -------------------- sizer -------------------

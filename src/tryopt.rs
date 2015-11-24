@@ -1,0 +1,41 @@
+
+use std::error;   
+use stringerror;
+
+
+#[macro_export]
+macro_rules! try_opt { 
+  ($e: expr) => { 
+    match $e { 
+      Some(x) => x, 
+      None => return None 
+      } 
+  } 
+}
+
+#[macro_export]
+macro_rules! try_opt_resbox { 
+
+  ($e: expr, $s: expr) => { 
+    match $e { 
+      Some(x) => x, 
+      None => return Err(stringerror::stringBoxErr($s)),
+      // None => return Err(Box::new(stringerror::Error::new($s))), 
+      } 
+  } 
+}
+
+/*
+#[macro_export]
+macro_rules! try_opt_res {
+  ($e: expr, $s: expr) =>  
+    (match $e {
+      Some(val) => val,
+      None => {
+          let err = Error::new($s) ;
+          return Err(std::convert::From::from(err))
+      },
+    })
+}
+*/
+

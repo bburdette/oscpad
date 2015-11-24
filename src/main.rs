@@ -32,6 +32,9 @@ use iron::prelude::*;
 use iron::status;
 use iron::mime::Mime;
 
+#[macro_use]
+mod tryopt;
+mod stringerror;
 mod controls;
 mod broadcaster;
 
@@ -42,6 +45,7 @@ extern crate serde_json;
 use serde_json::Value;
 use serde_json::ser;
 
+/*
 macro_rules! try_opt { 
   ($e: expr) => { 
     match $e { 
@@ -71,6 +75,7 @@ macro_rules! try_opt_res {
       },
     })
 }
+*/
 
 /*
 
@@ -190,9 +195,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     // deserialize the gui string into json.
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 
-    let blah = try_opt_resbox!(
-      controls::deserializeRoot(&guival),
-      "gui file is valid json, but failed to read controls.");
+    let blah = try!(controls::deserializeRoot(&guival));
 
     println!("title: {} count: {} ", 
       blah.title, blah.rootControl.controlType());
@@ -373,13 +376,23 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
-  } 
+    &controls::UpdateMsg::Label { controlId: ref id
+             , label: ref labtext
+             } => { 
+      // find the control in the map.
+      let mut arghs = Vec::new();
+      arghs.push(osc::Argument::s("l_label"));
+      arghs.push(osc::Argument::s(&labtext[..]));
+      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
+      msg.serialize() 
+    },
+   } 
 } 
 
 fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
-  let cid = try_opt_res!(cnm.get(om.path), "control name not found!");
+  let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
 
   match om.arguments.len() {
     1 => {

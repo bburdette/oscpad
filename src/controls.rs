@@ -11,6 +11,8 @@ use serde_json::Value;
 use std::collections;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+use std::error::Error;
+use stringerror;
 
 // --------------------------------------------------------
 // root obj.  contains controls.
@@ -23,16 +25,18 @@ pub struct Root {
   pub rootControl: Box<Control>,
 }
 
-pub fn deserializeRoot(data: &Value) -> Option<Box<Root>>
+pub fn deserializeRoot(data: &Value) -> Result<Box<Root>, Box<Error> >
 {
-  let obj = data.as_object().unwrap();
-  let title = obj.get("title").unwrap().as_string().unwrap();
+  let obj = try_opt_resbox!(data.as_object(), "json value is not an object!");
+  let title = 
+    try_opt_resbox!(
+      try_opt_resbox!(obj.get("title"), "'title' not found").as_string(), "title is not a string!");
 
-  let rc = obj.get("rootControl").unwrap();
+  let rc = try_opt_resbox!(obj.get("rootControl"), "rootControl not found");
 
-  let rootcontrol = deserializeControl(Vec::new(), rc).unwrap();
+  let rootcontrol = try!(deserializeControl(Vec::new(), rc)); 
 
-  Some(Box::new(Root { title: String::from(title), rootControl: rootcontrol }))
+  Ok(Box::new(Root { title: String::from(title), rootControl: rootcontrol }))
 }
 
 // --------------------------------------------------------
@@ -107,6 +111,34 @@ impl Control for Button {
   fn oscname(&self) -> &str { &self.name[..] }
 }
 
+#[derive(Debug)]
+pub struct Label { 
+  controlId: Vec<i32>,
+  name: String,
+  label: String,
+}
+
+impl Control for Label { 
+  fn controlType(&self) -> &'static str { "Label" } 
+  fn controlId(&self) -> &Vec<i32> { &self.controlId }
+  fn cloneTrol(&self) -> Box<Control> { 
+    Box::new( 
+      Label { controlId: self.controlId.clone(), 
+              name: self.name.clone(), 
+              label: self.label.clone() } ) }
+  fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
+  fn update(&mut self, um: &UpdateMsg) {
+    match um { 
+      &UpdateMsg::Label { controlId: _, label: ref l } => {
+        self.label = l.clone();
+        ()
+        }
+      _ => ()
+      }
+    }
+  fn oscname(&self) -> &str { &self.name[..] }
+}
+
 //#[derive(Debug, Clone)]
 #[derive(Debug)]
 pub struct Sizer { 
@@ -126,38 +158,45 @@ impl Control for Sizer {
   fn oscname(&self) -> &str { "" }
 }
 
-fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
+fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<Error> >
 {
   // what's the type?
-  let obj = data.as_object().unwrap();
+  let obj = try_opt_resbox!(data.as_object(), "unable to parse control as json");
   let objtype = 
-    obj.get("type").unwrap().as_string().unwrap();
+    try_opt_resbox!(try_opt_resbox!(obj.get("type"), "'type' not found").as_string(), "'type' is not a string");
 
   match objtype {
-    "slider" => { 
-      let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Slider { controlId: aVId.clone(), name: String::from(name), pressed: false, location: 0.5 }))
-    },
     "button" => { 
-      let name = obj.get("name").unwrap().as_string().unwrap();
-      Some(Box::new(Button { controlId: aVId.clone(), name: String::from(name), pressed: false }))
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      Ok(Box::new(Button { controlId: aVId.clone(), name: String::from(name), pressed: false }))
+    },
+    "slider" => { 
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      Ok(Box::new(Slider { controlId: aVId.clone(), name: String::from(name), pressed: false, location: 0.5 }))
+    },
+    "label" => { 
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      let label = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      Ok(Box::new(Label { controlId: aVId.clone(), name: String::from(name), label: label.to_string() }))
     },
     "sizer" => { 
-      let name = obj.get("name").unwrap().as_string().unwrap();
-      let controls = obj.get("controls").unwrap().as_array().unwrap();  
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      let controls = 
+        try_opt_resbox!(try_opt_resbox!(obj.get("controls"), "'controls' not found").as_array(), "'controls' is not an array");
 
       let mut controlv = Vec::new();
 
+      // loop through array, makin controls.
       for (i, v) in controls.into_iter().enumerate() {
           let mut id = aVId.clone();
           id.push(i as i32); 
-          let c = deserializeControl(id, v).unwrap();
+          let c = try!(deserializeControl(id, v));
           controlv.push(c);
           }
-      // loop through controls, makin controls.
-      Some(Box::new(Sizer { controlId: aVId.clone(), controls: controlv }))
+      
+      Ok(Box::new(Sizer { controlId: aVId.clone(), controls: controlv }))
     },
-    _ => None,
+    _ => Err(stringerror::stringBoxErr("objtype not supported!"))
   }
 }
 
@@ -167,7 +206,7 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Option<Box<Control>>
 
 /*
 
-i  JE.object [ ("controlType", JE.string "button")
+  JE.object [ ("controlType", JE.string "button")
             , ("controlId", SvgThings.encodeControlId um.controlId)
             , ("updateType", encodeUpdateType um.updateType)
             ]
@@ -178,14 +217,6 @@ i  JE.object [ ("controlType", JE.string "button")
             , ("location", (JE.float um.location))
 
 */
-macro_rules! try_opt { 
-  ($e: expr) => { 
-    match $e { 
-      Some(x) => x, 
-      None => return None 
-      } 
-  } 
-}
 
 pub enum ButtonUpType { 
   Pressed,
@@ -205,13 +236,17 @@ pub enum UpdateMsg {
   Slider  { controlId: Vec<i32>
           , updateType: SliderUpType 
           , location: f64
-          }
+          },
+  Label   { controlId: Vec<i32>
+          , label: String 
+          },
 }
 
 pub fn getUmId(um: &UpdateMsg) -> &Vec<i32> {
   match um { 
     &UpdateMsg::Button { controlId: ref cid, updateType: _ } => &cid,
     &UpdateMsg::Slider { controlId: ref cid, updateType: _, location: _ } => &cid, 
+    &UpdateMsg::Label { controlId: ref cid, label: _ } => &cid, 
     }
 }
 
@@ -247,7 +282,14 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
       btv.insert(String::from("location"), Value::F64(*loc));
       Value::Object(btv)
     },
-  } 
+    &UpdateMsg::Label { controlId: ref cid, label: ref labtext } => {
+      let mut btv = BTreeMap::new();
+      btv.insert(String::from("controlType"), Value::String(String::from("label")));
+      btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
+      btv.insert(String::from("updateType"), Value::String(labtext.clone()));
+      Value::Object(btv)
+    }, 
+   } 
 }
  
 pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {

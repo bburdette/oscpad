@@ -46,7 +46,10 @@ init rect cid spec =
           (spec.label)
           cid
           rect 
-          (SvgThings.toSRect rect)
+          (SvgThings.SRect (toString (rect.x + 5)) 
+                           (toString (rect.y + 5))
+                           (toString (rect.w - 5))
+                           (toString (rect.h - 5)))
           (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
           (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
   , Effects.none
@@ -81,14 +84,6 @@ update action model =
 
 -- VIEW
 (=>) = (,)
-
-{-
-view : Signal.Address Action -> Model -> Svg
-view address model =
-  g [ ]
-    [ text' [ fill "black", textAnchor "middle" ] [ text model.label ]
-    ]
--}
 
 view : Signal.Address Action -> Model -> Svg
 view address model =

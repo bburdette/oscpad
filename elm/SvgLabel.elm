@@ -87,6 +87,7 @@ update action model =
 
 view : Signal.Address Action -> Model -> Svg
 view address model =
+  let fonty = toString ((toFloat model.rect.y) + (toFloat model.rect.h) * 0.9) in
   g [ ]
     [ rect
         [ x model.srect.x
@@ -98,6 +99,14 @@ view address model =
         , style "fill: #A1A1A1;"
         ]
         []
-    , text' [ fill "black", textAnchor "middle", x model.middlex, y model.middley ] [ text model.label ]
+    , text' [ fill "black"  
+            , textAnchor "middle" 
+            , x model.middlex 
+            , y fonty
+            , lengthAdjust "glyphs"
+            -- , textLength model.srect.w 
+            , fontSize model.srect.h
+            ] 
+            [ text model.label ]
     ]
 

@@ -430,6 +430,12 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
               updateType: controls::SliderUpType::Unpressed,
               location: loc as f64 })
         },
+        (&osc::Argument::s("l_label"), &osc::Argument::s(txt))  => {
+          Ok(controls::UpdateMsg::Label
+            { controlId: cid.clone() 
+            , label: txt.to_string()
+            })
+        },
         _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid slider event"))),
       }
     },

@@ -286,7 +286,7 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
       let mut btv = BTreeMap::new();
       btv.insert(String::from("controlType"), Value::String(String::from("label")));
       btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
-      btv.insert(String::from("updateType"), Value::String(labtext.clone()));
+      btv.insert(String::from("label"), Value::String(labtext.clone()));
       Value::Object(btv)
     }, 
    } 

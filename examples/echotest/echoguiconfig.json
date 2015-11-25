@@ -49,30 +49,7 @@
       , { "type": "button"
         , "name": "b3"
         }
-      , {
-           "type": "sizer",
-           "orientation": "horizontal",
-           "name": "szname",
-           "controls": [
-             { "type": "slider"
-             , "orientation": "vertical"
-             , "name": "vs1"
-             }
-            ,{ "type": "slider"
-             , "orientation": "vertical"
-             , "name": "vs2"
-             }
-            ,{ "type": "slider"
-             , "orientation": "vertical"
-             , "name": "vs3"
-             }
-            ,{ "type": "slider"
-             , "orientation": "vertical"
-             , "name": "vs4"
-             }
-            ]
-        }
-        ]
+       ]
     }
 }
 

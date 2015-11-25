@@ -56,18 +56,39 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
             let q = &args[0];
             let r = &args[1];
        
-            // coming from the cyclophone, a is the key index and 
-            // b is nominally 0.0 to 1.0
- 
             match (q,r) {
               (&osc::Argument::s(_), &osc::Argument::f(b)) => {
-                  let pathh = format(format_args!("lb{}", &inpath[2..]));    
+                  let outpath = format(format_args!("lb{}", &inpath[2..]));    
                   let labtext = format(format_args!("{}", b));
                   let mut arghs = Vec::new();
                   // arghs.push(osc::Argument::f(b * 100.0 - 100.0)); 
                   arghs.push(osc::Argument::s("l_label")); 
                   arghs.push(osc::Argument::s(&labtext)); 
-                  let outmsg = osc::Message { path: &pathh, arguments: arghs };
+                  let outmsg = osc::Message { path: &outpath, arguments: arghs };
+                  match outmsg.serialize() {
+                    Ok(v) => {
+                      println!("sending {} {:?}", outmsg.path, outmsg.arguments );
+              			  socket.send_to(&v, &sendip[..])
+                    },
+                    Err(e) => return Err(Box::new(e)),
+                  }
+                },
+              _ => { 
+                println!("ignore");
+                // return Err(Error::new(ErrorKind::Other, "unexpected osc args!"));
+                Ok(0)
+              },
+            }
+          }
+        else if args.len() == 1 && &inpath[0..1] == "b"
+          {
+            match &args[0] {
+              &osc::Argument::s(evt) => {
+                  let outpath = "lb3"; 
+                  let mut arghs = Vec::new();
+                  arghs.push(osc::Argument::s("l_label")); 
+                  arghs.push(osc::Argument::s(&inpath)); 
+                  let outmsg = osc::Message { path: &outpath, arguments: arghs };
                   match outmsg.serialize() {
                     Ok(v) => {
                       println!("sending {} {:?}", outmsg.path, outmsg.arguments );

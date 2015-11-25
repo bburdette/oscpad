@@ -45,53 +45,6 @@ extern crate serde_json;
 use serde_json::Value;
 use serde_json::ser;
 
-/*
-macro_rules! try_opt { 
-  ($e: expr) => { 
-    match $e { 
-      Some(x) => x, 
-      None => return None 
-      } 
-  } 
-}
-
-macro_rules! try_opt_resbox { 
-
-  ($e: expr, $s: expr) => { 
-    match $e { 
-      Some(x) => x, 
-      None => return Err(Box::new(Error::new(ErrorKind::Other, $s))), 
-      } 
-  } 
-}
-
-macro_rules! try_opt_res {
-  ($e: expr, $s: expr) =>  
-    (match $e {
-      Some(val) => val,
-      None => {
-          let err = Error::new(ErrorKind::Other, $s) ;
-          return Err(std::convert::From::from(err))
-      },
-    })
-}
-*/
-
-/*
-
-hmmm not getting why this doesn't work... want it to be like the try! macro.
-
-macro_rules! try_opt_res {
-  ($e: expr, $s: expr) =>  
-    (match $e {
-      Some(val) => val,
-      None => {
-          let err = Err(Error::new(ErrorKind::Other, $s)) ;
-          return $crate::result::Result::Err($crate::convert::From::from(err))
-      },
-    })
-}
-*/
 
 fn loadString(file_name: &str) -> Option<String>
 {

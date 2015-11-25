@@ -1,5 +1,5 @@
 # oscpad
-Configurable web controls with shared state, which send OSC messages.  
+Configurable web controls with shared state, which send OSC messages.  [Overview/tutorial here](https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad!)
 
 This is my 'getting to know you' project for elm and rust.  
 

@@ -15031,6 +15031,7 @@ Elm.SvgControl.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Svg = Elm.Svg.make(_elm),
    $SvgButton = Elm.SvgButton.make(_elm),
+   $SvgLabel = Elm.SvgLabel.make(_elm),
    $SvgSlider = Elm.SvgSlider.make(_elm),
    $SvgThings = Elm.SvgThings.make(_elm),
    $Task = Elm.Task.make(_elm),
@@ -15069,12 +15070,12 @@ Elm.SvgControl.make = function (_elm) {
                       $List.tail(xs),
                       firstJust(f));}
                  _U.badCase($moduleName,
-                 "between lines 192 and 194");
+                 "between lines 210 and 212");
               }();
             case "Nothing":
             return $Maybe.Nothing;}
          _U.badCase($moduleName,
-         "between lines 189 and 194");
+         "between lines 207 and 212");
       }();
    });
    var SzModel = F5(function (a,
@@ -15115,7 +15116,7 @@ Elm.SvgControl.make = function (_elm) {
                case "Nothing":
                return _L.fromArray([]);}
             _U.badCase($moduleName,
-            "between lines 102 and 104");
+            "between lines 113 and 115");
          }();
       }();
    };
@@ -15124,12 +15125,14 @@ Elm.SvgControl.make = function (_elm) {
          switch (mod.ctor)
          {case "CmButton":
             return mod._0.name;
+            case "CmLabel":
+            return mod._0.name;
             case "CmSizer":
             return mod._0.name;
             case "CmSlider":
             return mod._0.name;}
          _U.badCase($moduleName,
-         "between lines 60 and 63");
+         "between lines 66 and 70");
       }();
    };
    var controlId = function (mod) {
@@ -15137,12 +15140,14 @@ Elm.SvgControl.make = function (_elm) {
          switch (mod.ctor)
          {case "CmButton":
             return mod._0.cid;
+            case "CmLabel":
+            return mod._0.cid;
             case "CmSizer":
             return mod._0.cid;
             case "CmSlider":
             return mod._0.cid;}
          _U.badCase($moduleName,
-         "between lines 53 and 57");
+         "between lines 58 and 63");
       }();
    };
    var findControl = F3(function (x,
@@ -15155,6 +15160,8 @@ Elm.SvgControl.make = function (_elm) {
               mod._0,
               x,
               y) ? $Maybe.Just(mod) : $Maybe.Nothing;
+            case "CmLabel":
+            return $Maybe.Nothing;
             case "CmSizer":
             return A3(szFindControl,
               mod._0,
@@ -15166,7 +15173,7 @@ Elm.SvgControl.make = function (_elm) {
               x,
               y) ? $Maybe.Just(mod) : $Maybe.Nothing;}
          _U.badCase($moduleName,
-         "between lines 38 and 50");
+         "between lines 42 and 55");
       }();
    });
    var szFindControl = F3(function (mod,
@@ -15186,19 +15193,23 @@ Elm.SvgControl.make = function (_elm) {
    var toCtrlAction = F2(function (id,
    action) {
       return function () {
-         var _v18 = $List.head(id);
-         switch (_v18.ctor)
+         var _v21 = $List.head(id);
+         switch (_v21.ctor)
          {case "Just":
             return CaSizer(A2(SzCAction,
-              _v18._0,
+              _v21._0,
               A2(toCtrlAction,
               myTail(id),
               action)));
             case "Nothing": return action;}
          _U.badCase($moduleName,
-         "between lines 108 and 110");
+         "between lines 119 and 121");
       }();
    });
+   var CaLabel = function (a) {
+      return {ctor: "CaLabel"
+             ,_0: a};
+   };
    var CaSlider = function (a) {
       return {ctor: "CaSlider"
              ,_0: a};
@@ -15214,6 +15225,10 @@ Elm.SvgControl.make = function (_elm) {
             return function (t) {
                  return $Maybe.Just(CaButton($SvgButton.SvgTouch(t)));
               };
+            case "CmLabel":
+            return function (t) {
+                 return $Maybe.Nothing;
+              };
             case "CmSizer":
             return function (t) {
                  return $Maybe.Nothing;
@@ -15223,7 +15238,7 @@ Elm.SvgControl.make = function (_elm) {
                  return $Maybe.Just(CaSlider($SvgSlider.SvgTouch(t)));
               };}
          _U.badCase($moduleName,
-         "between lines 69 and 73");
+         "between lines 76 and 81");
       }();
    };
    var jsUmType = function (wat) {
@@ -15236,6 +15251,14 @@ Elm.SvgControl.make = function (_elm) {
                  return $Json$Decode.succeed(A2(toCtrlAction,
                  x.controlId,
                  CaButton($SvgButton.SvgUpdate(x))));
+              });
+            case "label":
+            return A2($Json$Decode.andThen,
+              $SvgLabel.jsUpdateMessage,
+              function (x) {
+                 return $Json$Decode.succeed(A2(toCtrlAction,
+                 x.controlId,
+                 CaLabel($SvgLabel.SvgUpdate(x))));
               });
             case "slider":
             return A2($Json$Decode.andThen,
@@ -15265,6 +15288,12 @@ Elm.SvgControl.make = function (_elm) {
               address,
               CaButton),
               model._0);
+            case "CmLabel":
+            return A2($SvgLabel.view,
+              A2($Signal.forwardTo,
+              address,
+              CaLabel),
+              model._0);
             case "CmSizer":
             return A2(szview,
               A2($Signal.forwardTo,
@@ -15278,7 +15307,7 @@ Elm.SvgControl.make = function (_elm) {
               CaSlider),
               model._0);}
          _U.badCase($moduleName,
-         "between lines 142 and 145");
+         "between lines 159 and 163");
       }();
    });
    var szview = F2(function (address,
@@ -15293,20 +15322,24 @@ Elm.SvgControl.make = function (_elm) {
       }();
    });
    var viewSvgControls = F2(function (address,
-   _v29) {
+   _v34) {
       return function () {
-         switch (_v29.ctor)
+         switch (_v34.ctor)
          {case "_Tuple2": return A2(view,
               A2($Signal.forwardTo,
               address,
-              SzCAction(_v29._0)),
-              _v29._1);}
+              SzCAction(_v34._0)),
+              _v34._1);}
          _U.badCase($moduleName,
-         "on line 248, column 3 to 55");
+         "on line 266, column 3 to 55");
       }();
    });
    var CmSizer = function (a) {
       return {ctor: "CmSizer"
+             ,_0: a};
+   };
+   var CmLabel = function (a) {
+      return {ctor: "CmLabel"
              ,_0: a};
    };
    var CmSlider = function (a) {
@@ -15320,19 +15353,19 @@ Elm.SvgControl.make = function (_elm) {
    var update = F2(function (action,
    model) {
       return function () {
-         var _v33 = {ctor: "_Tuple2"
+         var _v38 = {ctor: "_Tuple2"
                     ,_0: action
                     ,_1: model};
-         switch (_v33.ctor)
+         switch (_v38.ctor)
          {case "_Tuple2":
-            switch (_v33._0.ctor)
+            switch (_v38._0.ctor)
               {case "CaButton":
-                 switch (_v33._1.ctor)
+                 switch (_v38._1.ctor)
                    {case "CmButton":
                       return function () {
                            var $ = A2($SvgButton.update,
-                           _v33._0._0,
-                           _v33._1._0),
+                           _v38._0._0,
+                           _v38._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15342,13 +15375,29 @@ Elm.SvgControl.make = function (_elm) {
                                   b)};
                         }();}
                    break;
+                 case "CaLabel":
+                 switch (_v38._1.ctor)
+                   {case "CmLabel":
+                      return function () {
+                           var $ = A2($SvgLabel.update,
+                           _v38._0._0,
+                           _v38._1._0),
+                           a = $._0,
+                           b = $._1;
+                           return {ctor: "_Tuple2"
+                                  ,_0: CmLabel(a)
+                                  ,_1: A2($Effects.map,
+                                  CaLabel,
+                                  b)};
+                        }();}
+                   break;
                  case "CaSizer":
-                 switch (_v33._1.ctor)
+                 switch (_v38._1.ctor)
                    {case "CmSizer":
                       return function () {
                            var $ = A2(szupdate,
-                           _v33._0._0,
-                           _v33._1._0),
+                           _v38._0._0,
+                           _v38._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15359,12 +15408,12 @@ Elm.SvgControl.make = function (_elm) {
                         }();}
                    break;
                  case "CaSlider":
-                 switch (_v33._1.ctor)
+                 switch (_v38._1.ctor)
                    {case "CmSlider":
                       return function () {
                            var $ = A2($SvgSlider.update,
-                           _v33._0._0,
-                           _v33._1._0),
+                           _v38._0._0,
+                           _v38._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15414,11 +15463,11 @@ Elm.SvgControl.make = function (_elm) {
                               ,_0: model
                               ,_1: $Effects.none};}
                     _U.badCase($moduleName,
-                    "between lines 210 and 218");
+                    "between lines 228 and 236");
                  }();
               }();}
          _U.badCase($moduleName,
-         "between lines 207 and 218");
+         "between lines 225 and 236");
       }();
    });
    var init = F4(function (sendf,
@@ -15440,6 +15489,20 @@ Elm.SvgControl.make = function (_elm) {
                         ,_0: CmButton(a)
                         ,_1: A2($Effects.map,
                         CaButton,
+                        b)};
+              }();
+            case "CsLabel":
+            return function () {
+                 var $ = A3($SvgLabel.init,
+                 rect,
+                 cid,
+                 spec._0),
+                 a = $._0,
+                 b = $._1;
+                 return {ctor: "_Tuple2"
+                        ,_0: CmLabel(a)
+                        ,_1: A2($Effects.map,
+                        CaLabel,
                         b)};
               }();
             case "CsSizer":
@@ -15473,7 +15536,7 @@ Elm.SvgControl.make = function (_elm) {
                         b)};
               }();}
          _U.badCase($moduleName,
-         "between lines 129 and 138");
+         "between lines 143 and 155");
       }();
    });
    var szinit = F4(function (sendf,
@@ -15484,8 +15547,8 @@ Elm.SvgControl.make = function (_elm) {
          var idxs = _L.range(0,
          $List.length(szspec.controls));
          var rlist = function () {
-            var _v51 = szspec.orientation;
-            switch (_v51.ctor)
+            var _v59 = szspec.orientation;
+            switch (_v59.ctor)
             {case "Horizontal":
                return A2($SvgThings.hrects,
                  rect,
@@ -15495,21 +15558,21 @@ Elm.SvgControl.make = function (_elm) {
                  rect,
                  $List.length(szspec.controls));}
             _U.badCase($moduleName,
-            "between lines 222 and 225");
+            "between lines 240 and 243");
          }();
          var blist = A2($List.map,
-         function (_v52) {
+         function (_v60) {
             return function () {
-               switch (_v52.ctor)
+               switch (_v60.ctor)
                {case "_Tuple3": return A4(init,
                     sendf,
-                    _v52._1,
+                    _v60._1,
                     A2($Basics._op["++"],
                     cid,
-                    _L.fromArray([_v52._2])),
-                    _v52._0);}
+                    _L.fromArray([_v60._2])),
+                    _v60._0);}
                _U.badCase($moduleName,
-               "on line 226, column 40 to 75");
+               "on line 244, column 40 to 75");
             }();
          },
          A4($List.map3,
@@ -15528,15 +15591,15 @@ Elm.SvgControl.make = function (_elm) {
          $Basics.fst,
          blist));
          var fx = $Effects.batch(A2($List.map,
-         function (_v57) {
+         function (_v65) {
             return function () {
-               switch (_v57.ctor)
+               switch (_v65.ctor)
                {case "_Tuple2":
                   return A2($Effects.map,
-                    SzCAction(_v57._0),
-                    _v57._1);}
+                    SzCAction(_v65._0),
+                    _v65._1);}
                _U.badCase($moduleName,
-               "on line 231, column 35 to 62");
+               "on line 249, column 35 to 62");
             }();
          },
          A2(zip,
@@ -15558,6 +15621,10 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CsSizer"
              ,_0: a};
    };
+   var CsLabel = function (a) {
+      return {ctor: "CsLabel"
+             ,_0: a};
+   };
    var CsSlider = function (a) {
       return {ctor: "CsSlider"
              ,_0: a};
@@ -15574,6 +15641,12 @@ Elm.SvgControl.make = function (_elm) {
               $SvgButton.jsSpec,
               function (a) {
                  return $Json$Decode.succeed(CsButton(a));
+              });
+            case "label":
+            return A2($Json$Decode.andThen,
+              $SvgLabel.jsSpec,
+              function (a) {
+                 return $Json$Decode.succeed(CsLabel(a));
               });
             case "sizer":
             return A2($Json$Decode.andThen,
@@ -15604,7 +15677,7 @@ Elm.SvgControl.make = function (_elm) {
    $SvgThings.jsOrientation),
    A2($Json$Decode._op[":="],
    "controls",
-   $Json$Decode.list(lazy(function (_v62) {
+   $Json$Decode.list(lazy(function (_v70) {
       return function () {
          return jsSpec;
       }();
@@ -15617,12 +15690,15 @@ Elm.SvgControl.make = function (_elm) {
    _elm.SvgControl.values = {_op: _op
                             ,CsButton: CsButton
                             ,CsSlider: CsSlider
+                            ,CsLabel: CsLabel
                             ,CsSizer: CsSizer
                             ,CmButton: CmButton
                             ,CmSlider: CmSlider
+                            ,CmLabel: CmLabel
                             ,CmSizer: CmSizer
                             ,CaButton: CaButton
                             ,CaSlider: CaSlider
+                            ,CaLabel: CaLabel
                             ,CaSizer: CaSizer
                             ,findControl: findControl
                             ,controlId: controlId
@@ -15995,6 +16071,167 @@ Elm.SvgControlPage.make = function (_elm) {
                                 ,view: view
                                 ,viewSvgControl: viewSvgControl};
    return _elm.SvgControlPage.values;
+};Elm.SvgLabel = Elm.SvgLabel || {};
+Elm.SvgLabel.make = function (_elm) {
+   "use strict";
+   _elm.SvgLabel = _elm.SvgLabel || {};
+   if (_elm.SvgLabel.values)
+   return _elm.SvgLabel.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   $moduleName = "SvgLabel",
+   $Basics = Elm.Basics.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Svg = Elm.Svg.make(_elm),
+   $Svg$Attributes = Elm.Svg.Attributes.make(_elm),
+   $SvgThings = Elm.SvgThings.make(_elm),
+   $Touch = Elm.Touch.make(_elm);
+   var view = F2(function (address,
+   model) {
+      return function () {
+         var fonty = $Basics.toString($Basics.toFloat(model.rect.y) + $Basics.toFloat(model.rect.h) * 0.9);
+         return A2($Svg.g,
+         _L.fromArray([]),
+         _L.fromArray([A2($Svg.rect,
+                      _L.fromArray([$Svg$Attributes.x(model.srect.x)
+                                   ,$Svg$Attributes.y(model.srect.y)
+                                   ,$Svg$Attributes.width(model.srect.w)
+                                   ,$Svg$Attributes.height(model.srect.h)
+                                   ,$Svg$Attributes.rx("15")
+                                   ,$Svg$Attributes.ry("15")
+                                   ,$Svg$Attributes.style("fill: #A1A1A1;")]),
+                      _L.fromArray([]))
+                      ,A2($Svg.text$,
+                      _L.fromArray([$Svg$Attributes.fill("black")
+                                   ,$Svg$Attributes.textAnchor("middle")
+                                   ,$Svg$Attributes.x(model.middlex)
+                                   ,$Svg$Attributes.y(fonty)
+                                   ,$Svg$Attributes.lengthAdjust("glyphs")
+                                   ,$Svg$Attributes.fontSize(model.srect.h)]),
+                      _L.fromArray([$Svg.text(model.label)]))]));
+      }();
+   });
+   _op["=>"] = F2(function (v0,
+   v1) {
+      return {ctor: "_Tuple2"
+             ,_0: v0
+             ,_1: v1};
+   });
+   var update = F2(function (action,
+   model) {
+      return function () {
+         switch (action.ctor)
+         {case "SvgTouch":
+            return {ctor: "_Tuple2"
+                   ,_0: model
+                   ,_1: $Effects.none};
+            case "SvgUpdate":
+            return {ctor: "_Tuple2"
+                   ,_0: _U.replace([["label"
+                                    ,action._0.label]],
+                   model)
+                   ,_1: $Effects.none};}
+         _U.badCase($moduleName,
+         "between lines 77 and 82");
+      }();
+   });
+   var UpdateMessage = F2(function (a,
+   b) {
+      return {_: {}
+             ,controlId: a
+             ,label: b};
+   });
+   var jsUpdateMessage = A3($Json$Decode.object2,
+   UpdateMessage,
+   A2($Json$Decode._op[":="],
+   "controlId",
+   $SvgThings.decodeControlId),
+   A2($Json$Decode._op[":="],
+   "label",
+   $Json$Decode.string));
+   var SvgTouch = function (a) {
+      return {ctor: "SvgTouch"
+             ,_0: a};
+   };
+   var SvgUpdate = function (a) {
+      return {ctor: "SvgUpdate"
+             ,_0: a};
+   };
+   var containsXY = F3(function (mod,
+   x,
+   y) {
+      return A3($SvgThings.containsXY,
+      mod.rect,
+      x,
+      y);
+   });
+   var Model = F7(function (a,
+   b,
+   c,
+   d,
+   e,
+   f,
+   g) {
+      return {_: {}
+             ,cid: c
+             ,label: b
+             ,middlex: f
+             ,middley: g
+             ,name: a
+             ,rect: d
+             ,srect: e};
+   });
+   var init = F3(function (rect,
+   cid,
+   spec) {
+      return {ctor: "_Tuple2"
+             ,_0: A7(Model,
+             spec.name,
+             spec.label,
+             cid,
+             rect,
+             A4($SvgThings.SRect,
+             $Basics.toString(rect.x + 5),
+             $Basics.toString(rect.y + 5),
+             $Basics.toString(rect.w - 5),
+             $Basics.toString(rect.h - 5)),
+             $Basics.toString($Basics.toFloat(rect.x) + $Basics.toFloat(rect.w) / 2),
+             $Basics.toString($Basics.toFloat(rect.y) + $Basics.toFloat(rect.h) / 2))
+             ,_1: $Effects.none};
+   });
+   var Spec = F2(function (a,b) {
+      return {_: {}
+             ,label: b
+             ,name: a};
+   });
+   var jsSpec = A3($Json$Decode.object2,
+   Spec,
+   A2($Json$Decode._op[":="],
+   "name",
+   $Json$Decode.string),
+   A2($Json$Decode._op[":="],
+   "label",
+   $Json$Decode.string));
+   _elm.SvgLabel.values = {_op: _op
+                          ,Spec: Spec
+                          ,jsSpec: jsSpec
+                          ,Model: Model
+                          ,containsXY: containsXY
+                          ,init: init
+                          ,SvgUpdate: SvgUpdate
+                          ,SvgTouch: SvgTouch
+                          ,UpdateMessage: UpdateMessage
+                          ,jsUpdateMessage: jsUpdateMessage
+                          ,update: update
+                          ,view: view};
+   return _elm.SvgLabel.values;
 };Elm.SvgSlider = Elm.SvgSlider || {};
 Elm.SvgSlider.make = function (_elm) {
    "use strict";

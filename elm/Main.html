@@ -15839,15 +15839,6 @@ Elm.SvgControlPage.make = function (_elm) {
    model) {
       return A2($Html.div,
       _L.fromArray([]),
-      A2($Basics._op["++"],
-      _L.fromArray([$Html.text("meh")
-                   ,A2($Html.br,
-                   _L.fromArray([]),
-                   _L.fromArray([]))
-                   ,$Html.text(model.title)
-                   ,A2($Html.br,
-                   _L.fromArray([]),
-                   _L.fromArray([]))]),
       _L.fromArray([A2($Svg.svg,
       _L.fromArray([$Svg$Attributes.width(model.srect.w)
                    ,$Svg$Attributes.height(model.srect.h)
@@ -15866,7 +15857,7 @@ Elm.SvgControlPage.make = function (_elm) {
                    model.srect.h)))))))]),
       _L.fromArray([A2(viewSvgControl,
       address,
-      model.control)]))])));
+      model.control)]))]));
    });
    var JsonMsg = function (a) {
       return {ctor: "JsonMsg"

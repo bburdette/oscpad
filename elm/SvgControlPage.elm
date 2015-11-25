@@ -149,11 +149,6 @@ init sendf rect spec =
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   Html.div [] (
-    [Html.text "meh", 
-     Html.br [] [],
-     Html.text model.title, 
-     Html.br [] []] 
-    ++ 
     [Svg.svg
       [ SA.width model.srect.w
       , SA.height model.srect.h
@@ -164,6 +159,14 @@ view address model =
       ]
       [(viewSvgControl address model.control)]
     ])
+
+{-
+    [Html.text "meh", 
+     Html.br [] [],
+     Html.text model.title, 
+     Html.br [] []] 
+
+-}
 
 viewSvgControl : Signal.Address Action -> SvgControl.Model -> Svg.Svg 
 viewSvgControl address conmodel =

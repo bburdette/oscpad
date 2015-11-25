@@ -5,9 +5,11 @@ This is my 'getting to know you' project for elm and rust.
 
 The idea is to have a simple way to configure a set of touch enabled buttons, sliders, and labels, which are presented on a web page.  When the user manipulates the controls, websocket messages are sent to the server, which in turn sends out OSC messages to one or more target IP addresses.  Incoming OSC messages can also change the control state, which is reflected in the clients.  OSC is an easy protocol to support, good for 'internet of things' activities, such as robots, lamps, electronic instruments, etc.
 
-Basically the controls and etc are working now.  Pressing a button or a slider results in an outgoing OSC message on the server, and updates the state of any other clients connected to the same server.  Incoming OSC messages update the control state on the server and send updates to all clients.  Controls are now touch enabled, although there's still a bit to be done there.
+Right now the controls are working for the most part.  There is a label, button, slider, and sizer.  Different web browsers have different behaviors, sometimes gestures interfere with the control operation.  So far the Opera browser is the most responsive to touch events on my nexus tablet.  
 
-Next up: a label control, uploading the current state to newly connected clients.  Also code cleanup, sending to multiple OSC ip addresses, accepting a new control configuration as an OSC message.  Also hopefully some cool examples.  
+I just added an example project, echotest, which changes numbers in labels based on slider movement.  
+
+Next up: resizing the display resets controls - remember state on resize.  upload the current state to newly connected clients.  Also code cleanup, sending to multiple OSC ip addresses, accepting a new control configuration as an OSC message.  more examples.  Screenshots and how-to.  
 
 Ultimately I'll probably break out the control server into a library separate from oscpad itself.  For now everything is smushed together into a single project.  
 

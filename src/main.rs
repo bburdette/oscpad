@@ -149,12 +149,18 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     let wsoscsendip = oscsendip.clone();
 
     thread::spawn(move || { 
-      oscmain_thread(oscsocket, oscsendip, bc, cm)
+      match oscmain(oscsocket, oscsendip, bc, cm) {
+        Err(e) => println!("oscmain exited with error: {:?}", e),
+        Ok(_) => (),
+      }
       }); 
 
     thread::spawn(move || { 
-      websockets_main(wip, guijson, wscm, wsbc, wsoscsendip, wsos);
-      });
+      match websockets_main(wip, guijson, wscm, wsbc, wsoscsendip, wsos) {
+        Ok(_) => (),
+        Err(e) => println!("error in websockets_main: {:?}", e),
+      }
+    });
 
     try!(Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
@@ -170,8 +176,9 @@ fn websockets_main( ipaddr: String,
                     broadcaster: broadcaster::Broadcaster, 
                     oscsendip: String, 
                     oscsocket: UdpSocket ) 
+                  -> Result<(), Box<std::error::Error> >
 {
-	let server = Server::bind(&ipaddr[..]).unwrap();
+	let server = try!(Server::bind(&ipaddr[..]));
 
 	for connection in server {
 
@@ -181,95 +188,123 @@ fn websockets_main( ipaddr: String,
     
     let scm = cm.clone();
     
-    let osock = oscsocket.try_clone().unwrap();
+    let osock = try!(oscsocket.try_clone());
     let osend = oscsendip.clone();
 
     let mut broadcaster = broadcaster.clone();
 
+    let conn = try!(connection);
     thread::spawn(move || {
-      // Get the request
-			let request = connection.unwrap().read_request().unwrap(); 
-      // Keep the headers so we can check them
-			let headers = request.headers.clone(); 
-			
-			request.validate().unwrap(); // Validate the request
-			
-			let mut response = request.accept(); // Form a response
-			
-			if let Some(&WebSocketProtocol(ref protocols)) = headers.get() {
-				if protocols.contains(&("rust-websocket".to_string())) {
-					// We have a protocol we want to use
-					response.headers.set(WebSocketProtocol(vec!["rust-websocket".to_string()]));
-				}
-			}
-			
-			let mut client = response.send().unwrap(); // Send the response
-			
-			let ip = client.get_mut_sender()
-				.get_mut()
-				.peer_addr()
-				.unwrap();
-			
-			println!("Connection from {}", ip);
-     
-      let message = Message::Text(blah);
-			client.send_message(message.clone()).unwrap();
-			
-			let (sender, mut receiver) = client.split();
+      match websockets_client(conn,
+                            blah,
+                            scm,
+                            broadcaster,
+                            osend,
+                            osock) {
+        Ok(_) => (), 
+        Err(e) => {
+          println!("error in websockets thread: {:?}", e);
+          ()
+        },
+      }
+    });
+  } 
 
-      let sendmeh = Arc::new(Mutex::new(sender));
-      
-      broadcaster.register(sendmeh.clone());      
-			
-			for message in receiver.incoming_messages() {
-				let message = message.unwrap();
-        println!("message: {:?}", message);
-	
-				match message {
-					Message::Close(_) => {
-						let message = Message::Close(None);
-            let mut sender = sendmeh.lock().unwrap();
-						sender.send_message(message).unwrap();
-						println!("Client {} disconnected", ip);
-						return;
-					}
-					Message::Ping(data) => {
-            println!("Message::Ping(data)");
-						let message = Message::Pong(data);
-            let mut sender = sendmeh.lock().unwrap();
-						sender.send_message(message).unwrap();
-					}
-          Message::Text(texxt) => {
-            let jsonval: Value = serde_json::from_str(&texxt[..]).unwrap();
-            let s_um = controls::decodeUpdateMessage(&jsonval);
-            match s_um { 
-              Some(updmsg) => {
-                let mut scmun = scm.lock().unwrap();
-                let cntrl = scmun.get_mut(controls::getUmId(&updmsg));
-                match cntrl {
-                  Some(x) => {
-                    (*x).update(&updmsg);
-                    println!("some x: {:?}", *x);
-                    broadcaster.broadcast_others(&ip, Message::Text(texxt));
-                    match ctrlUpdateToOsc(&updmsg, &**x) { 
-                      Ok(v) => osock.send_to(&v, &osend[..]),
-                      _ => Err(Error::new(ErrorKind::Other, "meh")) 
-                    };
-                    ()
-                  },
-                  None => println!("none"),
-                }
+  Ok(())
+}
+
+fn websockets_client(connection: websocket::server::Connection<websocket::stream::WebSocketStream, websocket::stream::WebSocketStream>,
+                    aSConfig: String, 
+                    cm: Arc<Mutex<controls::controlMap>>,
+                    mut broadcaster: broadcaster::Broadcaster, 
+                    oscsendip: String, 
+                    oscsocket: UdpSocket 
+                    ) -> Result<(), Box<std::error::Error> >
+{
+  // Get the request
+  let request = try!(connection.read_request());
+  // Keep the headers so we can check them
+  let headers = request.headers.clone(); 
+  
+  try!(request.validate()); // Validate the request
+  
+  let mut response = request.accept(); // Form a response
+  
+  if let Some(&WebSocketProtocol(ref protocols)) = headers.get() {
+    if protocols.contains(&("rust-websocket".to_string())) {
+      // We have a protocol we want to use
+      response.headers.set(WebSocketProtocol(vec!["rust-websocket".to_string()]));
+    }
+  }
+  
+  let mut client = try!(response.send()); // Send the response
+  
+  let ip = try!(client.get_mut_sender()
+                  .get_mut()
+                  .peer_addr());
+  
+  println!("Connection from {}", ip);
+ 
+  let message = Message::Text(aSConfig);
+  try!(client.send_message(message.clone()));
+  
+  let (sender, mut receiver) = client.split();
+
+  let sendmeh = Arc::new(Mutex::new(sender));
+  
+  broadcaster.register(sendmeh.clone());      
+  
+  for message in receiver.incoming_messages() {
+    let message = try!(message);
+    println!("message: {:?}", message);
+
+    match message {
+      Message::Close(_) => {
+        let message = Message::Close(None);
+        // let mut sender = try!(sendmeh.lock());
+        let mut sender = sendmeh.lock().unwrap();
+        try!(sender.send_message(message));
+        println!("Client {} disconnected", ip);
+        return Ok(());
+      }
+      Message::Ping(data) => {
+        println!("Message::Ping(data)");
+        let message = Message::Pong(data);
+        let mut sender = sendmeh.lock().unwrap();
+        try!(sender.send_message(message));
+
+      }
+      Message::Text(texxt) => {
+        let jsonval: Value = serde_json::from_str(&texxt[..]).unwrap();
+        let s_um = controls::decodeUpdateMessage(&jsonval);
+        match s_um { 
+          Some(updmsg) => {
+            let mut scmun = cm.lock().unwrap();
+            let cntrl = scmun.get_mut(controls::getUmId(&updmsg));
+            match cntrl {
+              Some(x) => {
+                (*x).update(&updmsg);
+                println!("some x: {:?}", *x);
+                broadcaster.broadcast_others(&ip, Message::Text(texxt));
+                match ctrlUpdateToOsc(&updmsg, &**x) { 
+                  Ok(v) => oscsocket.send_to(&v, &oscsendip[..]),
+                  _ => Err(Error::new(ErrorKind::Other, "meh")) 
+                };
+                ()
               },
-              _ => println!("uknown msg"),
+              None => println!("none"),
             }
           },
-					_ => { 
-            println!("unknown websockets msg: {:?}", message);
-          }
-				}
-			}
-		});
-	}
+          _ => println!("uknown msg"),
+        }
+      },
+      _ => { 
+        println!("unknown websockets msg: {:?}", message);
+      }
+    }
+  }
+
+  Ok(())
 }
 
 fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
@@ -369,17 +404,6 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
     },
     _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid osc message"))),
   } 
-}
-
-fn oscmain_thread( socket: UdpSocket, 
-            oscsendip: String, 
-            mut bc: broadcaster::Broadcaster, 
-            cm: Arc<Mutex<controls::controlMap>>)
-{ 
-  match oscmain(socket, oscsendip, bc, cm) { 
-    Err(e) => println!("oscmain exited with error: {:?}", e),
-    Ok(_) => (),
-  }
 }
 
 fn oscmain( socket: UdpSocket, 

@@ -1,0 +1,21 @@
+{
+  "title": "test",
+  "rootControl": 
+    { "type": "sizer",
+      "orientation": "vertical",
+      "name": "szname",
+      "controls": [
+       { "type": "label"
+       , "name": "lb3"
+       , "label": "blah"
+       }
+      ,{ "type": "button"
+       , "name": "b1"
+       }
+      ,{ "type": "slider"
+       , "orientation": "horizontal"
+       , "name": "hs2"
+       }
+      ]
+    }
+}

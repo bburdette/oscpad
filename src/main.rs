@@ -156,7 +156,6 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
-    let cnm = controls::controlMapToNameMap(&mapp);
 
     let cm = Arc::new(Mutex::new(mapp));
 
@@ -170,7 +169,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     let wsoscsendip = oscsendip.clone();
 
     thread::spawn(move || { 
-      oscmain(oscsocket, oscsendip, bc, cm, cnm)
+      oscmain_thread(oscsocket, oscsendip, bc, cm)
       }); 
 
     thread::spawn(move || { 
@@ -396,49 +395,100 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
   } 
 }
 
+fn oscmain_thread( socket: UdpSocket, 
+            oscsendip: String, 
+            mut bc: broadcaster::Broadcaster, 
+            cm: Arc<Mutex<controls::controlMap>>)
+{ 
+  match oscmain(socket, oscsendip, bc, cm) { 
+    Err(e) => println!("oscmain exited with error: {:?}", e),
+    Ok(_) => (),
+  }
+}
+
 fn oscmain( socket: UdpSocket, 
             oscsendip: String, 
             mut bc: broadcaster::Broadcaster, 
-            cm: Arc<Mutex<controls::controlMap>>, 
-            cnm: controls::controlNameMap)
-              -> Result<String, Error> 
+            cm: Arc<Mutex<controls::controlMap>>)
+              -> Result<String, Box<std::error::Error> >
 { 
-  let mut buf = [0; 1000];
+  let mut buf = [0; 10000];
+
+  let mut cnm = {
+    let cmunlock = cm.lock().unwrap(); 
+    controls::controlMapToNameMap(&*cmunlock)
+    };
 
   loop { 
     let (amt, src) = try!(socket.recv_from(&mut buf));
 
     println!("length: {}", amt);
-    let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
-      Ok(m) => m,
+    match osc::Message::deserialize(&buf[.. amt]) {
       Err(e) => {
-          return Err(Error::new(ErrorKind::Other, "invalid osc message!"));
+          println!("invalid osc messsage: {:?}", e)
         },
-      };
-
-    match oscToCtrlUpdate(&inmsg, &cnm) {
-      Ok(updmsg) => { 
-        let mut cmunlock = cm.lock().unwrap();
-        match cmunlock.get_mut(controls::getUmId(&updmsg)) {
-          Some(ctl) => {
-            (*ctl).update(&updmsg);
-          
-            let val = controls::encodeUpdateMessage(&updmsg); 
-            println!("sending control update {:?}", val);
-            match serde_json::ser::to_string(&val) { 
-              Ok(s) => bc.broadcast(Message::Text(s)), 
-              Err(_) => ()
+      Ok(inmsg) => {
+        match oscToCtrlUpdate(&inmsg, &cnm) {
+          Ok(updmsg) => { 
+            let mut cmunlock = cm.lock().unwrap();
+            match cmunlock.get_mut(controls::getUmId(&updmsg)) {
+              Some(ctl) => {
+                (*ctl).update(&updmsg);
+              
+                let val = controls::encodeUpdateMessage(&updmsg); 
+                println!("sending control update {:?}", val);
+                match serde_json::ser::to_string(&val) { 
+                  Ok(s) => bc.broadcast(Message::Text(s)), 
+                  Err(_) => ()
+                }
+                ()
+               },
+              None => (),
             }
-            ()
-           },
-          None => (),
-        }
-      },
-      Err(e) => println!("osc decode error: {:?}", e),
-    };
- 
-    println!("osc message received {} {:?}", inmsg.path, inmsg.arguments );
-  }    
+          },
+          Err(e) => {
+            if (inmsg.path == "guiconfig" && inmsg.arguments.len() > 0) {
+              // is this a control config update instead?
+              match &inmsg.arguments[0] {
+                &osc::Argument::s(guistring) => {
+                  // build a new control map with this.
+                  // deserialize the gui string into json.
+                  match serde_json::from_str(&guistring[..]) { 
+                    Ok(guival) => { 
+                      match controls::deserializeRoot(&guival) {
+                        Ok(controltree) => { 
+                          println!("new control layout recieved!");
+
+                          println!("title: {} count: {} ", 
+                            controltree.title, controltree.rootControl.controlType());
+                          println!("controls: {:?}", controltree.rootControl);
+
+                          // from control tree, make a map of ids->controls.
+                          let mapp = controls::makeControlMap(&*controltree.rootControl);
+                          cnm = controls::controlMapToNameMap(&mapp);
+
+                          let mut cmunlock = cm.lock().unwrap();
+                          *cmunlock = mapp;
+                          bc.broadcast(Message::Text(guistring.to_string()));
+                        },
+                        Err(e) => println!("error reading guiconfig from json: {:?}", e),
+                      }
+                    },
+                    Err(e) => println!("error reading guiconfig json: {:?}", e),
+                  }
+                },
+                _ => println!("osc decode error: {:?}", e),
+              }
+            }
+          }
+        };
+     
+        println!("osc message received {} {:?}", inmsg.path, inmsg.arguments);
+      }    
+    }
+  }
+
+  Ok("ok".to_string())
 }
 
 

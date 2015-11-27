@@ -53,9 +53,9 @@ impl Broadcaster {
       let mut tvsend = tv.lock().unwrap();
       match tvsend.get_mut().peer_addr() { 
         Ok(sa_send) => { 
-          println!("checking eq: {:?}, {:?}", sa, sa_send);
+          // println!("checking eq: {:?}, {:?}", sa, sa_send);
           if !mysockeq(sa,&sa_send) {
-            println!("sending to: {:?}", sa_send);
+            // println!("sending to: {:?}", sa_send);
             match tvsend.send_message(msg.clone()) {
               Err(e) => {},
               _ => {}

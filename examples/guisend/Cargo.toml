@@ -1,0 +1,7 @@
+[package]
+name = "guisend"
+version = "0.1.0"
+authors = ["Ben B <bburdette@gmail.com>"]
+
+[dependencies]
+tinyosc = "0.0.2"

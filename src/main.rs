@@ -46,31 +46,15 @@ use serde_json::Value;
 use serde_json::ser;
 
 
-fn loadString(file_name: &str) -> Option<String>
+fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
   let path = &Path::new(&file_name);
-  let f = File::open(path);
+  let mut inf = try!(File::open(path));
   let mut result = String::new();
-  match f { 
-    Ok(mut of) => {
-      match of.read_to_string(&mut result) { 
-        Err(e) => {
-          println!("err: {:?}", e);
-          None
-        },
-        Ok(len) => { 
-          println!("read {} bytes", len);
-          Some(result)
-        }, 
-      } 
-    },
-    Err(e) => {
-      println!("err: {:?}", e);
-      None
-    },
-  }
+  let len = try!(inf.read_to_string(&mut result));
+  println!("read {} bytes", len);
+  Ok(result)
 }
-
 
 fn main() {
   // read in the settings json.
@@ -95,13 +79,12 @@ fn main() {
 fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
-    let configstring = try_opt_resbox!(loadString(&file_name), 
-                                       "error reading config file");
+    let configstring = try!(loadString(&file_name));
 
     // read config file as json
     let configval: Value = try!(serde_json::from_str(&configstring[..]));
 
-    let obj = configval.as_object().unwrap();
+    let obj = try_opt_resbox!(configval.as_object(), "config file is not a json object!");
     
     let htmlfilename = 
       try_opt_resbox!(
@@ -109,17 +92,14 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                         "'htmlfile' not found in config file").as_string(), 
         "failed to convert to string");
     let htmlstring = 
-        try_opt_resbox!(loadString(&htmlfilename[..]), 
-                       "error loading html file!");
+        try!(loadString(&htmlfilename[..]));
 
     let guifilename = 
       try_opt_resbox!(
         try_opt_resbox!(obj.get("guifile"), 
                         "'guifile' not found in config file").as_string(), 
         "failed to convert to string");
-    let guistring = loadString(&guifilename[..]).unwrap();
-        try_opt_resbox!(loadString(&guifilename[..]), 
-                       "error loading gui file!");
+    let guistring = try!(loadString(&guifilename[..]));
 
     let ip = String::new() + 
       try_opt_resbox!(

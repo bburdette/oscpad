@@ -275,7 +275,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 
       }
       Message::Text(texxt) => {
-        let jsonval: Value = serde_json::from_str(&texxt[..]).unwrap();
+        let jsonval: Value = try!(serde_json::from_str(&texxt[..]));
         let s_um = controls::decodeUpdateMessage(&jsonval);
         match s_um { 
           Some(updmsg) => {

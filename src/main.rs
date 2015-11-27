@@ -245,8 +245,6 @@ fn websockets_main( ipaddr: String,
 				let message = message.unwrap();
         println!("message: {:?}", message);
 	
-        let replyy = Message::Text("replyyyblah".to_string());
-	
 				match message {
 					Message::Close(_) => {
 						let message = Message::Close(None);
@@ -286,9 +284,7 @@ fn websockets_main( ipaddr: String,
             }
           },
 					_ => { 
-            println!("sending replyy");
-            let mut sender = sendmeh.lock().unwrap();
-            sender.send_message(replyy).unwrap()
+            println!("unknown websockets msg: {:?}", message);
           }
 				}
 			}

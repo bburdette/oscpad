@@ -76,6 +76,11 @@ fn main() {
   }
 }
 
+pub struct ControlInfo {
+  cm: controls::controlMap,
+  guijson: String,
+}
+
 fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
@@ -136,27 +141,27 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 
     // from control tree, make a map of ids->controls.
     let mapp = controls::makeControlMap(&*blah.rootControl);
+    let guijson = guistring.clone();
 
-    let cm = Arc::new(Mutex::new(mapp));
+    let ci = ControlInfo { cm: mapp, guijson: guijson };
 
-    let guijson = String::new() + &guistring[..];
-
+    let cmshare = Arc::new(Mutex::new(ci));
+    let wscmshare = cmshare.clone();
     let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
     let mut bc = broadcaster::Broadcaster::new();
     let wsos = try!(oscsocket.try_clone());
-    let wscm = cm.clone();
     let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
 
     thread::spawn(move || { 
-      match oscmain(oscsocket, oscsendip, bc, cm) {
+      match oscmain(oscsocket, oscsendip, bc, cmshare) {
         Err(e) => println!("oscmain exited with error: {:?}", e),
         Ok(_) => (),
       }
       }); 
 
     thread::spawn(move || { 
-      match websockets_main(wip, guijson, wscm, wsbc, wsoscsendip, wsos) {
+      match websockets_main(wip, wscmshare, wsbc, wsoscsendip, wsos) {
         Ok(_) => (),
         Err(e) => println!("error in websockets_main: {:?}", e),
       }
@@ -171,8 +176,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 }
 
 fn websockets_main( ipaddr: String, 
-                    aSConfig: String, 
-                    cm: Arc<Mutex<controls::controlMap>>,
+                    ci: Arc<Mutex<ControlInfo>>,
                     broadcaster: broadcaster::Broadcaster, 
                     oscsendip: String, 
                     oscsocket: UdpSocket ) 
@@ -185,8 +189,7 @@ fn websockets_main( ipaddr: String,
     println!("new websockets connection!");
 		// Spawn a new thread for each connection.
     
-    let blah = aSConfig.clone();
-    let scm = cm.clone();
+    let sci = ci.clone();
     let osock = try!(oscsocket.try_clone());
     let osend = oscsendip.clone();
     let mut broadcaster = broadcaster.clone();
@@ -194,8 +197,7 @@ fn websockets_main( ipaddr: String,
     let conn = try!(connection);
     thread::spawn(move || {
       match websockets_client(conn,
-                            blah,
-                            scm,
+                            sci,
                             broadcaster,
                             osend,
                             osock) {
@@ -212,8 +214,7 @@ fn websockets_main( ipaddr: String,
 }
 
 fn websockets_client(connection: websocket::server::Connection<websocket::stream::WebSocketStream, websocket::stream::WebSocketStream>,
-                    aSConfig: String, 
-                    cm: Arc<Mutex<controls::controlMap>>,
+                    ci: Arc<Mutex<ControlInfo>>,
                     mut broadcaster: broadcaster::Broadcaster, 
                     oscsendip: String, 
                     oscsocket: UdpSocket 
@@ -242,9 +243,13 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
                   .peer_addr());
   
   println!("Connection from {}", ip);
- 
-  let message = Message::Text(aSConfig);
-  try!(client.send_message(message.clone()));
+
+  {
+    let mut sci  = ci.lock().unwrap();
+     
+    let message = Message::Text(sci.guijson.clone());
+    try!(client.send_message(message.clone()));
+  }
   
   let (sender, mut receiver) = client.split();
 
@@ -270,15 +275,14 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
         let message = Message::Pong(data);
         let mut sender = sendmeh.lock().unwrap();
         try!(sender.send_message(message));
-
       }
       Message::Text(texxt) => {
         let jsonval: Value = try!(serde_json::from_str(&texxt[..]));
         let s_um = controls::decodeUpdateMessage(&jsonval);
         match s_um { 
           Some(updmsg) => {
-            let mut scmun = cm.lock().unwrap();
-            let cntrl = scmun.get_mut(controls::getUmId(&updmsg));
+            let mut sci  = ci.lock().unwrap();
+            let cntrl = sci.cm.get_mut(controls::getUmId(&updmsg));
             match cntrl {
               Some(x) => {
                 (*x).update(&updmsg);
@@ -407,14 +411,14 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
 fn oscmain( socket: UdpSocket, 
             oscsendip: String, 
             mut bc: broadcaster::Broadcaster, 
-            cm: Arc<Mutex<controls::controlMap>>)
+            ci: Arc<Mutex<ControlInfo>>)
               -> Result<String, Box<std::error::Error> >
 { 
   let mut buf = [0; 10000];
 
   let mut cnm = {
-    let cmunlock = cm.lock().unwrap(); 
-    controls::controlMapToNameMap(&*cmunlock)
+    let sci  = ci.lock().unwrap(); 
+    controls::controlMapToNameMap(&sci.cm)
     };
 
   loop { 
@@ -428,8 +432,8 @@ fn oscmain( socket: UdpSocket,
       Ok(inmsg) => {
         match oscToCtrlUpdate(&inmsg, &cnm) {
           Ok(updmsg) => { 
-            let mut cmunlock = cm.lock().unwrap();
-            match cmunlock.get_mut(controls::getUmId(&updmsg)) {
+            let mut sci  = ci.lock().unwrap(); 
+            match sci.cm.get_mut(controls::getUmId(&updmsg)) {
               Some(ctl) => {
                 (*ctl).update(&updmsg);
               
@@ -465,8 +469,9 @@ fn oscmain( socket: UdpSocket,
                           let mapp = controls::makeControlMap(&*controltree.rootControl);
                           cnm = controls::controlMapToNameMap(&mapp);
 
-                          let mut cmunlock = cm.lock().unwrap();
-                          *cmunlock = mapp;
+                          let mut sci = ci.lock().unwrap(); 
+                          sci.cm = mapp;
+                          sci.guijson = guistring.to_string();
                           bc.broadcast(Message::Text(guistring.to_string()));
                         },
                         Err(e) => println!("error reading guiconfig from json: {:?}", e),

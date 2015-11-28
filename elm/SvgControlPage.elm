@@ -18,12 +18,14 @@ import Touch
 type alias Spec = 
   { title: String
   , rootControl: SvgControl.Spec
+  , state: Maybe (List SvgControl.Action)
   }
 
 jsSpec : JD.Decoder Spec
-jsSpec = JD.object2 Spec 
+jsSpec = JD.object3 Spec 
   ("title" := JD.string)
   ("rootControl" := SvgControl.jsSpec) 
+  (JD.maybe ("state" := JD.list SvgControl.jsUpdateMessage))
 
 type alias Model =
   { title: String  
@@ -132,16 +134,16 @@ updict mt dict =
 -- Ok could make a touch event list.  
 
 
-
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
   -> (Model, Effects Action)
 init sendf rect spec = 
   let (conmod, conevt) = SvgControl.init sendf rect [] spec.rootControl
-      fx = Effects.map CAction conevt
+      statefx = List.map (\t -> Effects.task (Task.succeed (CAction t)))
+                          (Maybe.withDefault [] spec.state)
+      fx = Effects.batch ((Effects.map CAction conevt) :: statefx)
     in
      (Model spec.title rect (SvgThings.toSRect rect) spec conmod Dict.empty sendf, fx)
       
-
 -- VIEW
 
 (=>) = (,)

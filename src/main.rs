@@ -52,7 +52,7 @@ fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
   let mut inf = try!(File::open(path));
   let mut result = String::new();
   let len = try!(inf.read_to_string(&mut result));
-  println!("read {} bytes", len);
+  // println!("read {} bytes", len);
   Ok(result)
 }
 
@@ -130,12 +130,11 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
 
-    // deserialize the gui string into json.
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 
     let blah = try!(controls::deserializeRoot(&guival));
 
-    println!("title: {} count: {} ", 
+    println!("title: {} rootcontroltype: {} ", 
       blah.title, blah.rootControl.controlType());
     println!("controls: {:?}", blah.rootControl);
 
@@ -242,15 +241,39 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
                   .get_mut()
                   .peer_addr());
   
-  println!("Connection from {}", ip);
+  println!("Websocket connection from {}", ip);
 
+  // send up the json of the current controls.
   {
     let mut sci  = ci.lock().unwrap();
-     
-    let message = Message::Text(sci.guijson.clone());
-    try!(client.send_message(message.clone()));
-  }
+
+    let updarray = controls::cmToUpdateArray(&sci.cm);
   
+    // build json message containing both guijson and the updarray.
+    // let updvals = updarray.into_iter().map(|x|{controls::encodeUpdateMessage(&x)}).collect();
+
+    let mut updvals = Vec::new();
+
+    for upd in updarray { 
+      let um = controls::encodeUpdateMessage(&upd);
+      updvals.push(um);
+    }
+   
+    let mut guival: Value = try!(serde_json::from_str(&sci.guijson[..]));
+
+    match guival.as_object_mut() {
+      Some(obj) => {
+        obj.insert("state".to_string(), Value::Array(updvals));
+        ()
+      },
+      None => (),
+    }
+  
+    let guistring = try!(serde_json::ser::to_string(&guival));
+    let message = Message::Text(guistring);
+    try!(client.send_message(message));
+  }
+ 
   let (sender, mut receiver) = client.split();
 
   let sendmeh = Arc::new(Mutex::new(sender));

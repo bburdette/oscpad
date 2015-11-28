@@ -49,6 +49,7 @@ pub trait Control : Debug + Send {
   fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
   fn update(&mut self, &UpdateMsg); 
+  fn toUpdate(&self) -> Option<UpdateMsg>;
   fn oscname(&self) -> &str;
 }
 
@@ -80,6 +81,10 @@ impl Control for Slider {
       _ => ()
       }
     }
+  fn toUpdate(&self) -> Option<UpdateMsg> {
+    let ut = if self.pressed { SliderUpType::Pressed  } else { SliderUpType::Moved };
+    Some(UpdateMsg::Slider { controlId: self.controlId.clone(), updateType: ut, location: self.location as f64 })
+  }
   fn oscname(&self) -> &str { &self.name[..] }
 }
 
@@ -108,6 +113,10 @@ impl Control for Button {
       _ => ()
       }
     }
+  fn toUpdate(&self) -> Option<UpdateMsg> {
+    let ut = if self.pressed { ButtonUpType::Pressed  } else { ButtonUpType::Unpressed };
+    Some(UpdateMsg::Button { controlId: self.controlId.clone(), updateType: ut })
+  }
   fn oscname(&self) -> &str { &self.name[..] }
 }
 
@@ -136,6 +145,9 @@ impl Control for Label {
       _ => ()
       }
     }
+  fn toUpdate(&self) -> Option<UpdateMsg> {
+    Some(UpdateMsg::Label { controlId: self.controlId.clone(), label: self.label.clone() })
+  }
   fn oscname(&self) -> &str { &self.name[..] }
 }
 
@@ -155,6 +167,7 @@ impl Control for Sizer {
               controls: Vec::new() } ) } 
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { Some(&self.controls) } 
   fn update(&mut self, um: &UpdateMsg) {}
+  fn toUpdate(&self) -> Option<UpdateMsg> { None }
   fn oscname(&self) -> &str { "" }
 }
 
@@ -167,16 +180,16 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
 
   match objtype {
     "button" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
       Ok(Box::new(Button { controlId: aVId.clone(), name: String::from(name), pressed: false }))
     },
     "slider" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
       Ok(Box::new(Slider { controlId: aVId.clone(), name: String::from(name), pressed: false, location: 0.5 }))
     },
     "label" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
-      let label = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
+      let label = try_opt_resbox!(try_opt_resbox!(obj.get("label"), "'label' not found!").as_string(), "'label' is not a string!");
       Ok(Box::new(Label { controlId: aVId.clone(), name: String::from(name), label: label.to_string() }))
     },
     "sizer" => { 
@@ -380,3 +393,20 @@ pub fn controlMapToNameMap(cmap: &controlMap) -> controlNameMap
   cnm
 }
 
+pub fn cmToUpdateArray(cm: &controlMap) -> Vec<UpdateMsg>
+{
+  let mut iter = cm.iter();
+  let mut result = Vec::new();
+  
+  loop {
+    match iter.next() {
+      Some((key,val)) => { 
+        match val.toUpdate() { 
+          Some(updmsg) => result.push(updmsg),
+          None => (),
+        }
+      },
+      None => return result,
+    }
+  }
+}

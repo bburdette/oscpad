@@ -184,13 +184,11 @@ fn websockets_main( ipaddr: String,
 
     println!("new websockets connection!");
 		// Spawn a new thread for each connection.
-    let blah = String::new() + &aSConfig[..];
     
+    let blah = aSConfig.clone();
     let scm = cm.clone();
-    
     let osock = try!(oscsocket.try_clone());
     let osend = oscsendip.clone();
-
     let mut broadcaster = broadcaster.clone();
 
     let conn = try!(connection);

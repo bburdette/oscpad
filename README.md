@@ -5,11 +5,11 @@ This is my 'getting to know you' project for elm and rust.
 
 The idea is to have a simple way to configure a set of touch enabled buttons, sliders, and labels, which are presented on a web page.  When the user manipulates the controls, websocket messages are sent to the server, which in turn sends out OSC messages to one or more target IP addresses.  Incoming OSC messages can also change the control state, which is reflected in the clients.  OSC is an easy protocol to support, good for 'internet of things' activities, such as robots, lamps, electronic instruments, etc.
 
-Right now the controls are working for the most part.  There is a label, button, slider, and sizer.  Different web browsers have different behaviors, sometimes gestures interfere with the control operation.  So far the Opera browser is the most responsive to touch events on my nexus tablet.  
+Right now the controls are working for the most part.  There is a label, button, slider, and sizer.  Different web browsers have different behaviors, sometimes gestures interfere with the control operation.  So far the Opera browser is the most responsive to touch events on my nexus tablet.  In firefox it appears to be helpful to access them menu and click the 'request desktop site' option.  
 
-I just added an example project, echotest, which changes numbers in labels based on slider movement.  
+I just added an example project, echotest, which changes numbers in labels based on slider movement.  There's also guisend, which reads a json control configuration file and sends it to oscpad.  
 
-Next up: resizing the display resets controls - remember state on resize.  upload the current state to newly connected clients.  Also code cleanup, sending to multiple OSC ip addresses, accepting a new control configuration as an OSC message.  more examples.  Screenshots and how-to.  
+Next up:  mostly everything is working, but the controls aren't as snappy as I'd like.  More importantly, there are issue in some browsers with interference from zooming events and from text selection.  Sometimes label text gets selected and after that controls can be selected by mousing over them instead of clicking.  So a few rough edges still.    
 
 Ultimately I'll probably break out the control server into a library separate from oscpad itself.  For now everything is smushed together into a single project.  
 

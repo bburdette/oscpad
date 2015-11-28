@@ -9,7 +9,7 @@ Right now the controls are working for the most part.  There is a label, button,
 
 I just added an example project, echotest, which changes numbers in labels based on slider movement.  There's also guisend, which reads a json control configuration file and sends it to oscpad.  
 
-Next up:  mostly everything is working, but the controls aren't as snappy as I'd like.  More importantly, there are issue in some browsers with interference from zooming events and from text selection.  Sometimes label text gets selected and after that controls can be selected by mousing over them instead of clicking.  So a few rough edges still.    
+Next up:  mostly everything is working, but the controls aren't as snappy as I'd like.  More importantly, there are issues in some browsers with interference from zooming events and from text selection, where it moves or resizes the display when that isn't desired. Sometimes label text gets selected and after that controls can be selected by mousing over them instead of clicking.  So a few rough edges still.    
 
 Ultimately I'll probably break out the control server into a library separate from oscpad itself.  For now everything is smushed together into a single project.  
 

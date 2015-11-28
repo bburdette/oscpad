@@ -141,6 +141,15 @@ pressup model ut =
          `Task.andThen` (\_ -> Task.succeed UselessCrap)))
 
 
+resize: Model -> SvgThings.Rect -> Model
+resize model rect = 
+  { model | rect <- rect, 
+            srect <- (SvgThings.SRect (toString (rect.x + 5)) 
+                                      (toString (rect.y + 5))
+                                      (toString (rect.w - 5))
+                                      (toString (rect.h - 5))) }
+
+
 -- VIEW
 (=>) = (,)
 

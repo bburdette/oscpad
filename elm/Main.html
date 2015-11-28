@@ -14753,6 +14753,18 @@ Elm.SvgButton.make = function (_elm) {
              ,_0: v0
              ,_1: v1};
    });
+   var resize = F2(function (model,
+   rect) {
+      return _U.replace([["rect"
+                         ,rect]
+                        ,["srect"
+                         ,A4($SvgThings.SRect,
+                         $Basics.toString(rect.x + 5),
+                         $Basics.toString(rect.y + 5),
+                         $Basics.toString(rect.w - 5),
+                         $Basics.toString(rect.h - 5))]],
+      model);
+   });
    var encodeUpdateType = function (ut) {
       return function () {
          switch (ut.ctor)
@@ -15009,6 +15021,7 @@ Elm.SvgButton.make = function (_elm) {
                            ,jsUpdateType: jsUpdateType
                            ,update: update
                            ,pressup: pressup
+                           ,resize: resize
                            ,view: view};
    return _elm.SvgButton.values;
 };Elm.SvgControl = Elm.SvgControl || {};
@@ -15071,12 +15084,12 @@ Elm.SvgControl.make = function (_elm) {
                       $List.tail(xs),
                       firstJust(f));}
                  _U.badCase($moduleName,
-                 "between lines 210 and 212");
+                 "between lines 219 and 221");
               }();
             case "Nothing":
             return $Maybe.Nothing;}
          _U.badCase($moduleName,
-         "between lines 207 and 212");
+         "between lines 216 and 221");
       }();
    });
    var SzModel = F5(function (a,
@@ -15088,8 +15101,8 @@ Elm.SvgControl.make = function (_elm) {
              ,cid: b
              ,controls: d
              ,name: a
-             ,rect: c
-             ,szspec: e};
+             ,orientation: e
+             ,rect: c};
    });
    var lazy = function (thunk) {
       return A2($Json$Decode.customDecoder,
@@ -15117,7 +15130,7 @@ Elm.SvgControl.make = function (_elm) {
                case "Nothing":
                return _L.fromArray([]);}
             _U.badCase($moduleName,
-            "between lines 113 and 115");
+            "between lines 121 and 123");
          }();
       }();
    };
@@ -15204,7 +15217,7 @@ Elm.SvgControl.make = function (_elm) {
               action)));
             case "Nothing": return action;}
          _U.badCase($moduleName,
-         "between lines 119 and 121");
+         "between lines 127 and 129");
       }();
    });
    var CaLabel = function (a) {
@@ -15239,7 +15252,7 @@ Elm.SvgControl.make = function (_elm) {
                  return $Maybe.Just(CaSlider($SvgSlider.SvgTouch(t)));
               };}
          _U.badCase($moduleName,
-         "between lines 76 and 81");
+         "between lines 84 and 89");
       }();
    };
    var jsUmType = function (wat) {
@@ -15308,7 +15321,7 @@ Elm.SvgControl.make = function (_elm) {
               CaSlider),
               model._0);}
          _U.badCase($moduleName,
-         "between lines 159 and 163");
+         "between lines 167 and 171");
       }();
    });
    var szview = F2(function (address,
@@ -15332,7 +15345,7 @@ Elm.SvgControl.make = function (_elm) {
               SzCAction(_v34._0)),
               _v34._1);}
          _U.badCase($moduleName,
-         "on line 266, column 3 to 55");
+         "on line 288, column 3 to 55");
       }();
    });
    var CmSizer = function (a) {
@@ -15351,22 +15364,88 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CmButton"
              ,_0: a};
    };
+   var resize = F2(function (model,
+   rect) {
+      return function () {
+         switch (model.ctor)
+         {case "CmButton":
+            return CmButton(A2($SvgButton.resize,
+              model._0,
+              rect));
+            case "CmLabel":
+            return CmLabel(A2($SvgLabel.resize,
+              model._0,
+              rect));
+            case "CmSizer":
+            return CmSizer(A2(szresize,
+              model._0,
+              rect));
+            case "CmSlider":
+            return CmSlider(A2($SvgSlider.resize,
+              model._0,
+              rect));}
+         _U.badCase($moduleName,
+         "between lines 74 and 78");
+      }();
+   });
+   var szresize = F2(function (model,
+   rect) {
+      return function () {
+         var clist = $Dict.toList(model.controls);
+         var rlist = function () {
+            var _v43 = model.orientation;
+            switch (_v43.ctor)
+            {case "Horizontal":
+               return A2($SvgThings.hrects,
+                 rect,
+                 $List.length(clist));
+               case "Vertical":
+               return A2($SvgThings.vrects,
+                 rect,
+                 $List.length(clist));}
+            _U.badCase($moduleName,
+            "between lines 250 and 253");
+         }();
+         var controls = A2($List.map,
+         function (_v44) {
+            return function () {
+               switch (_v44.ctor)
+               {case "_Tuple2":
+                  switch (_v44._0.ctor)
+                    {case "_Tuple2":
+                       return {ctor: "_Tuple2"
+                              ,_0: _v44._0._0
+                              ,_1: A2(resize,
+                              _v44._0._1,
+                              _v44._1)};}
+                    break;}
+               _U.badCase($moduleName,
+               "on line 253, column 43 to 56");
+            }();
+         },
+         A2(zip,clist,rlist));
+         var cdict = $Dict.fromList(controls);
+         return _U.replace([["rect",rect]
+                           ,["controls",cdict]],
+         model);
+      }();
+   });
    var update = F2(function (action,
    model) {
       return function () {
-         var _v38 = {ctor: "_Tuple2"
+         var _v50 = {ctor: "_Tuple2"
                     ,_0: action
                     ,_1: model};
-         switch (_v38.ctor)
+         switch (_v50.ctor)
          {case "_Tuple2":
-            switch (_v38._0.ctor)
+            switch (_v50._0.ctor)
               {case "CaButton":
-                 switch (_v38._1.ctor)
+                 switch (_v50._1.ctor)
                    {case "CmButton":
                       return function () {
                            var $ = A2($SvgButton.update,
-                           _v38._0._0,
-                           _v38._1._0),
+                           _v50._0._0,
+                           _v50._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15377,12 +15456,12 @@ Elm.SvgControl.make = function (_elm) {
                         }();}
                    break;
                  case "CaLabel":
-                 switch (_v38._1.ctor)
+                 switch (_v50._1.ctor)
                    {case "CmLabel":
                       return function () {
                            var $ = A2($SvgLabel.update,
-                           _v38._0._0,
-                           _v38._1._0),
+                           _v50._0._0,
+                           _v50._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15393,12 +15472,12 @@ Elm.SvgControl.make = function (_elm) {
                         }();}
                    break;
                  case "CaSizer":
-                 switch (_v38._1.ctor)
+                 switch (_v50._1.ctor)
                    {case "CmSizer":
                       return function () {
                            var $ = A2(szupdate,
-                           _v38._0._0,
-                           _v38._1._0),
+                           _v50._0._0,
+                           _v50._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15409,12 +15488,12 @@ Elm.SvgControl.make = function (_elm) {
                         }();}
                    break;
                  case "CaSlider":
-                 switch (_v38._1.ctor)
+                 switch (_v50._1.ctor)
                    {case "CmSlider":
                       return function () {
                            var $ = A2($SvgSlider.update,
-                           _v38._0._0,
-                           _v38._1._0),
+                           _v50._0._0,
+                           _v50._1._0),
                            a = $._0,
                            b = $._1;
                            return {ctor: "_Tuple2"
@@ -15464,11 +15543,12 @@ Elm.SvgControl.make = function (_elm) {
                               ,_0: model
                               ,_1: $Effects.none};}
                     _U.badCase($moduleName,
-                    "between lines 228 and 236");
+                    "between lines 237 and 245");
                  }();
               }();}
-         _U.badCase($moduleName,
-         "between lines 225 and 236");
+         return {ctor: "_Tuple2"
+                ,_0: model
+                ,_1: $Effects.none};
       }();
    });
    var init = F4(function (sendf,
@@ -15537,7 +15617,7 @@ Elm.SvgControl.make = function (_elm) {
                         b)};
               }();}
          _U.badCase($moduleName,
-         "between lines 143 and 155");
+         "between lines 151 and 163");
       }();
    });
    var szinit = F4(function (sendf,
@@ -15548,8 +15628,8 @@ Elm.SvgControl.make = function (_elm) {
          var idxs = _L.range(0,
          $List.length(szspec.controls));
          var rlist = function () {
-            var _v59 = szspec.orientation;
-            switch (_v59.ctor)
+            var _v71 = szspec.orientation;
+            switch (_v71.ctor)
             {case "Horizontal":
                return A2($SvgThings.hrects,
                  rect,
@@ -15559,21 +15639,21 @@ Elm.SvgControl.make = function (_elm) {
                  rect,
                  $List.length(szspec.controls));}
             _U.badCase($moduleName,
-            "between lines 240 and 243");
+            "between lines 262 and 265");
          }();
          var blist = A2($List.map,
-         function (_v60) {
+         function (_v72) {
             return function () {
-               switch (_v60.ctor)
+               switch (_v72.ctor)
                {case "_Tuple3": return A4(init,
                     sendf,
-                    _v60._1,
+                    _v72._1,
                     A2($Basics._op["++"],
                     cid,
-                    _L.fromArray([_v60._2])),
-                    _v60._0);}
+                    _L.fromArray([_v72._2])),
+                    _v72._0);}
                _U.badCase($moduleName,
-               "on line 244, column 40 to 75");
+               "on line 266, column 40 to 75");
             }();
          },
          A4($List.map3,
@@ -15592,15 +15672,15 @@ Elm.SvgControl.make = function (_elm) {
          $Basics.fst,
          blist));
          var fx = $Effects.batch(A2($List.map,
-         function (_v65) {
+         function (_v77) {
             return function () {
-               switch (_v65.ctor)
+               switch (_v77.ctor)
                {case "_Tuple2":
                   return A2($Effects.map,
-                    SzCAction(_v65._0),
-                    _v65._1);}
+                    SzCAction(_v77._0),
+                    _v77._1);}
                _U.badCase($moduleName,
-               "on line 249, column 35 to 62");
+               "on line 271, column 35 to 62");
             }();
          },
          A2(zip,
@@ -15614,7 +15694,7 @@ Elm.SvgControl.make = function (_elm) {
                 cid,
                 rect,
                 $Dict.fromList(controlz),
-                szspec)
+                szspec.orientation)
                 ,_1: fx};
       }();
    });
@@ -15678,7 +15758,7 @@ Elm.SvgControl.make = function (_elm) {
    $SvgThings.jsOrientation),
    A2($Json$Decode._op[":="],
    "controls",
-   $Json$Decode.list(lazy(function (_v70) {
+   $Json$Decode.list(lazy(function (_v82) {
       return function () {
          return jsSpec;
       }();
@@ -15704,6 +15784,7 @@ Elm.SvgControl.make = function (_elm) {
                             ,findControl: findControl
                             ,controlId: controlId
                             ,controlName: controlName
+                            ,resize: resize
                             ,controlTouchActionMaker: controlTouchActionMaker
                             ,jsSpec: jsSpec
                             ,jsCs: jsCs
@@ -15723,6 +15804,7 @@ Elm.SvgControl.make = function (_elm) {
                             ,SzCAction: SzCAction
                             ,zip: zip
                             ,szupdate: szupdate
+                            ,szresize: szresize
                             ,szinit: szinit
                             ,szview: szview
                             ,viewSvgControls: viewSvgControls};
@@ -15780,7 +15862,7 @@ Elm.SvgControlPage.make = function (_elm) {
                                   ,_0: $SvgControl.controlTouchActionMaker($Basics.fst(mt))
                                   ,_1: _L.fromArray([$Basics.snd(mt)])});}
             _U.badCase($moduleName,
-            "between lines 110 and 112");
+            "between lines 116 and 118");
          }();
       },
       dict);
@@ -16019,7 +16101,7 @@ Elm.SvgControlPage.make = function (_elm) {
                                         _v18._1._0(_v18._1._1));}
                                    break;}
                               _U.badCase($moduleName,
-                              "on line 87, column 17 to 64");
+                              "on line 93, column 17 to 64");
                            }();
                         },
                         $Dict.toList(tdict))),
@@ -16036,24 +16118,34 @@ Elm.SvgControlPage.make = function (_elm) {
                                    $SvgControl.toCtrlAction(_v24._0),
                                    _v24._1(_L.fromArray([])));}
                               _U.badCase($moduleName,
-                              "on line 92, column 17 to 64");
+                              "on line 98, column 17 to 64");
                            }();
                         },
                         $Dict.toList(prevs)))))};
               }();
             case "WinDims":
             switch (action._0.ctor)
-              {case "_Tuple2": return A3(init,
-                   model.mahsend,
-                   A4($SvgThings.Rect,
-                   0,
-                   0,
-                   action._0._0,
-                   action._0._1),
-                   model.spec);}
+              {case "_Tuple2":
+                 return function () {
+                      var nr = A4($SvgThings.Rect,
+                      0,
+                      0,
+                      action._0._0,
+                      action._0._1);
+                      return {ctor: "_Tuple2"
+                             ,_0: _U.replace([["mahrect",nr]
+                                             ,["srect"
+                                              ,$SvgThings.toSRect(nr)]
+                                             ,["control"
+                                              ,A2($SvgControl.resize,
+                                              model.control,
+                                              nr)]],
+                             model)
+                             ,_1: $Effects.none};
+                   }();}
               break;}
          _U.badCase($moduleName,
-         "between lines 64 and 94");
+         "between lines 64 and 100");
       }();
    });
    _elm.SvgControlPage.values = {_op: _op
@@ -16126,6 +16218,22 @@ Elm.SvgLabel.make = function (_elm) {
       return {ctor: "_Tuple2"
              ,_0: v0
              ,_1: v1};
+   });
+   var resize = F2(function (model,
+   rect) {
+      return _U.replace([["rect"
+                         ,rect]
+                        ,["srect"
+                         ,A4($SvgThings.SRect,
+                         $Basics.toString(rect.x + 5),
+                         $Basics.toString(rect.y + 5),
+                         $Basics.toString(rect.w - 5),
+                         $Basics.toString(rect.h - 5))]
+                        ,["middlex"
+                         ,$Basics.toString($Basics.toFloat(rect.x) + $Basics.toFloat(rect.w) / 2)]
+                        ,["middley"
+                         ,$Basics.toString($Basics.toFloat(rect.y) + $Basics.toFloat(rect.h) / 2)]],
+      model);
    });
    var update = F2(function (action,
    model) {
@@ -16233,6 +16341,7 @@ Elm.SvgLabel.make = function (_elm) {
                           ,UpdateMessage: UpdateMessage
                           ,jsUpdateMessage: jsUpdateMessage
                           ,update: update
+                          ,resize: resize
                           ,view: view};
    return _elm.SvgLabel.values;
 };Elm.SvgSlider = Elm.SvgSlider || {};
@@ -16280,6 +16389,18 @@ Elm.SvgSlider.make = function (_elm) {
       return {ctor: "_Tuple2"
              ,_0: v0
              ,_1: v1};
+   });
+   var resize = F2(function (model,
+   rect) {
+      return _U.replace([["rect"
+                         ,rect]
+                        ,["srect"
+                         ,A4($SvgThings.SRect,
+                         $Basics.toString(rect.x + 5),
+                         $Basics.toString(rect.y + 5),
+                         $Basics.toString(rect.w - 5),
+                         $Basics.toString(rect.h - 5))]],
+      model);
    });
    var encodeUpdateType = function (ut) {
       return function () {
@@ -16629,7 +16750,7 @@ Elm.SvgSlider.make = function (_elm) {
                       ,_2: model.srect.w
                       ,_3: "3"};}
             _U.badCase($moduleName,
-            "between lines 233 and 244");
+            "between lines 241 and 252");
          }(),
          sx = $._0,
          sy = $._1,
@@ -16756,6 +16877,7 @@ Elm.SvgSlider.make = function (_elm) {
                            ,getLocation: getLocation
                            ,update: update
                            ,updsend: updsend
+                           ,resize: resize
                            ,sliderEvt: sliderEvt
                            ,onMouseMove: onMouseMove
                            ,onMouseLeave: onMouseLeave

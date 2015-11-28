@@ -69,6 +69,14 @@ controlName mod =
     CmLabel smod -> smod.name
     CmSizer szmod -> szmod.name
 
+resize: Model -> SvgThings.Rect -> Model
+resize model rect = 
+  case model of 
+    CmButton mod -> CmButton (SvgButton.resize mod rect)
+    CmSlider mod -> CmSlider (SvgSlider.resize mod rect)
+    CmLabel mod -> CmLabel (SvgLabel.resize mod rect)
+    CmSizer mod -> CmSizer (szresize mod rect)
+
 type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
     
 controlTouchActionMaker: Model -> ControlTam 
@@ -189,7 +197,8 @@ type alias SzModel =
   , cid: SvgThings.ControlId
   , rect: SvgThings.Rect
   , controls: Dict ID Model 
-  , szspec: SzSpec
+  , orientation: SvgThings.Orientation
+--  , szspec: SzSpec
   }
 
 type alias ID = Int
@@ -216,7 +225,7 @@ firstJust f xs =
 -- UPDATE
 
 type SzAction
-    = SzCAction ID Action 
+    = SzCAction ID Action
 
 zip = List.map2 (,)
 
@@ -233,6 +242,19 @@ szupdate action model =
             in
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 
+    _ -> (model, Effects.none) 
+ 
+szresize : SzModel -> SvgThings.Rect -> SzModel
+szresize model rect = 
+  let clist = Dict.toList(model.controls)
+      rlist = case model.orientation of 
+        SvgThings.Horizontal -> SvgThings.hrects rect (List.length clist) 
+        SvgThings.Vertical -> SvgThings.vrects rect (List.length clist)
+      controls = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
+      cdict = Dict.fromList(controls)
+    in
+     { model | rect <- rect, controls <- cdict }
+         
         
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
   -> (SzModel, Effects SzAction)
@@ -249,7 +271,7 @@ szinit sendf rect cid szspec =
              (List.map (\(i,a) -> Effects.map (SzCAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (SzModel szspec.name cid rect (Dict.fromList controlz) szspec, fx)
+     (SzModel szspec.name cid rect (Dict.fromList controlz) szspec.orientation, fx)
       
 
 -- VIEW

@@ -4046,9 +4046,10 @@ Elm.Main.make = function (_elm) {
                              ,init: A3($SvgControlPage.init,
                              send,
                              A4($SvgThings.Rect,0,0,500,300),
-                             A2($SvgControlPage.Spec,
+                             A3($SvgControlPage.Spec,
                              "mehtitle",
-                             $SvgControl.CsButton($SvgButton.Spec("blah"))))
+                             $SvgControl.CsButton($SvgButton.Spec("blah")),
+                             $Maybe.Nothing))
                              ,inits: _L.fromArray([A2($Signal.map,
                              $SvgControlPage.WinDims,
                              $Window.dimensions)])
@@ -15779,7 +15780,7 @@ Elm.SvgControlPage.make = function (_elm) {
                                   ,_0: $SvgControl.controlTouchActionMaker($Basics.fst(mt))
                                   ,_1: _L.fromArray([$Basics.snd(mt)])});}
             _U.badCase($moduleName,
-            "between lines 108 and 110");
+            "between lines 110 and 112");
          }();
       },
       dict);
@@ -15883,6 +15884,13 @@ Elm.SvgControlPage.make = function (_elm) {
    rect,
    spec) {
       return function () {
+         var statefx = A2($List.map,
+         function (t) {
+            return $Effects.task($Task.succeed(CAction(t)));
+         },
+         A2($Maybe.withDefault,
+         _L.fromArray([]),
+         spec.state));
          var $ = A4($SvgControl.init,
          sendf,
          rect,
@@ -15890,9 +15898,9 @@ Elm.SvgControlPage.make = function (_elm) {
          spec.rootControl),
          conmod = $._0,
          conevt = $._1;
-         var fx = A2($Effects.map,
-         CAction,
-         conevt);
+         var fx = $Effects.batch(A2($List._op["::"],
+         A2($Effects.map,CAction,conevt),
+         statefx));
          return {ctor: "_Tuple2"
                 ,_0: A7(Model,
                 spec.title,
@@ -15905,19 +15913,23 @@ Elm.SvgControlPage.make = function (_elm) {
                 ,_1: fx};
       }();
    });
-   var Spec = F2(function (a,b) {
+   var Spec = F3(function (a,b,c) {
       return {_: {}
              ,rootControl: b
+             ,state: c
              ,title: a};
    });
-   var jsSpec = A3($Json$Decode.object2,
+   var jsSpec = A4($Json$Decode.object3,
    Spec,
    A2($Json$Decode._op[":="],
    "title",
    $Json$Decode.string),
    A2($Json$Decode._op[":="],
    "rootControl",
-   $SvgControl.jsSpec));
+   $SvgControl.jsSpec),
+   $Json$Decode.maybe(A2($Json$Decode._op[":="],
+   "state",
+   $Json$Decode.list($SvgControl.jsUpdateMessage))));
    var jsMessage = $Json$Decode.oneOf(_L.fromArray([A2($Json$Decode.andThen,
                                                    jsSpec,
                                                    function (x) {
@@ -15969,7 +15981,7 @@ Elm.SvgControlPage.make = function (_elm) {
                            model);}
                       break;}
                  _U.badCase($moduleName,
-                 "between lines 64 and 70");
+                 "between lines 66 and 72");
               }();
             case "Touche":
             return function () {
@@ -16007,7 +16019,7 @@ Elm.SvgControlPage.make = function (_elm) {
                                         _v18._1._0(_v18._1._1));}
                                    break;}
                               _U.badCase($moduleName,
-                              "on line 85, column 17 to 64");
+                              "on line 87, column 17 to 64");
                            }();
                         },
                         $Dict.toList(tdict))),
@@ -16024,7 +16036,7 @@ Elm.SvgControlPage.make = function (_elm) {
                                    $SvgControl.toCtrlAction(_v24._0),
                                    _v24._1(_L.fromArray([])));}
                               _U.badCase($moduleName,
-                              "on line 90, column 17 to 64");
+                              "on line 92, column 17 to 64");
                            }();
                         },
                         $Dict.toList(prevs)))))};
@@ -16041,7 +16053,7 @@ Elm.SvgControlPage.make = function (_elm) {
                    model.spec);}
               break;}
          _U.badCase($moduleName,
-         "between lines 62 and 92");
+         "between lines 64 and 94");
       }();
    });
    _elm.SvgControlPage.values = {_op: _op

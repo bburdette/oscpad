@@ -1,5 +1,7 @@
 # oscpad
-Configurable web controls with shared state, which send OSC messages.  [Overview/tutorial here](https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad!)
+Configurable web controls with shared state, which send OSC messages.  [Overview/tutorial here](https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad!)  
+
+[Arm executable here](https://drive.google.com/file/d/0B0C7MeOQIbZkbGk5WmRkRl9aWlE/view?usp=sharing) (compiled on bananapi arch).
 
 This is my 'getting to know you' project for elm and rust.  
 

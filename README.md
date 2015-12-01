@@ -23,7 +23,7 @@ First, the 'official' elm websockets library is actually a socketio library whic
 
 https://github.com/bburdette/testing-elm-websockets
 
-Also there's this thing where I need the window size on program start.  That capability comes from this pull request, which I just monkey-patched in to my elm-stuff folder.  If this or something like it is merged into startapp trunk I'll convert to that.
+Also there's this thing where I need the window size on program start.  That capability comes from this pull request, which I just monkey-patched in to my elm-stuff folder.  If this or something like it is merged into startapp trunk I'll convert to that.  Right now I can't get this to work with elm 0.16.  
 
 https://github.com/evancz/start-app/pull/37
 

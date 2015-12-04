@@ -68,25 +68,25 @@ update action model =
           init model.mahsend model.mahrect spec 
         Ok (JmUpdate jmact) -> 
           update jmact model
-        Err e -> ({model | title <- e}, Effects.none)
+        Err e -> ({model | title = e}, Effects.none)
     CAction act -> 
       let wha = SvgControl.update act model.control 
-          newmod = { model | control <- fst wha }
+          newmod = { model | control = fst wha }
         in
           (newmod, Effects.map CAction (snd wha))
     WinDims (x,y) -> 
       -- init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
       let nr = (SvgThings.Rect 0 0 x y)
         in
-      ({ model | mahrect <- nr
-               , srect <- (SvgThings.toSRect nr)
-               , control <- SvgControl.resize model.control nr }, 
+      ({ model | mahrect = nr
+               , srect = (SvgThings.toSRect nr)
+               , control = SvgControl.resize model.control nr }, 
        Effects.none)
     Touche touchlist ->
       let tdict = touchDict model.control touchlist
           curtouches = Dict.map (\_ v -> fst v) tdict
           prevs = Dict.diff model.prevtouches curtouches in 
-      ({model | prevtouches <- curtouches}, Effects.batch 
+      ({model | prevtouches = curtouches}, Effects.batch 
         (
           (List.map (\t -> Effects.task (Task.succeed (CAction t)))
               (List.filterMap (\(cid, (tam, tl)) -> 
@@ -123,11 +123,11 @@ updict mt dict =
 
     Touche touchlist ->
       case head touchlist of 
-        Nothing -> ({model | title <- "no touches" }, Effects.none)
+        Nothing -> ({model | title = "no touches" }, Effects.none)
         Just touch -> 
           case SvgControl.findControl touch.x touch.y model.control of
             Just control ->  
-              ({model | title <- SvgControl.controlName control }, Effects.none)
+              ({model | title = SvgControl.controlName control }, Effects.none)
             Nothing -> ({model | title = "no touches" }, Effects.none)
 
 

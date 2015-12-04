@@ -112,14 +112,14 @@ update action model =
         True ->  pressup model Unpress
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name <- s}, Effects.none)
+    Reply s -> ({model | name = s}, Effects.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let pressedupdate = case um.updateType of 
                       Press -> True
                       Unpress -> False
         in
-      ({ model | pressed <- pressedupdate }
+      ({ model | pressed = pressedupdate }
        , Effects.none )
     SvgTouch touches -> 
       if List.isEmpty touches then
@@ -136,15 +136,15 @@ update action model =
 pressup: Model -> UpdateType -> (Model, Effects Action) 
 pressup model ut = 
   let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
-  ({ model | pressed <- (ut == Press)}
+  ({ model | pressed = (ut == Press)}
     , Effects.task ((model.sendf um) 
          `Task.andThen` (\_ -> Task.succeed UselessCrap)))
 
 
 resize: Model -> SvgThings.Rect -> Model
 resize model rect = 
-  { model | rect <- rect, 
-            srect <- (SvgThings.SRect (toString (rect.x + 5)) 
+  { model | rect = rect, 
+            srect = (SvgThings.SRect (toString (rect.x + 5)) 
                                       (toString (rect.y + 5))
                                       (toString (rect.w - 5))
                                       (toString (rect.h - 5))) }

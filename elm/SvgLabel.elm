@@ -77,19 +77,19 @@ update action model =
   case action of
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
-      ({ model | label <- um.label }
+      ({ model | label = um.label }
        , Effects.none )
     SvgTouch touches -> (model, Effects.none)
 
 resize: Model -> SvgThings.Rect -> Model
 resize model rect = 
-  { model | rect <- rect  
-          , srect <- (SvgThings.SRect (toString (rect.x + 5)) 
+  { model | rect = rect  
+          , srect = (SvgThings.SRect (toString (rect.x + 5)) 
                                       (toString (rect.y + 5))
                                       (toString (rect.w - 5))
                                       (toString (rect.h - 5))) 
-          , middlex <- (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
-          , middley <- (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
+          , middlex = (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
+          , middley = (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
   }
 
 -- VIEW

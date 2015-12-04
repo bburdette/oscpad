@@ -17,13 +17,15 @@ Ultimately I'll probably break out the control server into a library separate fr
 
 ### Some notes on elm compiling.
 
-I've already compiled the elm to elm/Main.html, so an elm compiler isn't needed just to run oscpad.  But if you want to build it yourself (as of now you still need 0.15.1) there are a few items to note.
+I've already compiled the elm to elm/Main.html, so an elm compiler isn't needed just to run oscpad.  But if you want to build it yourself (on 0.16 now, which is much faster!) there are a few items to note.
 
-First, the 'official' elm websockets library is actually a socketio library which is not supported on the rust side. So, this project depends on this somewhat fly-by-night elm websockets library:
+First, the mainstream elm websockets library is actually a socketio library, and socketio is not supported by any rust libraries. So, this project depends on this somewhat fly-by-night elm websockets library:
 
 https://github.com/bburdette/testing-elm-websockets
 
-Also there's this thing where I need the window size on program start.  That capability comes from this pull request, which I just monkey-patched in to my elm-stuff folder.  If this or something like it is merged into startapp trunk I'll convert to that.  Right now I can't get this to work with elm 0.16.  
+Also there's this thing where I need the window size on program start.  That capability comes from this fork of start-app:
 
-https://github.com/evancz/start-app/pull/37
+https://github.com/seanhess/start-app
+
+To compile, use git to clone both of the above into the same directory where you've cloned oscpad.  Then run elm-make or elm-reactor as normal.
 

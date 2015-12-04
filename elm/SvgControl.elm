@@ -238,11 +238,10 @@ szupdate action model =
         Just bm -> 
           let wha = update act bm 
               updcontrols = insert id (fst wha) model.controls
-              newmod = { model | controls <- updcontrols }
+              newmod = { model | controls = updcontrols }
             in
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 
-    _ -> (model, Effects.none) 
  
 szresize : SzModel -> SvgThings.Rect -> SzModel
 szresize model rect = 
@@ -253,7 +252,7 @@ szresize model rect =
       controls = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
       cdict = Dict.fromList(controls)
     in
-     { model | rect <- rect, controls <- cdict }
+     { model | rect = rect, controls = cdict }
          
         
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec

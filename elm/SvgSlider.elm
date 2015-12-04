@@ -140,7 +140,7 @@ getLocation model v =
 updLoc: Model -> JD.Value -> (Model, Effects Action) 
 
       case (getLocation model v) of 
-        Ok l -> ({model | location <- l}, Effects.none)
+        Ok l -> ({model | location = l}, Effects.none)
         _ -> (model, Effects.none)
 -}
 
@@ -157,7 +157,7 @@ update action model =
         True -> updsend model Unpress model.location 
         False -> (model, Effects.none)
     UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name <- s}, Effects.none)
+    Reply s -> ({model | name = s}, Effects.none)
     SvgMoved v ->
       case model.pressed of 
         True -> 
@@ -168,9 +168,9 @@ update action model =
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let mod = case um.updateType of 
-          Press -> { model | pressed <- True, location <- um.location }
-          Move -> { model | location <- um.location }
-          Unpress -> { model | pressed <- False, location <- um.location }
+          Press -> { model | pressed = True, location = um.location }
+          Move -> { model | location = um.location }
+          Unpress -> { model | pressed = False, location = um.location }
         in
       (mod, Effects.none )
     SvgTouch touches -> 
@@ -204,15 +204,15 @@ updsend: Model -> UpdateType -> Float -> (Model, Effects Action)
 updsend model ut loc = 
   let um = JE.encode 0 
               (encodeUpdateMessage (UpdateMessage model.cid ut loc)) in
-  ( {model | location <- loc, pressed <- (ut /= Unpress) }
+  ( {model | location = loc, pressed = (ut /= Unpress) }
     , Effects.task 
         ((model.sendf um) `Task.andThen` 
         (\_ -> Task.succeed UselessCrap)))
 
 resize: Model -> SvgThings.Rect -> Model
 resize model rect = 
-  { model | rect <- rect, 
-            srect <- (SvgThings.SRect (toString (rect.x + 5)) 
+  { model | rect = rect, 
+            srect = (SvgThings.SRect (toString (rect.x + 5)) 
                                       (toString (rect.y + 5))
                                       (toString (rect.w - 5))
                                       (toString (rect.h - 5))) }

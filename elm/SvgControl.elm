@@ -198,7 +198,6 @@ type alias SzModel =
   , rect: SvgThings.Rect
   , controls: Dict ID Model 
   , orientation: SvgThings.Orientation
---  , szspec: SzSpec
   }
 
 type alias ID = Int

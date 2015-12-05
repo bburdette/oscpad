@@ -13700,10 +13700,10 @@ Elm.SvgControl.make = function (_elm) {
    var controlName = function (mod) {
       var _p3 = mod;
       switch (_p3.ctor)
-      {case "CmButton": return _p3._0.name;
-         case "CmSlider": return _p3._0.name;
-         case "CmLabel": return _p3._0.name;
-         default: return "";}
+      {case "CmButton": return $Maybe.Just(_p3._0.name);
+         case "CmSlider": return $Maybe.Just(_p3._0.name);
+         case "CmLabel": return $Maybe.Just(_p3._0.name);
+         default: return $Maybe.Nothing;}
    };
    var controlId = function (mod) {
       var _p4 = mod;

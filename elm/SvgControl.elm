@@ -61,13 +61,13 @@ controlId mod =
     CmLabel smod -> smod.cid
     CmSizer szmod -> szmod.cid
       
-controlName: Model -> String
+controlName: Model -> Maybe String
 controlName mod = 
   case mod of 
-    CmButton bmod -> bmod.name
-    CmSlider smod -> smod.name
-    CmLabel smod -> smod.name
-    CmSizer szmod -> ""
+    CmButton bmod -> Just bmod.name
+    CmSlider smod -> Just smod.name
+    CmLabel smod -> Just smod.name
+    CmSizer szmod -> Nothing
 
 resize: Model -> SvgThings.Rect -> Model
 resize model rect = 

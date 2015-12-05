@@ -13673,8 +13673,8 @@ Elm.SvgControl.make = function (_elm) {
                }
          }
    });
-   var SzModel = F5(function (a,b,c,d,e) {
-      return {name: a,cid: b,rect: c,controls: d,orientation: e};
+   var SzModel = F4(function (a,b,c,d) {
+      return {cid: a,rect: b,controls: c,orientation: d};
    });
    var lazy = function (thunk) {
       return A2($Json$Decode.customDecoder,
@@ -13685,8 +13685,8 @@ Elm.SvgControl.make = function (_elm) {
          js);
       });
    };
-   var SzSpec = F3(function (a,b,c) {
-      return {name: a,orientation: b,controls: c};
+   var SzSpec = F2(function (a,b) {
+      return {orientation: a,controls: b};
    });
    var myTail = function (lst) {
       var tl = $List.tail(lst);
@@ -13703,7 +13703,7 @@ Elm.SvgControl.make = function (_elm) {
       {case "CmButton": return _p3._0.name;
          case "CmSlider": return _p3._0.name;
          case "CmLabel": return _p3._0.name;
-         default: return _p3._0.name;}
+         default: return "";}
    };
    var controlId = function (mod) {
       var _p4 = mod;
@@ -14020,8 +14020,7 @@ Elm.SvgControl.make = function (_elm) {
       },
       A2(zip,idxs,A2($List.map,$Basics.snd,blist))));
       return {ctor: "_Tuple2"
-             ,_0: A5(SzModel,
-             szspec.name,
+             ,_0: A4(SzModel,
              cid,
              rect,
              $Dict.fromList(controlz),
@@ -14067,9 +14066,8 @@ Elm.SvgControl.make = function (_elm) {
            "unkown type: ",
            t));}
    };
-   var jsSzSpec = A4($Json$Decode.object3,
+   var jsSzSpec = A3($Json$Decode.object2,
    SzSpec,
-   A2($Json$Decode._op[":="],"name",$Json$Decode.string),
    A2($Json$Decode.andThen,
    A2($Json$Decode._op[":="],"orientation",$Json$Decode.string),
    $SvgThings.jsOrientation),

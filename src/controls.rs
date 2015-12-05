@@ -193,7 +193,6 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
       Ok(Box::new(Label { controlId: aVId.clone(), name: String::from(name), label: label.to_string() }))
     },
     "sizer" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "name not found!").as_string(), "name is not a string!");
       let controls = 
         try_opt_resbox!(try_opt_resbox!(obj.get("controls"), "'controls' not found").as_array(), "'controls' is not an array");
 

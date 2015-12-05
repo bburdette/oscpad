@@ -4,12 +4,10 @@
     {
       "type": "sizer",
       "orientation": "vertical",
-      "name": "szname",
       "controls": [
         {
            "type": "sizer",
            "orientation": "horizontal",
-           "name": "szname",
            "controls": [
              { "type": "slider"
              , "orientation": "horizontal"
@@ -24,7 +22,6 @@
        , {
            "type": "sizer",
            "orientation": "horizontal",
-           "name": "szname",
            "controls": [
               { "type": "label"
               , "name": "lb1"

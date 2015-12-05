@@ -67,7 +67,7 @@ controlName mod =
     CmButton bmod -> bmod.name
     CmSlider smod -> smod.name
     CmLabel smod -> smod.name
-    CmSizer szmod -> szmod.name
+    CmSizer szmod -> ""
 
 resize: Model -> SvgThings.Rect -> Model
 resize model rect = 
@@ -174,14 +174,12 @@ view address model =
 
 -- json spec
 type alias SzSpec = 
-  { name: String
-  , orientation: SvgThings.Orientation
+  { orientation: SvgThings.Orientation
   , controls: List Spec
   }
 
 jsSzSpec : JD.Decoder SzSpec
-jsSzSpec = JD.object3 SzSpec
-  ("name" := JD.string)
+jsSzSpec = JD.object2 SzSpec
   (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
   ("controls" := (JD.list (lazy (\_ -> jsSpec))))
 
@@ -193,8 +191,9 @@ lazy thunk =
       (\js -> JD.decodeValue (thunk ()) js)
 
 type alias SzModel =
-  { name: String  
-  , cid: SvgThings.ControlId
+  { 
+  -- name: String  
+    cid: SvgThings.ControlId
   , rect: SvgThings.Rect
   , controls: Dict ID Model 
   , orientation: SvgThings.Orientation
@@ -269,7 +268,7 @@ szinit sendf rect cid szspec =
              (List.map (\(i,a) -> Effects.map (SzCAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (SzModel szspec.name cid rect (Dict.fromList controlz) szspec.orientation, fx)
+     (SzModel cid rect (Dict.fromList controlz) szspec.orientation, fx)
       
 
 -- VIEW

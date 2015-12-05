@@ -3,7 +3,6 @@
   "rootControl": 
     { "type": "sizer",
       "orientation": "vertical",
-      "name": "szname",
       "controls": [
        { "type": "label"
        , "name": "lb3"

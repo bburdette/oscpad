@@ -36,7 +36,7 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
   let guifilename = try_opt_resbox!(iter.next(), syntax);
   let guistring = try!(loadString(&guifilename));
 
-  let socket = try!(UdpSocket::bind("localhost:9001"));
+  let socket = try!(UdpSocket::bind("0.0.0.0:0"));
   let mut buf = [0; 100];
   println!("guisend");
 
@@ -47,7 +47,7 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
   let v = try!(outmsg.serialize());
 
   println!("sending {} {:?}", outmsg.path, outmsg.arguments );
-  socket.send_to(&v, &sendip[..]);
+  try!(socket.send_to(&v, &sendip[..]));
 
   Ok("success".to_string())
 }

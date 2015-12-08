@@ -147,13 +147,16 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     let cmshare = Arc::new(Mutex::new(ci));
     let wscmshare = cmshare.clone();
     let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
+    // for sending, bind to this.  if we bind to localhost, we can't
+    // send messages to other machines.  
+    let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
     let mut bc = broadcaster::Broadcaster::new();
-    let wsos = try!(oscsocket.try_clone());
+    let wsos = try!(oscsendsocket.try_clone());
     let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
 
     thread::spawn(move || { 
-      match oscmain(oscsocket, oscsendip, bc, cmshare) {
+      match oscmain(oscsocket, bc, cmshare) {
         Err(e) => println!("oscmain exited with error: {:?}", e),
         Ok(_) => (),
       }
@@ -431,8 +434,7 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
   } 
 }
 
-fn oscmain( socket: UdpSocket, 
-            oscsendip: String, 
+fn oscmain( recvsocket: UdpSocket, 
             mut bc: broadcaster::Broadcaster, 
             ci: Arc<Mutex<ControlInfo>>)
               -> Result<String, Box<std::error::Error> >
@@ -445,7 +447,7 @@ fn oscmain( socket: UdpSocket,
     };
 
   loop { 
-    let (amt, src) = try!(socket.recv_from(&mut buf));
+    let (amt, src) = try!(recvsocket.recv_from(&mut buf));
 
     println!("length: {}", amt);
     match osc::Message::deserialize(&buf[.. amt]) {

@@ -31,12 +31,16 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
   let recvip = try_opt_resbox!(iter.next(), syntax);
   let sendip = try_opt_resbox!(iter.next(), syntax);
 
-  let socket = try!(UdpSocket::bind(&recvip[..]));
+  let recvsocket = try!(UdpSocket::bind(&recvip[..]));
+  // for sending, bind to this.  if we bind to localhost, we can't
+  // send messages to other machines.  for that reason, don't reuse the 
+  // recvsocket for sending. 
+  let sendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
   let mut buf = [0; 100];
   println!("echotest");
 
   loop { 
-    let (amt, src) = try!(socket.recv_from(&mut buf));
+    let (amt, src) = try!(recvsocket.recv_from(&mut buf));
 
     println!("length: {}", amt);
     let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
@@ -68,7 +72,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
                   match outmsg.serialize() {
                     Ok(v) => {
                       println!("sending {} {:?}", outmsg.path, outmsg.arguments );
-              			  socket.send_to(&v, &sendip[..])
+              			  sendsocket.send_to(&v, &sendip[..])
                     },
                     Err(e) => return Err(Box::new(e)),
                   }
@@ -92,7 +96,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
                   match outmsg.serialize() {
                     Ok(v) => {
                       println!("sending {} {:?}", outmsg.path, outmsg.arguments );
-              			  socket.send_to(&v, &sendip[..])
+              			  sendsocket.send_to(&v, &sendip[..])
                     },
                     Err(e) => return Err(Box::new(e)),
                   }

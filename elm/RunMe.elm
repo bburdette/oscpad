@@ -54,7 +54,6 @@ app =
           "mehtitle" 
           (SvgControl.CsSizer 
             (SvgControl.SzSpec 
-              "" 
               SvgThings.Vertical
               [(SvgControl.CsLabel (SvgLabel.Spec "test" "test")) 
               ,(SvgControl.CsButton (SvgButton.Spec "blah"))

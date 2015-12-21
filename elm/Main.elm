@@ -14,7 +14,7 @@ import String
 import WebSocket exposing (WebSocket)
 import SvgThings
 import Window
-import Touch
+import SvgTouch
 
 ---------------------------------------
 
@@ -55,7 +55,7 @@ app =
               ]
     , inputs = [ (Signal.map SvgControlPage.JsonMsg listen.signal)
                , (Signal.map SvgControlPage.WinDims Window.dimensions)
-               , (Signal.map SvgControlPage.Touche Touch.touches)
+               , (Signal.map SvgControlPage.Touche SvgTouch.touches)
                ]
     }
 

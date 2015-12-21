@@ -122,6 +122,7 @@ update action model =
       ({ model | pressed = pressedupdate }
        , Effects.none )
     SvgTouch touches -> 
+      -- let a = Debug.log "button touches: " (List.length touches) in
       if List.isEmpty touches then
         if model.pressed == True then 
           pressup model Unpress

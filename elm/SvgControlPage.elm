@@ -12,7 +12,8 @@ import Dict exposing (..)
 import Json.Decode as JD exposing ((:=))
 import Svg 
 import Svg.Attributes as SA 
-import Touch
+import Svg.Events as SE
+import SvgTouch
 
 -- json spec
 type alias Spec = 
@@ -45,7 +46,8 @@ type Action
     = JsonMsg String 
     | CAction SvgControl.Action 
     | WinDims (Int, Int)
-    | Touche (List Touch.Touch)
+    | Touche (List SvgTouch.Touch)
+    | Ignore
 
 type JsMessage 
   = JmSpec Spec
@@ -97,20 +99,22 @@ update action model =
               (List.filterMap (\(cid, tam) -> 
                 Maybe.map (SvgControl.toCtrlAction cid) (tam [])) 
                 (Dict.toList prevs)))))
+    Ignore -> 
+      (model, Effects.none)
           
 
 -- build a dict of controls -> touches.
 
 
-touchDict: SvgControl.Model -> (List Touch.Touch) -> 
-    Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch))
+touchDict: SvgControl.Model -> (List SvgTouch.Touch) -> 
+    Dict SvgThings.ControlId (SvgControl.ControlTam, (List SvgTouch.Touch))
 touchDict root touches = 
   let meh = List.filterMap (\t -> Maybe.andThen (SvgControl.findControl t.x t.y root) (\c -> Just (c,t))) touches in
   List.foldl updict Dict.empty meh 
 
-updict: (SvgControl.Model, Touch.Touch) 
-      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch)) 
-      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List Touch.Touch))
+updict: (SvgControl.Model, SvgTouch.Touch) 
+      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List SvgTouch.Touch)) 
+      -> Dict SvgThings.ControlId (SvgControl.ControlTam, (List SvgTouch.Touch))
 updict mt dict =
   Dict.update (SvgControl.controlId (fst mt)) 
               (\mbpair -> case mbpair of 
@@ -154,6 +158,7 @@ init sendf rect spec =
 
 (=>) = (,)
 
+
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   Html.div [] (
@@ -168,7 +173,12 @@ view address model =
       [(viewSvgControl address model.control)]
     ])
 
+
 {-
+    , SE.onMouseDown (Signal.message address Ignore)
+    , SE.onMouseUp (Signal.message address Ignore)
+    , SE.onMouseOut (Signal.message address Ignore)
+
     [Html.text "meh", 
      Html.br [] [],
      Html.text model.title, 

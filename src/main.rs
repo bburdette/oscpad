@@ -1,5 +1,3 @@
-#![feature(custom_derive)]
-
 extern crate websocket;
 
 use std::thread;

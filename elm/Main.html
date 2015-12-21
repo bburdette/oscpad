@@ -14394,7 +14394,6 @@ Elm.SvgControlPage.make = function (_elm) {
       return {ctor: "JmUpdate",_0: a};
    };
    var JmSpec = function (a) {    return {ctor: "JmSpec",_0: a};};
-   var Ignore = {ctor: "Ignore"};
    var Touche = function (a) {    return {ctor: "Touche",_0: a};};
    var WinDims = function (a) {
       return {ctor: "WinDims",_0: a};
@@ -14524,7 +14523,7 @@ Elm.SvgControlPage.make = function (_elm) {
                      ,srect: $SvgThings.toSRect(nr)
                      ,control: A2($SvgControl.resize,model.control,nr)})
                      ,_1: $Effects.none};
-            case "Touche": var tdict = A2(touchDict,model.control,_p2._0);
+            default: var tdict = A2(touchDict,model.control,_p2._0);
               var curtouches = A2($Dict.map,
               F2(function (_p4,v) {    return $Basics.fst(v);}),
               tdict);
@@ -14555,8 +14554,7 @@ Elm.SvgControlPage.make = function (_elm) {
                         $SvgControl.toCtrlAction(_p8._0),
                         _p8._1(_U.list([])));
                      },
-                     $Dict.toList(prevs)))))};
-            default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
+                     $Dict.toList(prevs)))))};}
       }
    });
    return _elm.SvgControlPage.values = {_op: _op
@@ -14567,7 +14565,6 @@ Elm.SvgControlPage.make = function (_elm) {
                                        ,CAction: CAction
                                        ,WinDims: WinDims
                                        ,Touche: Touche
-                                       ,Ignore: Ignore
                                        ,JmSpec: JmSpec
                                        ,JmUpdate: JmUpdate
                                        ,jsMessage: jsMessage

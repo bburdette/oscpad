@@ -47,7 +47,6 @@ type Action
     | CAction SvgControl.Action 
     | WinDims (Int, Int)
     | Touche (List SvgTouch.Touch)
-    | Ignore
 
 type JsMessage 
   = JmSpec Spec
@@ -99,8 +98,6 @@ update action model =
               (List.filterMap (\(cid, tam) -> 
                 Maybe.map (SvgControl.toCtrlAction cid) (tam [])) 
                 (Dict.toList prevs)))))
-    Ignore -> 
-      (model, Effects.none)
           
 
 -- build a dict of controls -> touches.
@@ -175,10 +172,6 @@ view address model =
 
 
 {-
-    , SE.onMouseDown (Signal.message address Ignore)
-    , SE.onMouseUp (Signal.message address Ignore)
-    , SE.onMouseOut (Signal.message address Ignore)
-
     [Html.text "meh", 
      Html.br [] [],
      Html.text model.title, 

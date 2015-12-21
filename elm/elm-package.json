@@ -7,7 +7,7 @@
         ".",
         "../../start-app",
         "../../start-app/src",
-        "../../elm-sockets"
+        "../../testing-elm-websockets"
     ],
     "exposed-modules": [],
     "native-modules": true,

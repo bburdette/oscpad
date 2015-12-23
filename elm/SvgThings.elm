@@ -61,7 +61,7 @@ hrects rct count =
      map (mekhr rct w) idxs
 
 mekhr: Rect -> Int -> Int -> Rect
-mekhr br w i = Rect (w * i) br.y w br.h 
+mekhr br w i = Rect (br.x + (w * i)) br.y w br.h 
 
 -- make a number of horizontally proportionally sized rects.
 hrectsp: Rect -> Int -> List Float -> List Rect
@@ -69,8 +69,7 @@ hrectsp rct count props =
   let props = processProps count props
       fw = toFloat rct.w
       widths = map (\p -> round (p * fw)) props 
-      xes = somme 0 widths
-      idxs = [0..(count-1)]
+      xes = somme rct.x widths
    in
      map (mekhrp rct) (map2 (,) xes widths)
 
@@ -84,8 +83,7 @@ vrectsp rct count props =
   let props = processProps count props
       fh = toFloat rct.h
       heights = map (\p -> round (p * fh)) props 
-      yes = somme 0 heights 
-      idxs = [0..(count-1)]
+      yes = somme rct.y heights 
    in
      map (mekvrp rct) (map2 (,) yes heights)
 
@@ -118,7 +116,7 @@ vrects rct count =
 
 
 mekvr: Rect -> Int -> Int -> Rect
-mekvr br h i = Rect br.x (h * i) br.w h 
+mekvr br h i = Rect br.x (br.y + (h * i)) br.w h 
 
 
 processProps: Int -> List Float -> List Float

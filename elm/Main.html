@@ -12727,7 +12727,7 @@ Elm.SvgThings.make = function (_elm) {
       return {x: a,y: b,w: c,h: d};
    });
    var mekhr = F3(function (br,w,i) {
-      return A4(Rect,w * i,br.y,w,br.h);
+      return A4(Rect,br.x + w * i,br.y,w,br.h);
    });
    var hrects = F2(function (rct,count) {
       var idxs = _U.range(0,count - 1);
@@ -12739,7 +12739,6 @@ Elm.SvgThings.make = function (_elm) {
       return A4(Rect,_p3._0,prect.y,_p3._1,prect.h);
    });
    var hrectsp = F3(function (rct,count,props) {
-      var idxs = _U.range(0,count - 1);
       var fw = $Basics.toFloat(rct.w);
       var props = A2(processProps,count,props);
       var widths = A2($List.map,
@@ -12747,7 +12746,7 @@ Elm.SvgThings.make = function (_elm) {
          return $Basics.round(p * fw);
       },
       props);
-      var xes = A2(somme,0,widths);
+      var xes = A2(somme,rct.x,widths);
       return A2($List.map,
       mekhrp(rct),
       A3($List.map2,
@@ -12762,7 +12761,6 @@ Elm.SvgThings.make = function (_elm) {
       return A4(Rect,prect.x,_p5._0,prect.w,_p5._1);
    });
    var vrectsp = F3(function (rct,count,props) {
-      var idxs = _U.range(0,count - 1);
       var fh = $Basics.toFloat(rct.h);
       var props = A2(processProps,count,props);
       var heights = A2($List.map,
@@ -12770,7 +12768,7 @@ Elm.SvgThings.make = function (_elm) {
          return $Basics.round(p * fh);
       },
       props);
-      var yes = A2(somme,0,heights);
+      var yes = A2(somme,rct.y,heights);
       return A2($List.map,
       mekvrp(rct),
       A3($List.map2,
@@ -12781,7 +12779,7 @@ Elm.SvgThings.make = function (_elm) {
       heights));
    });
    var mekvr = F3(function (br,h,i) {
-      return A4(Rect,br.x,h * i,br.w,h);
+      return A4(Rect,br.x,br.y + h * i,br.w,h);
    });
    var vrects = F2(function (rct,count) {
       var idxs = _U.range(0,count - 1);

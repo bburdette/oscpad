@@ -175,12 +175,21 @@ view address model =
 -- json spec
 type alias SzSpec = 
   { orientation: SvgThings.Orientation
+  , proportions: Maybe (List Float)
   , controls: List Spec
   }
 
+-- proportions should all add up to 1.0
+processProps: List Float -> List Float
+processProps lst = 
+  let s = sum lst in
+  List.map (\x -> x / s) lst
+
 jsSzSpec : JD.Decoder SzSpec
-jsSzSpec = JD.object2 SzSpec
+jsSzSpec = JD.object3 SzSpec
   (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
+  ((JD.maybe ("proportions" := JD.list JD.float)) `JD.andThen` 
+    (\x -> JD.succeed (Maybe.map processProps x)))
   ("controls" := (JD.list (lazy (\_ -> jsSpec))))
 
 -- Hack because recursion is sort of broked I guess
@@ -192,11 +201,11 @@ lazy thunk =
 
 type alias SzModel =
   { 
-  -- name: String  
     cid: SvgThings.ControlId
   , rect: SvgThings.Rect
   , controls: Dict ID Model 
   , orientation: SvgThings.Orientation
+  , proportions: Maybe (List Float)
   }
 
 type alias ID = Int
@@ -217,7 +226,6 @@ firstJust f xs =
       case f x of 
         Just v -> Just v
         Nothing -> Maybe.andThen (tail xs) (firstJust f) 
-
 
 
 -- UPDATE
@@ -244,21 +252,30 @@ szupdate action model =
 szresize : SzModel -> SvgThings.Rect -> SzModel
 szresize model rect = 
   let clist = Dict.toList(model.controls)
-      rlist = case model.orientation of 
-        SvgThings.Horizontal -> SvgThings.hrects rect (List.length clist) 
-        SvgThings.Vertical -> SvgThings.vrects rect (List.length clist)
+      rlist = mkRlist model.orientation rect (List.length clist) model.proportions 
       controls = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
       cdict = Dict.fromList(controls)
     in
      { model | rect = rect, controls = cdict }
          
+mkRlist: SvgThings.Orientation -> SvgThings.Rect -> Int -> Maybe (List Float) -> List SvgThings.Rect
+mkRlist orientation rect count mbproportions = 
+  case orientation of 
+    SvgThings.Horizontal -> 
+      case mbproportions of 
+        Nothing -> SvgThings.hrects rect count  
+        Just p -> SvgThings.hrectsp rect count p 
+    SvgThings.Vertical -> 
+      case mbproportions of 
+        Nothing -> SvgThings.vrects rect count 
+        Just p -> SvgThings.vrectsp rect count p
+
+
         
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
   -> (SzModel, Effects SzAction)
 szinit sendf rect cid szspec = 
-  let rlist = case szspec.orientation of 
-        SvgThings.Horizontal -> SvgThings.hrects rect (List.length szspec.controls)
-        SvgThings.Vertical -> SvgThings.vrects rect (List.length szspec.controls)
+  let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions 
       blist = List.map 
                 (\(spec, rect, idx) -> init sendf rect (cid ++ [idx]) spec) 
                 (map3 (,,) szspec.controls rlist idxs)
@@ -268,7 +285,7 @@ szinit sendf rect cid szspec =
              (List.map (\(i,a) -> Effects.map (SzCAction i) a)
                   (zip idxs (List.map snd blist)))
     in
-     (SzModel cid rect (Dict.fromList controlz) szspec.orientation, fx)
+     (SzModel cid rect (Dict.fromList controlz) szspec.orientation szspec.proportions, fx)
       
 
 -- VIEW

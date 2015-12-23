@@ -12684,6 +12684,30 @@ Elm.SvgThings.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
+   var processProps = F2(function (controlcount,lst) {
+      var l = $List.length(lst);
+      var r = _U.cmp(controlcount,l) > 0 ? controlcount - l : 0;
+      var lst = A2($List.append,
+      A2($List.take,controlcount,lst),
+      A2($List.repeat,r,0.0));
+      var s = $List.sum(lst);
+      return A2($List.map,function (x) {    return x / s;},lst);
+   });
+   var somme = F2(function (f,lst) {
+      var _p0 = $List.head(lst);
+      if (_p0.ctor === "Nothing") {
+            return lst;
+         } else {
+            var tl = $List.tail(lst);
+            var s = f + _p0._0;
+            var _p1 = tl;
+            if (_p1.ctor === "Nothing") {
+                  return _U.list([s]);
+               } else {
+                  return A2($List._op["::"],f,A2(somme,s,_p1._0));
+               }
+         }
+   });
    var SRect = F4(function (a,b,c,d) {
       return {x: a,y: b,w: c,h: d};
    });
@@ -12710,6 +12734,52 @@ Elm.SvgThings.make = function (_elm) {
       var w = $Basics.round($Basics.toFloat(rct.w) / count);
       return A2($List.map,A2(mekhr,rct,w),idxs);
    });
+   var mekhrp = F2(function (prect,_p2) {
+      var _p3 = _p2;
+      return A4(Rect,_p3._0,prect.y,_p3._1,prect.h);
+   });
+   var hrectsp = F3(function (rct,count,props) {
+      var idxs = _U.range(0,count - 1);
+      var fw = $Basics.toFloat(rct.w);
+      var props = A2(processProps,count,props);
+      var widths = A2($List.map,
+      function (p) {
+         return $Basics.round(p * fw);
+      },
+      props);
+      var xes = A2(somme,0,widths);
+      return A2($List.map,
+      mekhrp(rct),
+      A3($List.map2,
+      F2(function (v0,v1) {
+         return {ctor: "_Tuple2",_0: v0,_1: v1};
+      }),
+      xes,
+      widths));
+   });
+   var mekvrp = F2(function (prect,_p4) {
+      var _p5 = _p4;
+      return A4(Rect,prect.x,_p5._0,prect.w,_p5._1);
+   });
+   var vrectsp = F3(function (rct,count,props) {
+      var idxs = _U.range(0,count - 1);
+      var fh = $Basics.toFloat(rct.h);
+      var props = A2(processProps,count,props);
+      var heights = A2($List.map,
+      function (p) {
+         return $Basics.round(p * fh);
+      },
+      props);
+      var yes = A2(somme,0,heights);
+      return A2($List.map,
+      mekvrp(rct),
+      A3($List.map2,
+      F2(function (v0,v1) {
+         return {ctor: "_Tuple2",_0: v0,_1: v1};
+      }),
+      yes,
+      heights));
+   });
    var mekvr = F3(function (br,h,i) {
       return A4(Rect,br.x,h * i,br.w,h);
    });
@@ -12727,8 +12797,8 @@ Elm.SvgThings.make = function (_elm) {
    var Horizontal = {ctor: "Horizontal"};
    var Vertical = {ctor: "Vertical"};
    var jsOrientation = function (o) {
-      var _p0 = o;
-      switch (_p0)
+      var _p6 = o;
+      switch (_p6)
       {case "vertical": return $Json$Decode.succeed(Vertical);
          case "horizontal": return $Json$Decode.succeed(Horizontal);
          default: return $Json$Decode.succeed(Horizontal);}
@@ -12745,8 +12815,14 @@ Elm.SvgThings.make = function (_elm) {
                                   ,toSRect: toSRect
                                   ,hrects: hrects
                                   ,mekhr: mekhr
+                                  ,hrectsp: hrectsp
+                                  ,mekhrp: mekhrp
+                                  ,vrectsp: vrectsp
+                                  ,mekvrp: mekvrp
+                                  ,somme: somme
                                   ,vrects: vrects
-                                  ,mekvr: mekvr};
+                                  ,mekvr: mekvr
+                                  ,processProps: processProps};
 };Elm.Native = Elm.Native || {};
 Elm.Native.Touch = {};
 Elm.Native.Touch.make = function(localRuntime) {
@@ -13654,6 +13730,27 @@ Elm.SvgControl.make = function (_elm) {
    _op["=>"] = F2(function (v0,v1) {
       return {ctor: "_Tuple2",_0: v0,_1: v1};
    });
+   var mkRlist = F4(function (orientation,
+   rect,
+   count,
+   mbproportions) {
+      var _p0 = orientation;
+      if (_p0.ctor === "Horizontal") {
+            var _p1 = mbproportions;
+            if (_p1.ctor === "Nothing") {
+                  return A2($SvgThings.hrects,rect,count);
+               } else {
+                  return A3($SvgThings.hrectsp,rect,count,_p1._0);
+               }
+         } else {
+            var _p2 = mbproportions;
+            if (_p2.ctor === "Nothing") {
+                  return A2($SvgThings.vrects,rect,count);
+               } else {
+                  return A3($SvgThings.vrectsp,rect,count,_p2._0);
+               }
+         }
+   });
    var zip = $List.map2(F2(function (v0,v1) {
       return {ctor: "_Tuple2",_0: v0,_1: v1};
    }));
@@ -13661,20 +13758,24 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "SzCAction",_0: a,_1: b};
    });
    var firstJust = F2(function (f,xs) {
-      var _p0 = $List.head(xs);
-      if (_p0.ctor === "Nothing") {
+      var _p3 = $List.head(xs);
+      if (_p3.ctor === "Nothing") {
             return $Maybe.Nothing;
          } else {
-            var _p1 = f(_p0._0);
-            if (_p1.ctor === "Just") {
-                  return $Maybe.Just(_p1._0);
+            var _p4 = f(_p3._0);
+            if (_p4.ctor === "Just") {
+                  return $Maybe.Just(_p4._0);
                } else {
                   return A2($Maybe.andThen,$List.tail(xs),firstJust(f));
                }
          }
    });
-   var SzModel = F4(function (a,b,c,d) {
-      return {cid: a,rect: b,controls: c,orientation: d};
+   var SzModel = F5(function (a,b,c,d,e) {
+      return {cid: a
+             ,rect: b
+             ,controls: c
+             ,orientation: d
+             ,proportions: e};
    });
    var lazy = function (thunk) {
       return A2($Json$Decode.customDecoder,
@@ -13685,47 +13786,51 @@ Elm.SvgControl.make = function (_elm) {
          js);
       });
    };
-   var SzSpec = F2(function (a,b) {
-      return {orientation: a,controls: b};
+   var processProps = function (lst) {
+      var s = $List.sum(lst);
+      return A2($List.map,function (x) {    return x / s;},lst);
+   };
+   var SzSpec = F3(function (a,b,c) {
+      return {orientation: a,proportions: b,controls: c};
    });
    var myTail = function (lst) {
       var tl = $List.tail(lst);
-      var _p2 = tl;
-      if (_p2.ctor === "Just") {
-            return _p2._0;
+      var _p5 = tl;
+      if (_p5.ctor === "Just") {
+            return _p5._0;
          } else {
             return _U.list([]);
          }
    };
    var controlName = function (mod) {
-      var _p3 = mod;
-      switch (_p3.ctor)
-      {case "CmButton": return $Maybe.Just(_p3._0.name);
-         case "CmSlider": return $Maybe.Just(_p3._0.name);
-         case "CmLabel": return $Maybe.Just(_p3._0.name);
+      var _p6 = mod;
+      switch (_p6.ctor)
+      {case "CmButton": return $Maybe.Just(_p6._0.name);
+         case "CmSlider": return $Maybe.Just(_p6._0.name);
+         case "CmLabel": return $Maybe.Just(_p6._0.name);
          default: return $Maybe.Nothing;}
    };
    var controlId = function (mod) {
-      var _p4 = mod;
-      switch (_p4.ctor)
-      {case "CmButton": return _p4._0.cid;
-         case "CmSlider": return _p4._0.cid;
-         case "CmLabel": return _p4._0.cid;
-         default: return _p4._0.cid;}
+      var _p7 = mod;
+      switch (_p7.ctor)
+      {case "CmButton": return _p7._0.cid;
+         case "CmSlider": return _p7._0.cid;
+         case "CmLabel": return _p7._0.cid;
+         default: return _p7._0.cid;}
    };
    var findControl = F3(function (x,y,mod) {
-      var _p5 = mod;
-      switch (_p5.ctor)
+      var _p8 = mod;
+      switch (_p8.ctor)
       {case "CmButton": return A3($SvgButton.containsXY,
-           _p5._0,
+           _p8._0,
            x,
            y) ? $Maybe.Just(mod) : $Maybe.Nothing;
          case "CmSlider": return A3($SvgSlider.containsXY,
-           _p5._0,
+           _p8._0,
            x,
            y) ? $Maybe.Just(mod) : $Maybe.Nothing;
          case "CmLabel": return $Maybe.Nothing;
-         default: return A3(szFindControl,_p5._0,x,y);}
+         default: return A3(szFindControl,_p8._0,x,y);}
    });
    var szFindControl = F3(function (mod,x,y) {
       return A3($SvgThings.containsXY,mod.rect,x,y) ? A2(firstJust,
@@ -13736,12 +13841,12 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CaSizer",_0: a};
    };
    var toCtrlAction = F2(function (id,action) {
-      var _p6 = $List.head(id);
-      if (_p6.ctor === "Nothing") {
+      var _p9 = $List.head(id);
+      if (_p9.ctor === "Nothing") {
             return action;
          } else {
             return CaSizer(A2(SzCAction,
-            _p6._0,
+            _p9._0,
             A2(toCtrlAction,myTail(id),action)));
          }
    });
@@ -13755,8 +13860,8 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CaButton",_0: a};
    };
    var controlTouchActionMaker = function (ctrl) {
-      var _p7 = ctrl;
-      switch (_p7.ctor)
+      var _p10 = ctrl;
+      switch (_p10.ctor)
       {case "CmButton": return function (t) {
               return $Maybe.Just(CaButton($SvgButton.SvgTouch(t)));
            };
@@ -13771,8 +13876,8 @@ Elm.SvgControl.make = function (_elm) {
            };}
    };
    var jsUmType = function (wat) {
-      var _p8 = wat;
-      switch (_p8)
+      var _p11 = wat;
+      switch (_p11)
       {case "button": return A2($Json$Decode.andThen,
            $SvgButton.jsUpdateMessage,
            function (x) {
@@ -13802,20 +13907,20 @@ Elm.SvgControl.make = function (_elm) {
    A2($Json$Decode._op[":="],"controlType",$Json$Decode.string),
    jsUmType);
    var view = F2(function (address,model) {
-      var _p9 = model;
-      switch (_p9.ctor)
+      var _p12 = model;
+      switch (_p12.ctor)
       {case "CmButton": return A2($SvgButton.view,
            A2($Signal.forwardTo,address,CaButton),
-           _p9._0);
+           _p12._0);
          case "CmSlider": return A2($SvgSlider.view,
            A2($Signal.forwardTo,address,CaSlider),
-           _p9._0);
+           _p12._0);
          case "CmLabel": return A2($SvgLabel.view,
            A2($Signal.forwardTo,address,CaLabel),
-           _p9._0);
+           _p12._0);
          default: return A2(szview,
            A2($Signal.forwardTo,address,CaSizer),
-           _p9._0);}
+           _p12._0);}
    });
    var szview = F2(function (address,model) {
       var controllst = $Dict.toList(model.controls);
@@ -13823,11 +13928,11 @@ Elm.SvgControl.make = function (_elm) {
       _U.list([]),
       A2($List.map,viewSvgControls(address),controllst));
    });
-   var viewSvgControls = F2(function (address,_p10) {
-      var _p11 = _p10;
+   var viewSvgControls = F2(function (address,_p13) {
+      var _p14 = _p13;
       return A2(view,
-      A2($Signal.forwardTo,address,SzCAction(_p11._0)),
-      _p11._1);
+      A2($Signal.forwardTo,address,SzCAction(_p14._0)),
+      _p14._1);
    });
    var CmSizer = function (a) {
       return {ctor: "CmSizer",_0: a};
@@ -13842,168 +13947,158 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CmButton",_0: a};
    };
    var resize = F2(function (model,rect) {
-      var _p12 = model;
-      switch (_p12.ctor)
+      var _p15 = model;
+      switch (_p15.ctor)
       {case "CmButton": return CmButton(A2($SvgButton.resize,
-           _p12._0,
+           _p15._0,
            rect));
          case "CmSlider": return CmSlider(A2($SvgSlider.resize,
-           _p12._0,
+           _p15._0,
            rect));
          case "CmLabel": return CmLabel(A2($SvgLabel.resize,
-           _p12._0,
+           _p15._0,
            rect));
-         default: return CmSizer(A2(szresize,_p12._0,rect));}
+         default: return CmSizer(A2(szresize,_p15._0,rect));}
    });
    var szresize = F2(function (model,rect) {
       var clist = $Dict.toList(model.controls);
-      var rlist = function () {
-         var _p13 = model.orientation;
-         if (_p13.ctor === "Horizontal") {
-               return A2($SvgThings.hrects,rect,$List.length(clist));
-            } else {
-               return A2($SvgThings.vrects,rect,$List.length(clist));
-            }
-      }();
+      var rlist = A4(mkRlist,
+      model.orientation,
+      rect,
+      $List.length(clist),
+      model.proportions);
       var controls = A2($List.map,
-      function (_p14) {
-         var _p15 = _p14;
+      function (_p16) {
+         var _p17 = _p16;
          return {ctor: "_Tuple2"
-                ,_0: _p15._0._0
-                ,_1: A2(resize,_p15._0._1,_p15._1)};
+                ,_0: _p17._0._0
+                ,_1: A2(resize,_p17._0._1,_p17._1)};
       },
       A2(zip,clist,rlist));
       var cdict = $Dict.fromList(controls);
       return _U.update(model,{rect: rect,controls: cdict});
    });
    var update = F2(function (action,model) {
-      var _p16 = {ctor: "_Tuple2",_0: action,_1: model};
-      _v14_4: do {
-         if (_p16.ctor === "_Tuple2") {
-               switch (_p16._0.ctor)
-               {case "CaButton": if (_p16._1.ctor === "CmButton") {
-                          var _p17 = A2($SvgButton.update,_p16._0._0,_p16._1._0);
-                          var a = _p17._0;
-                          var b = _p17._1;
+      var _p18 = {ctor: "_Tuple2",_0: action,_1: model};
+      _v16_4: do {
+         if (_p18.ctor === "_Tuple2") {
+               switch (_p18._0.ctor)
+               {case "CaButton": if (_p18._1.ctor === "CmButton") {
+                          var _p19 = A2($SvgButton.update,_p18._0._0,_p18._1._0);
+                          var a = _p19._0;
+                          var b = _p19._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmButton(a)
                                  ,_1: A2($Effects.map,CaButton,b)};
                        } else {
-                          break _v14_4;
+                          break _v16_4;
                        }
-                  case "CaSlider": if (_p16._1.ctor === "CmSlider") {
-                          var _p18 = A2($SvgSlider.update,_p16._0._0,_p16._1._0);
-                          var a = _p18._0;
-                          var b = _p18._1;
+                  case "CaSlider": if (_p18._1.ctor === "CmSlider") {
+                          var _p20 = A2($SvgSlider.update,_p18._0._0,_p18._1._0);
+                          var a = _p20._0;
+                          var b = _p20._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmSlider(a)
                                  ,_1: A2($Effects.map,CaSlider,b)};
                        } else {
-                          break _v14_4;
+                          break _v16_4;
                        }
-                  case "CaLabel": if (_p16._1.ctor === "CmLabel") {
-                          var _p19 = A2($SvgLabel.update,_p16._0._0,_p16._1._0);
-                          var a = _p19._0;
-                          var b = _p19._1;
+                  case "CaLabel": if (_p18._1.ctor === "CmLabel") {
+                          var _p21 = A2($SvgLabel.update,_p18._0._0,_p18._1._0);
+                          var a = _p21._0;
+                          var b = _p21._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmLabel(a)
                                  ,_1: A2($Effects.map,CaLabel,b)};
                        } else {
-                          break _v14_4;
+                          break _v16_4;
                        }
-                  default: if (_p16._1.ctor === "CmSizer") {
-                          var _p20 = A2(szupdate,_p16._0._0,_p16._1._0);
-                          var a = _p20._0;
-                          var b = _p20._1;
+                  default: if (_p18._1.ctor === "CmSizer") {
+                          var _p22 = A2(szupdate,_p18._0._0,_p18._1._0);
+                          var a = _p22._0;
+                          var b = _p22._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmSizer(a)
                                  ,_1: A2($Effects.map,CaSizer,b)};
                        } else {
-                          break _v14_4;
+                          break _v16_4;
                        }}
             } else {
-               break _v14_4;
+               break _v16_4;
             }
       } while (false);
       return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
    });
    var szupdate = F2(function (action,model) {
-      var _p21 = action;
-      var _p23 = _p21._0;
-      var bb = A2($Dict.get,_p23,model.controls);
-      var _p22 = bb;
-      if (_p22.ctor === "Just") {
-            var wha = A2(update,_p21._1,_p22._0);
+      var _p23 = action;
+      var _p25 = _p23._0;
+      var bb = A2($Dict.get,_p25,model.controls);
+      var _p24 = bb;
+      if (_p24.ctor === "Just") {
+            var wha = A2(update,_p23._1,_p24._0);
             var updcontrols = A3($Dict.insert,
-            _p23,
+            _p25,
             $Basics.fst(wha),
             model.controls);
             var newmod = _U.update(model,{controls: updcontrols});
             return {ctor: "_Tuple2"
                    ,_0: newmod
-                   ,_1: A2($Effects.map,SzCAction(_p23),$Basics.snd(wha))};
+                   ,_1: A2($Effects.map,SzCAction(_p25),$Basics.snd(wha))};
          } else {
             return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
          }
    });
    var init = F4(function (sendf,rect,cid,spec) {
-      var _p24 = spec;
-      switch (_p24.ctor)
-      {case "CsButton": var _p25 = A4($SvgButton.init,
+      var _p26 = spec;
+      switch (_p26.ctor)
+      {case "CsButton": var _p27 = A4($SvgButton.init,
            sendf,
            rect,
            cid,
-           _p24._0);
-           var a = _p25._0;
-           var b = _p25._1;
-           return {ctor: "_Tuple2"
-                  ,_0: CmButton(a)
-                  ,_1: A2($Effects.map,CaButton,b)};
-         case "CsSlider": var _p26 = A4($SvgSlider.init,
-           sendf,
-           rect,
-           cid,
-           _p24._0);
-           var a = _p26._0;
-           var b = _p26._1;
-           return {ctor: "_Tuple2"
-                  ,_0: CmSlider(a)
-                  ,_1: A2($Effects.map,CaSlider,b)};
-         case "CsLabel": var _p27 = A3($SvgLabel.init,rect,cid,_p24._0);
+           _p26._0);
            var a = _p27._0;
            var b = _p27._1;
            return {ctor: "_Tuple2"
-                  ,_0: CmLabel(a)
-                  ,_1: A2($Effects.map,CaLabel,b)};
-         default: var _p28 = A4(szinit,sendf,rect,cid,_p24._0);
+                  ,_0: CmButton(a)
+                  ,_1: A2($Effects.map,CaButton,b)};
+         case "CsSlider": var _p28 = A4($SvgSlider.init,
+           sendf,
+           rect,
+           cid,
+           _p26._0);
            var a = _p28._0;
            var b = _p28._1;
+           return {ctor: "_Tuple2"
+                  ,_0: CmSlider(a)
+                  ,_1: A2($Effects.map,CaSlider,b)};
+         case "CsLabel": var _p29 = A3($SvgLabel.init,rect,cid,_p26._0);
+           var a = _p29._0;
+           var b = _p29._1;
+           return {ctor: "_Tuple2"
+                  ,_0: CmLabel(a)
+                  ,_1: A2($Effects.map,CaLabel,b)};
+         default: var _p30 = A4(szinit,sendf,rect,cid,_p26._0);
+           var a = _p30._0;
+           var b = _p30._1;
            return {ctor: "_Tuple2"
                   ,_0: CmSizer(a)
                   ,_1: A2($Effects.map,CaSizer,b)};}
    });
    var szinit = F4(function (sendf,rect,cid,szspec) {
       var idxs = _U.range(0,$List.length(szspec.controls));
-      var rlist = function () {
-         var _p29 = szspec.orientation;
-         if (_p29.ctor === "Horizontal") {
-               return A2($SvgThings.hrects,
-               rect,
-               $List.length(szspec.controls));
-            } else {
-               return A2($SvgThings.vrects,
-               rect,
-               $List.length(szspec.controls));
-            }
-      }();
+      var rlist = A4(mkRlist,
+      szspec.orientation,
+      rect,
+      $List.length(szspec.controls),
+      szspec.proportions);
       var blist = A2($List.map,
-      function (_p30) {
-         var _p31 = _p30;
+      function (_p31) {
+         var _p32 = _p31;
          return A4(init,
          sendf,
-         _p31._1,
-         A2($Basics._op["++"],cid,_U.list([_p31._2])),
-         _p31._0);
+         _p32._1,
+         A2($Basics._op["++"],cid,_U.list([_p32._2])),
+         _p32._0);
       },
       A4($List.map3,
       F3(function (v0,v1,v2) {
@@ -14014,17 +14109,18 @@ Elm.SvgControl.make = function (_elm) {
       idxs));
       var controlz = A2(zip,idxs,A2($List.map,$Basics.fst,blist));
       var fx = $Effects.batch(A2($List.map,
-      function (_p32) {
-         var _p33 = _p32;
-         return A2($Effects.map,SzCAction(_p33._0),_p33._1);
+      function (_p33) {
+         var _p34 = _p33;
+         return A2($Effects.map,SzCAction(_p34._0),_p34._1);
       },
       A2(zip,idxs,A2($List.map,$Basics.snd,blist))));
       return {ctor: "_Tuple2"
-             ,_0: A4(SzModel,
+             ,_0: A5(SzModel,
              cid,
              rect,
              $Dict.fromList(controlz),
-             szspec.orientation)
+             szspec.orientation,
+             szspec.proportions)
              ,_1: fx};
    });
    var CsSizer = function (a) {
@@ -14040,8 +14136,8 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CsButton",_0: a};
    };
    var jsCs = function (t) {
-      var _p34 = t;
-      switch (_p34)
+      var _p35 = t;
+      switch (_p35)
       {case "button": return A2($Json$Decode.andThen,
            $SvgButton.jsSpec,
            function (a) {
@@ -14066,14 +14162,21 @@ Elm.SvgControl.make = function (_elm) {
            "unkown type: ",
            t));}
    };
-   var jsSzSpec = A3($Json$Decode.object2,
+   var jsSzSpec = A4($Json$Decode.object3,
    SzSpec,
    A2($Json$Decode.andThen,
    A2($Json$Decode._op[":="],"orientation",$Json$Decode.string),
    $SvgThings.jsOrientation),
+   A2($Json$Decode.andThen,
+   $Json$Decode.maybe(A2($Json$Decode._op[":="],
+   "proportions",
+   $Json$Decode.list($Json$Decode.$float))),
+   function (x) {
+      return $Json$Decode.succeed(A2($Maybe.map,processProps,x));
+   }),
    A2($Json$Decode._op[":="],
    "controls",
-   $Json$Decode.list(lazy(function (_p35) {    return jsSpec;}))));
+   $Json$Decode.list(lazy(function (_p36) {    return jsSpec;}))));
    var jsSpec = A2($Json$Decode.andThen,
    A2($Json$Decode._op[":="],"type",$Json$Decode.string),
    jsCs);
@@ -14105,6 +14208,7 @@ Elm.SvgControl.make = function (_elm) {
                                    ,init: init
                                    ,view: view
                                    ,SzSpec: SzSpec
+                                   ,processProps: processProps
                                    ,jsSzSpec: jsSzSpec
                                    ,lazy: lazy
                                    ,SzModel: SzModel
@@ -14114,6 +14218,7 @@ Elm.SvgControl.make = function (_elm) {
                                    ,zip: zip
                                    ,szupdate: szupdate
                                    ,szresize: szresize
+                                   ,mkRlist: mkRlist
                                    ,szinit: szinit
                                    ,szview: szview
                                    ,viewSvgControls: viewSvgControls};

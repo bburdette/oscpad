@@ -60,9 +60,52 @@ hrects rct count =
    in
      map (mekhr rct w) idxs
 
-
 mekhr: Rect -> Int -> Int -> Rect
 mekhr br w i = Rect (w * i) br.y w br.h 
+
+-- make a number of horizontally proportionally sized rects.
+hrectsp: Rect -> Int -> List Float -> List Rect
+hrectsp rct count props = 
+  let props = processProps count props
+      fw = toFloat rct.w
+      widths = map (\p -> round (p * fw)) props 
+      xes = somme 0 widths
+      idxs = [0..(count-1)]
+   in
+     map (mekhrp rct) (map2 (,) xes widths)
+
+mekhrp: Rect -> (Int, Int) -> Rect
+mekhrp prect (x,w) = 
+  Rect x prect.y w prect.h
+
+-- make a number of vertically evenly spaced rects.
+vrectsp: Rect -> Int -> List Float -> List Rect
+vrectsp rct count props = 
+  let props = processProps count props
+      fh = toFloat rct.h
+      heights = map (\p -> round (p * fh)) props 
+      yes = somme 0 heights 
+      idxs = [0..(count-1)]
+   in
+     map (mekvrp rct) (map2 (,) yes heights)
+
+mekvrp: Rect -> (Int, Int) -> Rect
+mekvrp prect (y,h) = 
+  Rect prect.x y prect.w h 
+
+-- given a list [a,b,c,d,e], produce the sum list:
+-- [0, a, a+b, a+b+c, etc]
+somme: Int -> List Int -> List Int
+somme f lst = 
+  case head lst of 
+    Nothing -> lst
+    Just hf -> 
+      let s = f + hf 
+          tl = tail lst in 
+      case tl of 
+        Nothing -> [s]
+        Just t -> f :: (somme s t) 
+ 
 
 -- make a number of vertically evenly spaced rects.
 vrects: Rect -> Int -> List Rect
@@ -76,3 +119,13 @@ vrects rct count =
 
 mekvr: Rect -> Int -> Int -> Rect
 mekvr br h i = Rect br.x (h * i) br.w h 
+
+
+processProps: Int -> List Float -> List Float
+processProps controlcount lst = 
+  let l = length lst
+      r = if controlcount > l then controlcount - l else 0 in 
+  let lst = (take controlcount lst) `append` (repeat r 0.0)
+      s = sum lst in
+  List.map (\x -> x / s) lst
+

@@ -3,6 +3,7 @@
   "rootControl": 
     { "type": "sizer",
       "orientation": "vertical",
+      "proportions": [.1,.3,.6],
       "controls": [
        { "type": "label"
        , "name": "lb3"

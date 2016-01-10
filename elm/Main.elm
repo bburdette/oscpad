@@ -39,6 +39,8 @@ send message = socket `Task.andThen` WebSocket.send message
 port sending : Signal (Task x ())
 port sending = Signal.map send inputKeyboard
 
+-- not really used yet!  but hopefully will be soon, for a 
+-- text entry control or other keyboard oriented controls.  
 inputKeyboard : Signal String
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 

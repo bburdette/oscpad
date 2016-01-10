@@ -81,16 +81,17 @@ update action model =
        , Effects.none )
     SvgTouch touches -> (model, Effects.none)
 
-resize: Model -> SvgThings.Rect -> Model
+resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
-  { model | rect = rect  
+  ({ model | rect = rect  
           , srect = (SvgThings.SRect (toString (rect.x + 5)) 
                                       (toString (rect.y + 5))
                                       (toString (rect.w - 5))
                                       (toString (rect.h - 5))) 
           , middlex = (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
           , middley = (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
-  }
+    }
+  , Effects.none)
 
 -- VIEW
 (=>) = (,)

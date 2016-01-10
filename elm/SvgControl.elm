@@ -69,13 +69,16 @@ controlName mod =
     CmLabel smod -> Just smod.name
     CmSizer szmod -> Nothing
 
-resize: Model -> SvgThings.Rect -> Model
+tupMap2: (a -> c) -> (b -> d) -> (a,b) -> (c,d)
+tupMap2 fa fb ab = (fa (fst ab), fb (snd ab))
+
+resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   case model of 
-    CmButton mod -> CmButton (SvgButton.resize mod rect)
-    CmSlider mod -> CmSlider (SvgSlider.resize mod rect)
-    CmLabel mod -> CmLabel (SvgLabel.resize mod rect)
-    CmSizer mod -> CmSizer (szresize mod rect)
+    CmButton mod -> tupMap2 CmButton (Effects.map CaButton) (SvgButton.resize mod rect)
+    CmSlider mod -> tupMap2 CmSlider (Effects.map CaSlider) (SvgSlider.resize mod rect)
+    CmLabel mod -> tupMap2 CmLabel (Effects.map CaLabel) (SvgLabel.resize mod rect)
+    CmSizer mod -> tupMap2 CmSizer (Effects.map CaSizer) (szresize mod rect)
 
 type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
     
@@ -249,14 +252,20 @@ szupdate action model =
               (newmod, Effects.map (SzCAction id) (snd wha))
         Nothing -> (model, Effects.none) 
  
-szresize : SzModel -> SvgThings.Rect -> SzModel
+szresize : SzModel -> SvgThings.Rect -> (SzModel, Effects SzAction)
 szresize model rect = 
   let clist = Dict.toList(model.controls)
       rlist = mkRlist model.orientation rect (List.length clist) model.proportions 
-      controls = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
+      ctlsNeffs = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
+      controls = List.map (\(i,(c,efs)) -> (i,c)) ctlsNeffs
+      effs = Effects.batch 
+          (List.map 
+            (\(i,(c,efs)) -> (Effects.map (\ef -> SzCAction i ef) efs))
+            ctlsNeffs)
       cdict = Dict.fromList(controls)
     in
-     { model | rect = rect, controls = cdict }
+     ( { model | rect = rect, controls = cdict }
+     , effs )
          
 mkRlist: SvgThings.Orientation -> SvgThings.Rect -> Int -> Maybe (List Float) -> List SvgThings.Rect
 mkRlist orientation rect count mbproportions = 

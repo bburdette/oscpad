@@ -78,11 +78,12 @@ update action model =
     WinDims (x,y) -> 
       -- init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
       let nr = (SvgThings.Rect 0 0 x y)
+          (ctrl, eff) = SvgControl.resize model.control nr 
         in
       ({ model | mahrect = nr
                , srect = (SvgThings.toSRect nr)
-               , control = SvgControl.resize model.control nr }, 
-       Effects.none)
+               , control = ctrl }, 
+       Effects.map CAction eff)
     Touche touchlist ->
       let tdict = touchDict model.control touchlist
           curtouches = Dict.map (\_ v -> fst v) tdict

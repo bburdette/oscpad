@@ -15,6 +15,7 @@ import WebSocket exposing (WebSocket)
 import SvgThings
 import Window
 import SvgTouch
+import SvgTextSize
 
 ---------------------------------------
 

@@ -13,6 +13,9 @@ import Svg.Attributes exposing (..)
 import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
 import Touch
+import SvgTextSize exposing (..)
+import Time exposing (..)
+import String
 
 type alias Spec = 
   { name: String
@@ -29,6 +32,7 @@ jsSpec = JD.object2 Spec
 type alias Model =
   { name : String
   , label: String
+  , fontSize: Int
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
@@ -44,6 +48,7 @@ init: SvgThings.Rect -> SvgThings.ControlId -> Spec
 init rect cid spec =
   ( Model (spec.name) 
           (spec.label)
+          20          -- default to whatever
           cid
           rect 
           (SvgThings.SRect (toString (rect.x + 5)) 
@@ -60,6 +65,9 @@ init rect cid spec =
 type Action
     = SvgUpdate UpdateMessage
     | SvgTouch (List Touch.Touch)
+    | SvgTextSize TextBounds 
+    | SvgInt Int
+    | SvgTime Time
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
@@ -71,7 +79,6 @@ jsUpdateMessage = JD.object2 UpdateMessage
   ("controlId" := SvgThings.decodeControlId) 
   ("label" := JD.string)
   
-
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
@@ -80,18 +87,71 @@ update action model =
       ({ model | label = um.label }
        , Effects.none )
     SvgTouch touches -> (model, Effects.none)
+    SvgTextSize tb -> 
+      ({ model | label = String.concat [toString tb.w, " ", toString tb.h] }, Effects.none)
+      -- (model, Effects.none)
+    SvgInt tw -> 
+      ({ model | label = String.concat ["width: ", toString tw] }, Effects.none)
+    SvgTime tm -> 
+      ({ model | label = toString tm }, Effects.none)
+
+{-
+
+ var width=336, height=107;
+ var textNode = document.getElementById("t1");
+ var bb = textNode.getBBox();
+ var widthTransform = width / bb.width;
+ var heightTransform = height / bb.height;
+ var value = widthTransform < heightTransform ? widthTransform : heightTransform;
+ textNode.setAttribute("transform", "matrix("+value+", 0, 0, "+value+", 0,0)");
+
+-}
+
+
+
+
 
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   ({ model | rect = rect  
-          , srect = (SvgThings.SRect (toString (rect.x + 5)) 
-                                      (toString (rect.y + 5))
-                                      (toString (rect.w - 5))
-                                      (toString (rect.h - 5))) 
+           , srect = (SvgThings.SRect (toString (rect.x + 5)) 
+                                     (toString (rect.y + 5))
+                                     (toString (rect.w - 5))
+                                     (toString (rect.h - 5))) 
           , middlex = (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
           , middley = (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
     }
+  , Effects.task 
+    (Task.andThen 
+      (SvgTextSize.getTextWidth model.label "20px sans-serif")
+      (\tb -> Task.succeed (SvgInt tb))))
+
+{-
+      (SvgTextSize.getTextWidth (TextSizeRequest model.label "20px sans-serif"))
+      (\tb -> Task.succeed (SvgInt tb))))
+
+      (SvgTextSize.getTextWidth model.label "20px sans-serif")
+      (\tw -> Task.succeed (SvgTextSize tw))))
+
+      (SvgTextSize.getTextWidth model.label "20px sans-serif")
+      (\tw -> Task.succeed (SvgInt tw))))
+
+      (SvgTextSize.getTextSize (TextSizeRequest model.label "20px sans-serif"))
+      (\tb -> Task.succeed (SvgTextSize tb))))
+
+      (SvgTextSize.getTb)
+      (\tb -> Task.succeed (SvgTextSize tb))))
+
+      (SvgTextSize.getTInt)
+      (\tb -> Task.succeed (SvgInt tb))))
+
+      (SvgTextSize.getCurrentTime)
+      (\tb -> Task.succeed (SvgTime tb))))
+
+      (Task.succeed (TextBounds 100 100))
+  , Effects.task (Task.succeed (SvgTextSize (TextBounds 100 100))))
   , Effects.none)
+-}
 
 -- VIEW
 (=>) = (,)
@@ -114,7 +174,7 @@ view address model =
             , textAnchor "middle" 
             , x model.middlex 
             , y fonty
-            , lengthAdjust "glyphs"
+            -- , lengthAdjust "glyphs"
             -- , textLength model.srect.w 
             , fontSize model.srect.h
             ] 

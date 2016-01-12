@@ -16,6 +16,8 @@ import Touch
 import SvgTextSize exposing (..)
 import Time exposing (..)
 import String
+import Template exposing (template, render)
+import Template.Infix exposing ((<%), (%>))
 
 type alias Spec = 
   { name: String
@@ -32,7 +34,7 @@ jsSpec = JD.object2 Spec
 type alias Model =
   { name : String
   , label: String
-  , fontSize: Int
+  , fontInfo: Maybe (Float, Int)   -- scaling, width
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
@@ -46,9 +48,9 @@ containsXY mod x y = SvgThings.containsXY mod.rect x y
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init rect cid spec =
-  ( Model (spec.name) 
+  ( Model (spec.name)
           (spec.label)
-          20          -- default to whatever
+          Nothing
           cid
           rect 
           (SvgThings.SRect (toString (rect.x + 5)) 
@@ -57,17 +59,17 @@ init rect cid spec =
                            (toString (rect.h - 5)))
           (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
           (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
-  , Effects.none
-  )
+  , Effects.task 
+    (Task.andThen 
+      (SvgTextSize.getTextWidth spec.label "20px sans-serif")
+      (\tb -> Task.succeed (SvgTextWidth tb))))
 
 -- UPDATE
 
 type Action
     = SvgUpdate UpdateMessage
     | SvgTouch (List Touch.Touch)
-    | SvgTextSize TextBounds 
-    | SvgInt Int
-    | SvgTime Time
+    | SvgTextWidth Int
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
@@ -83,17 +85,27 @@ update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     SvgUpdate um -> 
-      -- sanity check for ids?  or don't.
+      -- when the text changes, measure it. 
       ({ model | label = um.label }
-       , Effects.none )
+      , Effects.task 
+        (Task.andThen 
+          (SvgTextSize.getTextWidth um.label "20px sans-serif")
+          (\tb -> Task.succeed (SvgTextWidth tb))))
     SvgTouch touches -> (model, Effects.none)
-    SvgTextSize tb -> 
-      ({ model | label = String.concat [toString tb.w, " ", toString tb.h] }, Effects.none)
-      -- (model, Effects.none)
-    SvgInt tw -> 
-      ({ model | label = String.concat ["width: ", toString tw] }, Effects.none)
-    SvgTime tm -> 
-      ({ model | label = toString tm }, Effects.none)
+    SvgTextWidth w ->
+      let fs = computeFontScaling (toFloat w) 20.0 (toFloat model.rect.w) (toFloat model.rect.h) 
+      in
+      Debug.log (toString fs)
+      ({ model | fontInfo = Just (fs,w) }, Effects.none)
+      -- ({ model | label = toString w, fontScale = Just fs }, Effects.none)
+
+computeFontScaling: Float -> Float -> Float -> Float -> Float 
+computeFontScaling fw fh rw rh = 
+  let wr = rw / fw
+      hr = rh / fh in 
+  Debug.log (toString (List.map toString [fw,fh,rw,rh])) 
+    (if wr < hr then wr else hr)
+    
 
 {-
 
@@ -108,9 +120,6 @@ update action model =
 -}
 
 
-
-
-
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   ({ model | rect = rect  
@@ -121,46 +130,23 @@ resize model rect =
           , middlex = (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
           , middley = (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
     }
-  , Effects.task 
-    (Task.andThen 
-      (SvgTextSize.getTextWidth model.label "20px sans-serif")
-      (\tb -> Task.succeed (SvgInt tb))))
-
-{-
-      (SvgTextSize.getTextWidth (TextSizeRequest model.label "20px sans-serif"))
-      (\tb -> Task.succeed (SvgInt tb))))
-
-      (SvgTextSize.getTextWidth model.label "20px sans-serif")
-      (\tw -> Task.succeed (SvgTextSize tw))))
-
-      (SvgTextSize.getTextWidth model.label "20px sans-serif")
-      (\tw -> Task.succeed (SvgInt tw))))
-
-      (SvgTextSize.getTextSize (TextSizeRequest model.label "20px sans-serif"))
-      (\tb -> Task.succeed (SvgTextSize tb))))
-
-      (SvgTextSize.getTb)
-      (\tb -> Task.succeed (SvgTextSize tb))))
-
-      (SvgTextSize.getTInt)
-      (\tb -> Task.succeed (SvgInt tb))))
-
-      (SvgTextSize.getCurrentTime)
-      (\tb -> Task.succeed (SvgTime tb))))
-
-      (Task.succeed (TextBounds 100 100))
-  , Effects.task (Task.succeed (SvgTextSize (TextBounds 100 100))))
   , Effects.none)
--}
 
 -- VIEW
 (=>) = (,)
 
+{-
+      fs = case model.fontScale of
+             Just fs -> fs
+             Nothing -> 1.0
+
+-}
+
 view : Signal.Address Action -> Model -> Svg
 view address model =
-  let fonty = toString ((toFloat model.rect.y) + (toFloat model.rect.h) * 0.9) in
-  g [ ]
-    [ rect
+  let -- fonty = toString ((toFloat model.rect.y) + (toFloat model.rect.h) * 0.9)  
+      -- fs = 2.0
+      lbrect = rect
         [ x model.srect.x
         , y model.srect.y 
         , width model.srect.w
@@ -170,14 +156,36 @@ view address model =
         , style "fill: #A1A1A1;"
         ]
         []
-    , text' [ fill "black"  
-            , textAnchor "middle" 
-            , x model.middlex 
-            , y fonty
-            -- , lengthAdjust "glyphs"
-            -- , textLength model.srect.w 
-            , fontSize model.srect.h
-            ] 
-            [ text model.label ]
-    ]
+      svgl = lbrect :: calcText model
+  in
+  g [ ] svgl
 
+calcText : Model -> List Svg
+calcText model = 
+  case model.fontInfo of
+    Nothing -> []
+    Just (scale,width) -> 
+      let xc = ((toFloat model.rect.x) + (toFloat model.rect.w) / 2)
+          yc = ((toFloat model.rect.y) + (toFloat model.rect.h) / 2)
+          xt = xc - ((toFloat width) * scale * 0.5)
+          -- xt = toFloat width * scale
+          -- xt = xc
+          yt = yc + 20.0 * scale * 0.5
+          tmpl = template "matrix(" <% .scale %> ", 0, 0, " <% .scale %> ", "<% .xt %>", "<% .yt %>")"
+          xf = render tmpl { scale = toString scale, xt = toString xt, yt = toString yt  }
+      in 
+        [ text' [ fill "black"  
+                -- , textAnchor "middle" 
+                -- , x model.middlex 
+                -- , y fonty
+                -- , lengthAdjust "glyphs"
+                -- , textLength model.srect.w 
+                -- , fontSize "20" -- model.srect.h
+                , fontSize "20px"
+                , fontFamily "sans-serif"
+                , transform xf 
+                ] 
+                [ text model.label ]
+        ]
+
+        

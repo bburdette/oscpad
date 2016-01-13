@@ -45,6 +45,9 @@ type alias Model =
 containsXY: Model -> Int -> Int -> Bool
 containsXY mod x y = SvgThings.containsXY mod.rect x y
 
+ff: String
+ff = "sans-serif"
+
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init rect cid spec =
@@ -61,7 +64,7 @@ init rect cid spec =
           (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
   , Effects.task 
     (Task.andThen 
-      (SvgTextSize.getTextWidth spec.label "20px sans-serif")
+      (SvgTextSize.getTextWidth spec.label ("20px " ++ ff))
       (\tb -> Task.succeed (SvgTextWidth tb))))
 
 -- UPDATE
@@ -89,7 +92,7 @@ update action model =
       ({ model | label = um.label }
       , Effects.task 
         (Task.andThen 
-          (SvgTextSize.getTextWidth um.label "20px sans-serif")
+          (SvgTextSize.getTextWidth um.label ("20px " ++ ff))
           (\tb -> Task.succeed (SvgTextWidth tb))))
     SvgTouch touches -> (model, Effects.none)
     SvgTextWidth w ->
@@ -182,7 +185,7 @@ calcText model =
                 -- , textLength model.srect.w 
                 -- , fontSize "20" -- model.srect.h
                 , fontSize "20px"
-                , fontFamily "sans-serif"
+                , fontFamily ff
                 , transform xf 
                 ] 
                 [ text model.label ]

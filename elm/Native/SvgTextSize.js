@@ -136,7 +136,7 @@ Elm.Native.SvgTextSize.make = function(localRuntime) {
         // re-use canvas object for better performance
      var canvas = getTextMetrics.canvas || (getTextMetrics.canvas = document.createElement("canvas"));
      var context = canvas.getContext("2d");
-     // context.font = font;
+     context.font = font;
      var metrics = context.measureText(text);
      return metrics;
     };

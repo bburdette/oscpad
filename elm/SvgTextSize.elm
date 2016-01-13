@@ -32,7 +32,7 @@ getTextWidth =
 
 getTextWidth : String -> String -> Task x Int 
 getTextWidth text font = 
-  Native.SvgTextSize.getTextWidth (toString text) (toString font)
+  Native.SvgTextSize.getTextWidth text font 
 
 getTextSize : TextSizeRequest -> Task x TextBounds
 getTextSize = 

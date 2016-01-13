@@ -52,7 +52,7 @@ ff = "sans-serif"
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init rect cid spec =
-  let fw = SvgTextSize.getTextWidthNow spec.label ("20px " ++ ff)
+  let fw = SvgTextSize.getTextWidth spec.label ("20px " ++ ff)
       fs = computeFontScaling (toFloat fw) 20.0 (toFloat rect.w) (toFloat rect.h) 
   in
   ( Model (spec.name)
@@ -74,7 +74,6 @@ init rect cid spec =
 type Action
     = SvgUpdate UpdateMessage
     | SvgTouch (List Touch.Touch)
---    | SvgTextWidth Int
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
@@ -90,7 +89,7 @@ update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     SvgUpdate um ->
-      let w = SvgTextSize.getTextWidthNow um.label ("20px " ++ ff)
+      let w = SvgTextSize.getTextWidth um.label ("20px " ++ ff)
           fs = computeFontScaling (toFloat w) 20.0 (toFloat model.rect.w) (toFloat model.rect.h) 
       in
       -- when the text changes, measure it. 
@@ -120,7 +119,7 @@ computeFontScaling fw fh rw rh =
 
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
-  let w = SvgTextSize.getTextWidthNow model.label ("20px " ++ ff)
+  let w = SvgTextSize.getTextWidth model.label ("20px " ++ ff)
       fs = computeFontScaling (toFloat w) 20.0 (toFloat rect.w) (toFloat rect.h) 
   in
   ({ model | rect = rect  

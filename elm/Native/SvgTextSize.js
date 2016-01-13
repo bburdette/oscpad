@@ -90,6 +90,11 @@ Elm.Native.SvgTextSize.make = function(localRuntime) {
     });
   };
 
+  var getTextWidthNow = function (t, f) {
+    blah = getTextMetrics(t, f);
+    return blah.width; 
+  };
+
   /*
   var getTextWidth = function (textsizerequest) {
     return Task.asyncFunction(function(callback) {
@@ -154,6 +159,7 @@ Elm.Native.SvgTextSize.make = function(localRuntime) {
   return localRuntime.Native.SvgTextSize.values = 
   {
      getTextWidth: F2(getTextWidth),
+     getTextWidthNow: F2(getTextWidthNow),
      getTextSize: getTextSize,
      getTInt: getTInt,
      getTb: getTb,

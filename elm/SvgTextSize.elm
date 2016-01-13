@@ -1,6 +1,6 @@
 module SvgTextSize
     ( TextSizeRequest, TextBounds, 
-      getTextSize, getTb, getTInt, getCurrentTime, getTextWidth
+      getTextSize, getTb, getTInt, getCurrentTime, getTextWidth, getTextWidthNow
     ) where
 
 import Native.SvgTextSize
@@ -29,6 +29,10 @@ getTextWidth =
   Native.SvgTextSize.getTextWidth
 
 -}
+
+getTextWidthNow : String -> String -> Int 
+getTextWidthNow text font = 
+  Native.SvgTextSize.getTextWidthNow text font 
 
 getTextWidth : String -> String -> Task x Int 
 getTextWidth text font = 

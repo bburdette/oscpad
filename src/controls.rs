@@ -8,7 +8,6 @@ extern crate serde;
 
 use serde_json::Value;
 
-use std::collections;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::error::Error;

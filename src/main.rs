@@ -2,27 +2,19 @@ extern crate websocket;
 
 use std::thread;
 use std::sync::{Arc, Mutex};
-use std::fmt::format;
-use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::os;
 use std::env;
-use std::convert;
 
 use std::io::Read;
 use std::io::{Error,ErrorKind};
-use std::error;
 use std::string::*;
-use std::collections::BTreeMap;
 
 use std::net::UdpSocket;
-use std::net::SocketAddr;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
 use websocket::stream::WebSocketStream;
-use websocket::server::sender;
 
 extern crate iron;
 
@@ -41,8 +33,6 @@ use tinyosc as osc;
 
 extern crate serde_json;
 use serde_json::Value;
-use serde_json::ser;
-
 
 fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
@@ -148,7 +138,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     // for sending, bind to this.  if we bind to localhost, we can't
     // send messages to other machines.  
     let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
-    let mut bc = broadcaster::Broadcaster::new();
+    let bc = broadcaster::Broadcaster::new();
     let wsos = try!(oscsendsocket.try_clone());
     let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
@@ -192,7 +182,7 @@ fn websockets_main( ipaddr: String,
     let sci = ci.clone();
     let osock = try!(oscsocket.try_clone());
     let osend = oscsendip.clone();
-    let mut broadcaster = broadcaster.clone();
+    let broadcaster = broadcaster.clone();
 
     let conn = try!(connection);
     thread::spawn(move || {
@@ -246,7 +236,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 
   // send up the json of the current controls.
   {
-    let mut sci  = ci.lock().unwrap();
+    let sci = ci.lock().unwrap();
 
     let updarray = controls::cmToUpdateArray(&sci.cm);
   
@@ -472,7 +462,7 @@ fn oscmain( recvsocket: UdpSocket,
             }
           },
           Err(e) => {
-            if (inmsg.path == "guiconfig" && inmsg.arguments.len() > 0) {
+            if inmsg.path == "guiconfig" && inmsg.arguments.len() > 0 {
               // is this a control config update instead?
               match &inmsg.arguments[0] {
                 &osc::Argument::s(guistring) => {
@@ -514,7 +504,7 @@ fn oscmain( recvsocket: UdpSocket,
     }
   }
 
-  Ok("ok".to_string())
+  // Ok("ok".to_string())
 }
 
 

@@ -72,11 +72,19 @@ type Action
     | SvgUpdate UpdateMessage
     | SvgTouch (List Touch.Touch)
 
+{-
 getX : JD.Decoder Int
 getX = "offsetX" := JD.int 
 
 getY : JD.Decoder Int
 getY = "offsetY" := JD.int 
+-}
+
+getX : JD.Decoder Int
+getX = "clientX" := JD.int 
+
+getY : JD.Decoder Int
+getY = "clientY" := JD.int 
 
 type UpdateType 
   = Press

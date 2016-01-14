@@ -13039,13 +13039,15 @@ Elm.SvgButton.make = function (_elm) {
       return {ctor: "_Tuple2",_0: v0,_1: v1};
    });
    var resize = F2(function (model,rect) {
-      return _U.update(model,
-      {rect: rect
-      ,srect: A4($SvgThings.SRect,
-      $Basics.toString(rect.x + 5),
-      $Basics.toString(rect.y + 5),
-      $Basics.toString(rect.w - 5),
-      $Basics.toString(rect.h - 5))});
+      return {ctor: "_Tuple2"
+             ,_0: _U.update(model,
+             {rect: rect
+             ,srect: A4($SvgThings.SRect,
+             $Basics.toString(rect.x + 5),
+             $Basics.toString(rect.y + 5),
+             $Basics.toString(rect.w - 5),
+             $Basics.toString(rect.h - 5))})
+             ,_1: $Effects.none};
    });
    var encodeUpdateType = function (ut) {
       var _p0 = ut;
@@ -13259,13 +13261,15 @@ Elm.SvgSlider.make = function (_elm) {
       return {ctor: "_Tuple2",_0: v0,_1: v1};
    });
    var resize = F2(function (model,rect) {
-      return _U.update(model,
-      {rect: rect
-      ,srect: A4($SvgThings.SRect,
-      $Basics.toString(rect.x + 5),
-      $Basics.toString(rect.y + 5),
-      $Basics.toString(rect.w - 5),
-      $Basics.toString(rect.h - 5))});
+      return {ctor: "_Tuple2"
+             ,_0: _U.update(model,
+             {rect: rect
+             ,srect: A4($SvgThings.SRect,
+             $Basics.toString(rect.x + 5),
+             $Basics.toString(rect.y + 5),
+             $Basics.toString(rect.w - 5),
+             $Basics.toString(rect.h - 5))})
+             ,_1: $Effects.none};
    });
    var encodeUpdateType = function (ut) {
       var _p0 = ut;
@@ -13312,10 +13316,10 @@ Elm.SvgSlider.make = function (_elm) {
    jsUpdateType),
    A2($Json$Decode._op[":="],"location",$Json$Decode.$float));
    var getY = A2($Json$Decode._op[":="],
-   "offsetY",
+   "clientY",
    $Json$Decode.$int);
    var getX = A2($Json$Decode._op[":="],
-   "offsetX",
+   "clientX",
    $Json$Decode.$int);
    var getLocation = F2(function (model,v) {
       var _p2 = model.orientation;
@@ -13576,6 +13580,142 @@ Elm.SvgSlider.make = function (_elm) {
                                   ,onMouseDown: onMouseDown
                                   ,onMouseUp: onMouseUp
                                   ,view: view};
+};Elm.Native.SvgTextSize = {};
+Elm.Native.SvgTextSize.make = function(localRuntime) {
+  localRuntime.Native = localRuntime.Native || {};
+  localRuntime.Native.SvgTextSize = localRuntime.Native.SvgTextSize || {};
+  if (localRuntime.Native.SvgTextSize.values) {
+    return localRuntime.Native.SvgTextSize.values;
+  }
+
+  // var Signal = Elm.Native.Signal.make(localRuntime);
+  // var Task = Elm.Native.Task.make(localRuntime);
+  // var Utils = Elm.Native.Utils.make(localRuntime);
+
+  var getTextWidth = function (t, f) {
+    blah = getTextMetrics(t, f);
+    return blah.width; 
+  };
+
+  /**
+   * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+   * 
+   * @param {String} text The text to be rendered.
+   * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+   * 
+   * see http://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+   */
+  var getTextMetrics = function (text, font) {
+        // re-use canvas object for better performance
+     var canvas = getTextMetrics.canvas || (getTextMetrics.canvas = document.createElement("canvas"));
+     var context = canvas.getContext("2d");
+     context.font = font;
+     var metrics = context.measureText(text);
+     return metrics;
+    };
+  
+  return localRuntime.Native.SvgTextSize.values = 
+  {
+     getTextWidth: F2(getTextWidth),
+  }
+}
+Elm.SvgTextSize = Elm.SvgTextSize || {};
+Elm.SvgTextSize.make = function (_elm) {
+   "use strict";
+   _elm.SvgTextSize = _elm.SvgTextSize || {};
+   if (_elm.SvgTextSize.values) return _elm.SvgTextSize.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Native$SvgTextSize = Elm.Native.SvgTextSize.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var getTextWidth = F2(function (text,font) {
+      return A2($Native$SvgTextSize.getTextWidth,text,font);
+   });
+   return _elm.SvgTextSize.values = {_op: _op
+                                    ,getTextWidth: getTextWidth};
+};Elm.Template = Elm.Template || {};
+Elm.Template.make = function (_elm) {
+   "use strict";
+   _elm.Template = _elm.Template || {};
+   if (_elm.Template.values) return _elm.Template.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var renderComponent = F3(function (record,component,result) {
+      var _p0 = component;
+      if (_p0.ctor === "Literal") {
+            return A2(F2(function (x,y) {
+               return A2($Basics._op["++"],x,y);
+            }),
+            result,
+            _p0._0);
+         } else {
+            return A2(F2(function (x,y) {
+               return A2($Basics._op["++"],x,y);
+            }),
+            result,
+            _p0._0(record));
+         }
+   });
+   var render = F2(function (template,record) {
+      return A3($List.foldr,renderComponent(record),"",template);
+   });
+   var Interpolation = function (a) {
+      return {ctor: "Interpolation",_0: a};
+   };
+   var withValue = F2(function (interpolator,template) {
+      return A2($List._op["::"],
+      Interpolation(interpolator),
+      template);
+   });
+   var andValue = $Basics.flip(withValue);
+   var Literal = function (a) {
+      return {ctor: "Literal",_0: a};
+   };
+   var template = function (initial) {
+      return _U.list([Literal(initial)]);
+   };
+   var withString = F2(function (string,template) {
+      return A2($List._op["::"],Literal(string),template);
+   });
+   var andString = $Basics.flip(withString);
+   return _elm.Template.values = {_op: _op
+                                 ,template: template
+                                 ,withValue: withValue
+                                 ,andValue: andValue
+                                 ,withString: withString
+                                 ,andString: andString
+                                 ,render: render};
+};Elm.Template = Elm.Template || {};
+Elm.Template.Infix = Elm.Template.Infix || {};
+Elm.Template.Infix.make = function (_elm) {
+   "use strict";
+   _elm.Template = _elm.Template || {};
+   _elm.Template.Infix = _elm.Template.Infix || {};
+   if (_elm.Template.Infix.values)
+   return _elm.Template.Infix.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Template = Elm.Template.make(_elm);
+   var _op = {};
+   _op["%>"] = $Template.andString;
+   _op["<%"] = $Template.andValue;
+   return _elm.Template.Infix.values = {_op: _op};
 };Elm.SvgLabel = Elm.SvgLabel || {};
 Elm.SvgLabel.make = function (_elm) {
    "use strict";
@@ -13592,54 +13732,19 @@ Elm.SvgLabel.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Svg = Elm.Svg.make(_elm),
    $Svg$Attributes = Elm.Svg.Attributes.make(_elm),
+   $SvgTextSize = Elm.SvgTextSize.make(_elm),
    $SvgThings = Elm.SvgThings.make(_elm),
+   $Template = Elm.Template.make(_elm),
+   $Template$Infix = Elm.Template.Infix.make(_elm),
    $Touch = Elm.Touch.make(_elm);
    var _op = {};
-   var view = F2(function (address,model) {
-      var fonty = $Basics.toString($Basics.toFloat(model.rect.y) + $Basics.toFloat(model.rect.h) * 0.9);
-      return A2($Svg.g,
-      _U.list([]),
-      _U.list([A2($Svg.rect,
-              _U.list([$Svg$Attributes.x(model.srect.x)
-                      ,$Svg$Attributes.y(model.srect.y)
-                      ,$Svg$Attributes.width(model.srect.w)
-                      ,$Svg$Attributes.height(model.srect.h)
-                      ,$Svg$Attributes.rx("15")
-                      ,$Svg$Attributes.ry("15")
-                      ,$Svg$Attributes.style("fill: #A1A1A1;")]),
-              _U.list([]))
-              ,A2($Svg.text$,
-              _U.list([$Svg$Attributes.fill("black")
-                      ,$Svg$Attributes.textAnchor("middle")
-                      ,$Svg$Attributes.x(model.middlex)
-                      ,$Svg$Attributes.y(fonty)
-                      ,$Svg$Attributes.lengthAdjust("glyphs")
-                      ,$Svg$Attributes.fontSize(model.srect.h)]),
-              _U.list([$Svg.text(model.label)]))]));
-   });
    _op["=>"] = F2(function (v0,v1) {
       return {ctor: "_Tuple2",_0: v0,_1: v1};
    });
-   var resize = F2(function (model,rect) {
-      return _U.update(model,
-      {rect: rect
-      ,srect: A4($SvgThings.SRect,
-      $Basics.toString(rect.x + 5),
-      $Basics.toString(rect.y + 5),
-      $Basics.toString(rect.w - 5),
-      $Basics.toString(rect.h - 5))
-      ,middlex: $Basics.toString($Basics.toFloat(rect.x) + $Basics.toFloat(rect.w) / 2)
-      ,middley: $Basics.toString($Basics.toFloat(rect.y) + $Basics.toFloat(rect.h) / 2)});
-   });
-   var update = F2(function (action,model) {
-      var _p0 = action;
-      if (_p0.ctor === "SvgUpdate") {
-            return {ctor: "_Tuple2"
-                   ,_0: _U.update(model,{label: _p0._0.label})
-                   ,_1: $Effects.none};
-         } else {
-            return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-         }
+   var computeFontScaling = F4(function (fw,fh,rw,rh) {
+      var hr = rh / fh;
+      var wr = rw / fw;
+      return _U.cmp(wr,hr) < 0 ? wr : hr;
    });
    var UpdateMessage = F2(function (a,b) {
       return {controlId: a,label: b};
@@ -13656,23 +13761,136 @@ Elm.SvgLabel.make = function (_elm) {
    var SvgUpdate = function (a) {
       return {ctor: "SvgUpdate",_0: a};
    };
+   var ff = "sans-serif";
+   var update = F2(function (action,model) {
+      var _p0 = action;
+      if (_p0.ctor === "SvgUpdate") {
+            var _p1 = _p0._0;
+            var w = A2($SvgTextSize.getTextWidth,
+            _p1.label,
+            A2($Basics._op["++"],"20px ",ff));
+            var fs = A4(computeFontScaling,
+            $Basics.toFloat(w),
+            20.0,
+            $Basics.toFloat(model.rect.w),
+            $Basics.toFloat(model.rect.h));
+            return {ctor: "_Tuple2"
+                   ,_0: _U.update(model,
+                   {label: _p1.label,fontScaling: fs,labelMeasuredWidth: w})
+                   ,_1: $Effects.none};
+         } else {
+            return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+         }
+   });
+   var resize = F2(function (model,rect) {
+      var w = A2($SvgTextSize.getTextWidth,
+      model.label,
+      A2($Basics._op["++"],"20px ",ff));
+      var fs = A4(computeFontScaling,
+      $Basics.toFloat(w),
+      20.0,
+      $Basics.toFloat(rect.w),
+      $Basics.toFloat(rect.h));
+      return {ctor: "_Tuple2"
+             ,_0: _U.update(model,
+             {rect: rect
+             ,srect: A4($SvgThings.SRect,
+             $Basics.toString(rect.x + 5),
+             $Basics.toString(rect.y + 5),
+             $Basics.toString(rect.w - 5),
+             $Basics.toString(rect.h - 5))
+             ,middlex: $Basics.toString($Basics.toFloat(rect.x) + $Basics.toFloat(rect.w) / 2)
+             ,middley: $Basics.toString($Basics.toFloat(rect.y) + $Basics.toFloat(rect.h) / 2)
+             ,fontScaling: fs
+             ,labelMeasuredWidth: w})
+             ,_1: $Effects.none};
+   });
+   var calcText = function (model) {
+      var tmpl = A2($Template$Infix._op["%>"],
+      A2($Template$Infix._op["<%"],
+      A2($Template$Infix._op["%>"],
+      A2($Template$Infix._op["<%"],
+      A2($Template$Infix._op["%>"],
+      A2($Template$Infix._op["<%"],
+      A2($Template$Infix._op["%>"],
+      A2($Template$Infix._op["<%"],
+      $Template.template("matrix("),
+      function (_) {
+         return _.scale;
+      }),
+      ", 0, 0, "),
+      function (_) {
+         return _.scale;
+      }),
+      ", "),
+      function (_) {
+         return _.xt;
+      }),
+      ", "),
+      function (_) {
+         return _.yt;
+      }),
+      ")");
+      var yc = $Basics.toFloat(model.rect.y) + $Basics.toFloat(model.rect.h) / 2;
+      var xc = $Basics.toFloat(model.rect.x) + $Basics.toFloat(model.rect.w) / 2;
+      var scale = model.fontScaling;
+      var yt = yc + 20.0 * scale * 0.5;
+      var width = model.labelMeasuredWidth;
+      var xt = xc - $Basics.toFloat(width) * scale * 0.5;
+      var xf = A2($Template.render,
+      tmpl,
+      {scale: $Basics.toString(scale)
+      ,xt: $Basics.toString(xt)
+      ,yt: $Basics.toString(yt)});
+      return _U.list([A2($Svg.text$,
+      _U.list([$Svg$Attributes.fill("black")
+              ,$Svg$Attributes.fontSize("20px")
+              ,$Svg$Attributes.fontFamily(ff)
+              ,$Svg$Attributes.transform(xf)]),
+      _U.list([$Svg.text(model.label)]))]);
+   };
+   var view = F2(function (address,model) {
+      var lbrect = A2($Svg.rect,
+      _U.list([$Svg$Attributes.x(model.srect.x)
+              ,$Svg$Attributes.y(model.srect.y)
+              ,$Svg$Attributes.width(model.srect.w)
+              ,$Svg$Attributes.height(model.srect.h)
+              ,$Svg$Attributes.rx("15")
+              ,$Svg$Attributes.ry("15")
+              ,$Svg$Attributes.style("fill: #A1A1A1;")]),
+      _U.list([]));
+      var svgl = A2($List._op["::"],lbrect,calcText(model));
+      return A2($Svg.g,_U.list([]),svgl);
+   });
    var containsXY = F3(function (mod,x,y) {
       return A3($SvgThings.containsXY,mod.rect,x,y);
    });
-   var Model = F7(function (a,b,c,d,e,f,g) {
+   var Model = F9(function (a,b,c,d,e,f,g,h,i) {
       return {name: a
              ,label: b
-             ,cid: c
-             ,rect: d
-             ,srect: e
-             ,middlex: f
-             ,middley: g};
+             ,fontScaling: c
+             ,labelMeasuredWidth: d
+             ,cid: e
+             ,rect: f
+             ,srect: g
+             ,middlex: h
+             ,middley: i};
    });
    var init = F3(function (rect,cid,spec) {
+      var fw = A2($SvgTextSize.getTextWidth,
+      spec.label,
+      A2($Basics._op["++"],"20px ",ff));
+      var fs = A4(computeFontScaling,
+      $Basics.toFloat(fw),
+      20.0,
+      $Basics.toFloat(rect.w),
+      $Basics.toFloat(rect.h));
       return {ctor: "_Tuple2"
-             ,_0: A7(Model,
+             ,_0: A9(Model,
              spec.name,
              spec.label,
+             fs,
+             fw,
              cid,
              rect,
              A4($SvgThings.SRect,
@@ -13694,14 +13912,17 @@ Elm.SvgLabel.make = function (_elm) {
                                  ,jsSpec: jsSpec
                                  ,Model: Model
                                  ,containsXY: containsXY
+                                 ,ff: ff
                                  ,init: init
                                  ,SvgUpdate: SvgUpdate
                                  ,SvgTouch: SvgTouch
                                  ,UpdateMessage: UpdateMessage
                                  ,jsUpdateMessage: jsUpdateMessage
                                  ,update: update
+                                 ,computeFontScaling: computeFontScaling
                                  ,resize: resize
-                                 ,view: view};
+                                 ,view: view
+                                 ,calcText: calcText};
 };Elm.SvgControl = Elm.SvgControl || {};
 Elm.SvgControl.make = function (_elm) {
    "use strict";
@@ -13800,6 +14021,11 @@ Elm.SvgControl.make = function (_elm) {
             return _U.list([]);
          }
    };
+   var tupMap2 = F3(function (fa,fb,ab) {
+      return {ctor: "_Tuple2"
+             ,_0: fa($Basics.fst(ab))
+             ,_1: fb($Basics.snd(ab))};
+   });
    var controlName = function (mod) {
       var _p6 = mod;
       switch (_p6.ctor)
@@ -13947,16 +14173,22 @@ Elm.SvgControl.make = function (_elm) {
    var resize = F2(function (model,rect) {
       var _p15 = model;
       switch (_p15.ctor)
-      {case "CmButton": return CmButton(A2($SvgButton.resize,
-           _p15._0,
-           rect));
-         case "CmSlider": return CmSlider(A2($SvgSlider.resize,
-           _p15._0,
-           rect));
-         case "CmLabel": return CmLabel(A2($SvgLabel.resize,
-           _p15._0,
-           rect));
-         default: return CmSizer(A2(szresize,_p15._0,rect));}
+      {case "CmButton": return A3(tupMap2,
+           CmButton,
+           $Effects.map(CaButton),
+           A2($SvgButton.resize,_p15._0,rect));
+         case "CmSlider": return A3(tupMap2,
+           CmSlider,
+           $Effects.map(CaSlider),
+           A2($SvgSlider.resize,_p15._0,rect));
+         case "CmLabel": return A3(tupMap2,
+           CmLabel,
+           $Effects.map(CaLabel),
+           A2($SvgLabel.resize,_p15._0,rect));
+         default: return A3(tupMap2,
+           CmSizer,
+           $Effects.map(CaSizer),
+           A2(szresize,_p15._0,rect));}
    });
    var szresize = F2(function (model,rect) {
       var clist = $Dict.toList(model.controls);
@@ -13965,7 +14197,7 @@ Elm.SvgControl.make = function (_elm) {
       rect,
       $List.length(clist),
       model.proportions);
-      var controls = A2($List.map,
+      var ctlsNeffs = A2($List.map,
       function (_p16) {
          var _p17 = _p16;
          return {ctor: "_Tuple2"
@@ -13973,111 +14205,129 @@ Elm.SvgControl.make = function (_elm) {
                 ,_1: A2(resize,_p17._0._1,_p17._1)};
       },
       A2(zip,clist,rlist));
+      var controls = A2($List.map,
+      function (_p18) {
+         var _p19 = _p18;
+         return {ctor: "_Tuple2",_0: _p19._0,_1: _p19._1._0};
+      },
+      ctlsNeffs);
       var cdict = $Dict.fromList(controls);
-      return _U.update(model,{rect: rect,controls: cdict});
+      var effs = $Effects.batch(A2($List.map,
+      function (_p20) {
+         var _p21 = _p20;
+         return A2($Effects.map,
+         function (ef) {
+            return A2(SzCAction,_p21._0,ef);
+         },
+         _p21._1._1);
+      },
+      ctlsNeffs));
+      return {ctor: "_Tuple2"
+             ,_0: _U.update(model,{rect: rect,controls: cdict})
+             ,_1: effs};
    });
    var update = F2(function (action,model) {
-      var _p18 = {ctor: "_Tuple2",_0: action,_1: model};
-      _v16_4: do {
-         if (_p18.ctor === "_Tuple2") {
-               switch (_p18._0.ctor)
-               {case "CaButton": if (_p18._1.ctor === "CmButton") {
-                          var _p19 = A2($SvgButton.update,_p18._0._0,_p18._1._0);
-                          var a = _p19._0;
-                          var b = _p19._1;
+      var _p22 = {ctor: "_Tuple2",_0: action,_1: model};
+      _v18_4: do {
+         if (_p22.ctor === "_Tuple2") {
+               switch (_p22._0.ctor)
+               {case "CaButton": if (_p22._1.ctor === "CmButton") {
+                          var _p23 = A2($SvgButton.update,_p22._0._0,_p22._1._0);
+                          var a = _p23._0;
+                          var b = _p23._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmButton(a)
                                  ,_1: A2($Effects.map,CaButton,b)};
                        } else {
-                          break _v16_4;
+                          break _v18_4;
                        }
-                  case "CaSlider": if (_p18._1.ctor === "CmSlider") {
-                          var _p20 = A2($SvgSlider.update,_p18._0._0,_p18._1._0);
-                          var a = _p20._0;
-                          var b = _p20._1;
+                  case "CaSlider": if (_p22._1.ctor === "CmSlider") {
+                          var _p24 = A2($SvgSlider.update,_p22._0._0,_p22._1._0);
+                          var a = _p24._0;
+                          var b = _p24._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmSlider(a)
                                  ,_1: A2($Effects.map,CaSlider,b)};
                        } else {
-                          break _v16_4;
+                          break _v18_4;
                        }
-                  case "CaLabel": if (_p18._1.ctor === "CmLabel") {
-                          var _p21 = A2($SvgLabel.update,_p18._0._0,_p18._1._0);
-                          var a = _p21._0;
-                          var b = _p21._1;
+                  case "CaLabel": if (_p22._1.ctor === "CmLabel") {
+                          var _p25 = A2($SvgLabel.update,_p22._0._0,_p22._1._0);
+                          var a = _p25._0;
+                          var b = _p25._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmLabel(a)
                                  ,_1: A2($Effects.map,CaLabel,b)};
                        } else {
-                          break _v16_4;
+                          break _v18_4;
                        }
-                  default: if (_p18._1.ctor === "CmSizer") {
-                          var _p22 = A2(szupdate,_p18._0._0,_p18._1._0);
-                          var a = _p22._0;
-                          var b = _p22._1;
+                  default: if (_p22._1.ctor === "CmSizer") {
+                          var _p26 = A2(szupdate,_p22._0._0,_p22._1._0);
+                          var a = _p26._0;
+                          var b = _p26._1;
                           return {ctor: "_Tuple2"
                                  ,_0: CmSizer(a)
                                  ,_1: A2($Effects.map,CaSizer,b)};
                        } else {
-                          break _v16_4;
+                          break _v18_4;
                        }}
             } else {
-               break _v16_4;
+               break _v18_4;
             }
       } while (false);
       return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
    });
    var szupdate = F2(function (action,model) {
-      var _p23 = action;
-      var _p25 = _p23._0;
-      var bb = A2($Dict.get,_p25,model.controls);
-      var _p24 = bb;
-      if (_p24.ctor === "Just") {
-            var wha = A2(update,_p23._1,_p24._0);
+      var _p27 = action;
+      var _p29 = _p27._0;
+      var bb = A2($Dict.get,_p29,model.controls);
+      var _p28 = bb;
+      if (_p28.ctor === "Just") {
+            var wha = A2(update,_p27._1,_p28._0);
             var updcontrols = A3($Dict.insert,
-            _p25,
+            _p29,
             $Basics.fst(wha),
             model.controls);
             var newmod = _U.update(model,{controls: updcontrols});
             return {ctor: "_Tuple2"
                    ,_0: newmod
-                   ,_1: A2($Effects.map,SzCAction(_p25),$Basics.snd(wha))};
+                   ,_1: A2($Effects.map,SzCAction(_p29),$Basics.snd(wha))};
          } else {
             return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
          }
    });
    var init = F4(function (sendf,rect,cid,spec) {
-      var _p26 = spec;
-      switch (_p26.ctor)
-      {case "CsButton": var _p27 = A4($SvgButton.init,
+      var _p30 = spec;
+      switch (_p30.ctor)
+      {case "CsButton": var _p31 = A4($SvgButton.init,
            sendf,
            rect,
            cid,
-           _p26._0);
-           var a = _p27._0;
-           var b = _p27._1;
+           _p30._0);
+           var a = _p31._0;
+           var b = _p31._1;
            return {ctor: "_Tuple2"
                   ,_0: CmButton(a)
                   ,_1: A2($Effects.map,CaButton,b)};
-         case "CsSlider": var _p28 = A4($SvgSlider.init,
+         case "CsSlider": var _p32 = A4($SvgSlider.init,
            sendf,
            rect,
            cid,
-           _p26._0);
-           var a = _p28._0;
-           var b = _p28._1;
+           _p30._0);
+           var a = _p32._0;
+           var b = _p32._1;
            return {ctor: "_Tuple2"
                   ,_0: CmSlider(a)
                   ,_1: A2($Effects.map,CaSlider,b)};
-         case "CsLabel": var _p29 = A3($SvgLabel.init,rect,cid,_p26._0);
-           var a = _p29._0;
-           var b = _p29._1;
+         case "CsLabel": var _p33 = A3($SvgLabel.init,rect,cid,_p30._0);
+           var a = _p33._0;
+           var b = _p33._1;
            return {ctor: "_Tuple2"
                   ,_0: CmLabel(a)
                   ,_1: A2($Effects.map,CaLabel,b)};
-         default: var _p30 = A4(szinit,sendf,rect,cid,_p26._0);
-           var a = _p30._0;
-           var b = _p30._1;
+         default: var _p34 = A4(szinit,sendf,rect,cid,_p30._0);
+           var a = _p34._0;
+           var b = _p34._1;
            return {ctor: "_Tuple2"
                   ,_0: CmSizer(a)
                   ,_1: A2($Effects.map,CaSizer,b)};}
@@ -14090,13 +14340,13 @@ Elm.SvgControl.make = function (_elm) {
       $List.length(szspec.controls),
       szspec.proportions);
       var blist = A2($List.map,
-      function (_p31) {
-         var _p32 = _p31;
+      function (_p35) {
+         var _p36 = _p35;
          return A4(init,
          sendf,
-         _p32._1,
-         A2($Basics._op["++"],cid,_U.list([_p32._2])),
-         _p32._0);
+         _p36._1,
+         A2($Basics._op["++"],cid,_U.list([_p36._2])),
+         _p36._0);
       },
       A4($List.map3,
       F3(function (v0,v1,v2) {
@@ -14107,9 +14357,9 @@ Elm.SvgControl.make = function (_elm) {
       idxs));
       var controlz = A2(zip,idxs,A2($List.map,$Basics.fst,blist));
       var fx = $Effects.batch(A2($List.map,
-      function (_p33) {
-         var _p34 = _p33;
-         return A2($Effects.map,SzCAction(_p34._0),_p34._1);
+      function (_p37) {
+         var _p38 = _p37;
+         return A2($Effects.map,SzCAction(_p38._0),_p38._1);
       },
       A2(zip,idxs,A2($List.map,$Basics.snd,blist))));
       return {ctor: "_Tuple2"
@@ -14134,8 +14384,8 @@ Elm.SvgControl.make = function (_elm) {
       return {ctor: "CsButton",_0: a};
    };
    var jsCs = function (t) {
-      var _p35 = t;
-      switch (_p35)
+      var _p39 = t;
+      switch (_p39)
       {case "button": return A2($Json$Decode.andThen,
            $SvgButton.jsSpec,
            function (a) {
@@ -14174,7 +14424,7 @@ Elm.SvgControl.make = function (_elm) {
    }),
    A2($Json$Decode._op[":="],
    "controls",
-   $Json$Decode.list(lazy(function (_p36) {    return jsSpec;}))));
+   $Json$Decode.list(lazy(function (_p40) {    return jsSpec;}))));
    var jsSpec = A2($Json$Decode.andThen,
    A2($Json$Decode._op[":="],"type",$Json$Decode.string),
    jsCs);
@@ -14194,6 +14444,7 @@ Elm.SvgControl.make = function (_elm) {
                                    ,findControl: findControl
                                    ,controlId: controlId
                                    ,controlName: controlName
+                                   ,tupMap2: tupMap2
                                    ,resize: resize
                                    ,controlTouchActionMaker: controlTouchActionMaker
                                    ,jsSpec: jsSpec
@@ -14620,15 +14871,16 @@ Elm.SvgControlPage.make = function (_elm) {
               0,
               _p2._0._0,
               _p2._0._1);
+              var _p4 = A2($SvgControl.resize,model.control,nr);
+              var ctrl = _p4._0;
+              var eff = _p4._1;
               return {ctor: "_Tuple2"
                      ,_0: _U.update(model,
-                     {mahrect: nr
-                     ,srect: $SvgThings.toSRect(nr)
-                     ,control: A2($SvgControl.resize,model.control,nr)})
-                     ,_1: $Effects.none};
+                     {mahrect: nr,srect: $SvgThings.toSRect(nr),control: ctrl})
+                     ,_1: A2($Effects.map,CAction,eff)};
             default: var tdict = A2(touchDict,model.control,_p2._0);
               var curtouches = A2($Dict.map,
-              F2(function (_p4,v) {    return $Basics.fst(v);}),
+              F2(function (_p5,v) {    return $Basics.fst(v);}),
               tdict);
               var prevs = A2($Dict.diff,model.prevtouches,curtouches);
               return {ctor: "_Tuple2"
@@ -14639,11 +14891,11 @@ Elm.SvgControlPage.make = function (_elm) {
                         return $Effects.task($Task.succeed(CAction(t)));
                      },
                      A2($List.filterMap,
-                     function (_p5) {
-                        var _p6 = _p5;
+                     function (_p6) {
+                        var _p7 = _p6;
                         return A2($Maybe.map,
-                        $SvgControl.toCtrlAction(_p6._0),
-                        _p6._1._0(_p6._1._1));
+                        $SvgControl.toCtrlAction(_p7._0),
+                        _p7._1._0(_p7._1._1));
                      },
                      $Dict.toList(tdict))),
                      A2($List.map,
@@ -14651,11 +14903,11 @@ Elm.SvgControlPage.make = function (_elm) {
                         return $Effects.task($Task.succeed(CAction(t)));
                      },
                      A2($List.filterMap,
-                     function (_p7) {
-                        var _p8 = _p7;
+                     function (_p8) {
+                        var _p9 = _p8;
                         return A2($Maybe.map,
-                        $SvgControl.toCtrlAction(_p8._0),
-                        _p8._1(_U.list([])));
+                        $SvgControl.toCtrlAction(_p9._0),
+                        _p9._1(_U.list([])));
                      },
                      $Dict.toList(prevs)))))};}
       }

@@ -212,13 +212,15 @@ updsend model ut loc =
              else if (loc < 0.0) then
                 0.0
              else
-                loc in
-  if (model.location == bLoc) then 
-    ({ model | pressed = (ut /= Unpress)}, Effects.none)
+                loc 
+      prest = ut /= Unpress
+  in
+  if (model.location == bLoc && model.pressed == prest) then 
+    (model, Effects.none)
   else
     let um = JE.encode 0 
               (encodeUpdateMessage (UpdateMessage model.cid ut bLoc)) in
-    ( {model | location = bLoc, pressed = (ut /= Unpress) }
+    ( {model | location = bLoc, pressed = prest }
       , Effects.task 
           ((model.sendf um) `Task.andThen` 
           (\_ -> Task.succeed UselessCrap)))

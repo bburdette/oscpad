@@ -17,36 +17,45 @@ import Touch
 -- how to specify a button in json.
 type alias Spec = 
   { name: String
+  , label: Maybe String
   }
 
 jsSpec : JD.Decoder Spec
-jsSpec = JD.object1 Spec ("name" := JD.string)
+jsSpec = JD.object2 Spec
+  ("name" := JD.string)
+  (JD.maybe ("label" := JD.string)) 
 
 -- MODEL
 
 type alias Model =
   { name : String
+  , label: String
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , pressed: Bool
   , sendf : (String -> Task.Task Never ())
+  , textSvg: List Svg
   }
-
-containsXY: Model -> Int -> Int -> Bool
-containsXY mod x y = SvgThings.containsXY mod.rect x y
 
 init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init sendf rect cid spec =
+  let ts = case spec.label of 
+        Just lbtext -> SvgThings.calcTextSvg SvgThings.ff lbtext rect 
+        Nothing -> []
+  in
   ( Model (spec.name) 
+          (Maybe.withDefault "" (spec.label))
           cid
           rect 
           (SvgThings.SRect (toString rect.x)
                            (toString rect.y)
                            (toString rect.w)
                            (toString rect.h))
-          False sendf
+          False 
+          sendf
+          ts
   , Effects.none
   )
 
@@ -122,7 +131,6 @@ update action model =
       ({ model | pressed = pressedupdate }
        , Effects.none )
     SvgTouch touches -> 
-      -- let a = Debug.log "button touches: " (List.length touches) in
       if List.isEmpty touches then
         if model.pressed == True then 
           pressup model Unpress
@@ -144,6 +152,8 @@ pressup model ut =
 
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
+  let ts = SvgThings.calcTextSvg SvgThings.ff model.label rect 
+  in
   ({ model | rect = rect, 
             srect = (SvgThings.SRect (toString rect.x)
                                      (toString rect.y)

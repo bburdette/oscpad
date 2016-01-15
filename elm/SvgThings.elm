@@ -3,6 +3,15 @@ module SvgThings where
 import List exposing (..)
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE
+import Template exposing (template, render)
+import Template.Infix exposing ((<%), (%>))
+import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
+import Svg.Attributes exposing (..)
+import SvgTextSize
+
+-- font family
+ff: String
+ff = "sans-serif"
 
 type Orientation = Vertical | Horizontal
 
@@ -133,4 +142,46 @@ processProps controlcount lst =
   let lst = (take controlcount lst) `append` (repeat r 0.0)
       s = sum lst in
   List.map (\x -> x / s) lst
+
+-- text scaling!
+
+calcTextSvg : String -> String -> Rect -> List Svg
+calcTextSvg fontFam textString rect = 
+  let w = SvgTextSize.getTextWidth textString ("20px " ++ fontFam)
+      fs = computeFontScaling (toFloat w) 20.0 (toFloat rect.w) (toFloat rect.h) 
+  in calcText fontFam textString w fs rect 
+ 
+  
+calcText : String -> String -> Int -> Float -> Rect -> List Svg
+calcText fontFam lbtext labelMeasuredWidth fontScaling rect = 
+  let width = labelMeasuredWidth
+      scale = fontScaling
+      xc = ((toFloat rect.x) + (toFloat rect.w) / 2)
+      yc = ((toFloat rect.y) + (toFloat rect.h) / 2)
+      xt = xc - ((toFloat width) * scale * 0.5)
+      yt = yc + 20.0 * scale * 0.5
+      tmpl = template "matrix(" <% .scale %> ", 0, 0, " <% .scale %> ", "<% .xt %>", "<% .yt %>")"
+      xf = render tmpl { scale = toString scale, xt = toString xt, yt = toString yt  }
+  in 
+    [ text' [ fill "black"  
+            -- , textAnchor "middle" 
+            -- , x model.middlex 
+            -- , y fonty
+            -- , lengthAdjust "glyphs"
+            -- , textLength model.srect.w 
+            -- , fontSize "20" -- model.srect.h
+            , fontSize "20px"
+            , fontFamily fontFam
+            , transform xf 
+            ] 
+            [ text lbtext ]
+    ]
+
+computeFontScaling: Float -> Float -> Float -> Float -> Float 
+computeFontScaling fw fh rw rh = 
+  let wr = rw / fw
+      hr = rh / fh in 
+  if wr < hr then wr else hr
+    
+
 

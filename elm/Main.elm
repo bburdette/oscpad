@@ -51,7 +51,7 @@ app =
   StartApp.start
     { init = SvgControlPage.init send 
         (SvgThings.Rect 0 0 500 300)    
-        (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah")) Nothing)
+        (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
     , update = SvgControlPage.update
     , view = SvgControlPage.view
     , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)

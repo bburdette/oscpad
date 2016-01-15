@@ -34,35 +34,26 @@ jsSpec = JD.object2 Spec
 type alias Model =
   { name : String
   , label: String
-  , fontScaling: Float
-  , labelMeasuredWidth: Int 
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
+  , textSvg: List Svg
   }
-
-containsXY: Model -> Int -> Int -> Bool
-containsXY mod x y = SvgThings.containsXY mod.rect x y
-
-ff: String
-ff = "sans-serif"
 
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Effects Action)
 init rect cid spec =
-  let fw = SvgTextSize.getTextWidth spec.label ("20px " ++ ff)
-      fs = computeFontScaling (toFloat fw) 20.0 (toFloat rect.w) (toFloat rect.h) 
+  let ts = SvgThings.calcTextSvg SvgThings.ff spec.label rect 
   in
   ( Model (spec.name)
           (spec.label)
-          fs
-          fw
           cid
           rect 
           (SvgThings.SRect (toString rect.x)
                            (toString rect.y)
                            (toString rect.w)
                            (toString rect.h))
+          ts
   , Effects.none)
 
 -- UPDATE
@@ -85,33 +76,23 @@ update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     SvgUpdate um ->
-      let w = SvgTextSize.getTextWidth um.label ("20px " ++ ff)
-          fs = computeFontScaling (toFloat w) 20.0 (toFloat model.rect.w) (toFloat model.rect.h) 
+      let ts = SvgThings.calcTextSvg SvgThings.ff um.label model.rect 
       in
       -- when the text changes, measure it. 
-      ({ model | label = um.label, fontScaling = fs, labelMeasuredWidth = w }
+      ({ model | label = um.label, textSvg = ts }
       , Effects.none) 
     SvgTouch touches -> (model, Effects.none)
 
-computeFontScaling: Float -> Float -> Float -> Float -> Float 
-computeFontScaling fw fh rw rh = 
-  let wr = rw / fw
-      hr = rh / fh in 
-  if wr < hr then wr else hr
-    
-
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
-  let w = SvgTextSize.getTextWidth model.label ("20px " ++ ff)
-      fs = computeFontScaling (toFloat w) 20.0 (toFloat rect.w) (toFloat rect.h) 
+  let ts = SvgThings.calcTextSvg SvgThings.ff model.label rect 
   in
   ({ model | rect = rect 
            , srect = (SvgThings.SRect (toString rect.x)
                                       (toString rect.y)
                                       (toString rect.w)
                                       (toString rect.h))
-           , fontScaling = fs
-           , labelMeasuredWidth = w
+           , textSvg = ts
     }
   , Effects.none)
 
@@ -130,33 +111,9 @@ view address model =
         , style "fill: #A1A1A1;"
         ]
         []
-      svgl = lbrect :: calcText model
+      svgl = lbrect :: model.textSvg 
   in
   g [ ] svgl
 
-calcText : Model -> List Svg
-calcText model = 
-  let width = model.labelMeasuredWidth
-      scale = model.fontScaling
-      xc = ((toFloat model.rect.x) + (toFloat model.rect.w) / 2)
-      yc = ((toFloat model.rect.y) + (toFloat model.rect.h) / 2)
-      xt = xc - ((toFloat width) * scale * 0.5)
-      yt = yc + 20.0 * scale * 0.5
-      tmpl = template "matrix(" <% .scale %> ", 0, 0, " <% .scale %> ", "<% .xt %>", "<% .yt %>")"
-      xf = render tmpl { scale = toString scale, xt = toString xt, yt = toString yt  }
-  in 
-    [ text' [ fill "black"  
-            -- , textAnchor "middle" 
-            -- , x model.middlex 
-            -- , y fonty
-            -- , lengthAdjust "glyphs"
-            -- , textLength model.srect.w 
-            -- , fontSize "20" -- model.srect.h
-            , fontSize "20px"
-            , fontFamily ff
-            , transform xf 
-            ] 
-            [ text model.label ]
-    ]
 
-        
+ 

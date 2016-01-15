@@ -44,12 +44,12 @@ findControl: Int -> Int -> Model -> Maybe Model
 findControl x y mod = 
   case mod of 
     CmButton bmod -> 
-      if (SvgButton.containsXY bmod x y) then
+      if (SvgThings.containsXY bmod.rect x y) then
         Just mod
       else
         Nothing
     CmSlider smod -> 
-      if (SvgSlider.containsXY smod x y) then
+      if (SvgThings.containsXY smod.rect x y) then
         Just mod
       else
         Nothing

@@ -39,8 +39,6 @@ type alias Model =
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
-  , middlex: String
-  , middley: String
   }
 
 containsXY: Model -> Int -> Int -> Bool
@@ -61,12 +59,10 @@ init rect cid spec =
           fw
           cid
           rect 
-          (SvgThings.SRect (toString (rect.x + 5)) 
-                           (toString (rect.y + 5))
-                           (toString (rect.w - 5))
-                           (toString (rect.h - 5)))
-          (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
-          (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
+          (SvgThings.SRect (toString rect.x)
+                           (toString rect.y)
+                           (toString rect.w)
+                           (toString rect.h))
   , Effects.none)
 
 -- UPDATE
@@ -104,33 +100,18 @@ computeFontScaling fw fh rw rh =
   if wr < hr then wr else hr
     
 
-{-
-
- var width=336, height=107;
- var textNode = document.getElementById("t1");
- var bb = textNode.getBBox();
- var widthTransform = width / bb.width;
- var heightTransform = height / bb.height;
- var value = widthTransform < heightTransform ? widthTransform : heightTransform;
- textNode.setAttribute("transform", "matrix("+value+", 0, 0, "+value+", 0,0)");
-
--}
-
-
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   let w = SvgTextSize.getTextWidth model.label ("20px " ++ ff)
       fs = computeFontScaling (toFloat w) 20.0 (toFloat rect.w) (toFloat rect.h) 
   in
-  ({ model | rect = rect  
-           , srect = (SvgThings.SRect (toString (rect.x + 5)) 
-                                     (toString (rect.y + 5))
-                                     (toString (rect.w - 5))
-                                     (toString (rect.h - 5))) 
-          , middlex = (toString ((toFloat rect.x) + (toFloat rect.w) / 2))
-          , middley = (toString ((toFloat rect.y) + (toFloat rect.h) / 2))
-          , fontScaling = fs
-          , labelMeasuredWidth = w
+  ({ model | rect = rect 
+           , srect = (SvgThings.SRect (toString rect.x)
+                                      (toString rect.y)
+                                      (toString rect.w)
+                                      (toString rect.h))
+           , fontScaling = fs
+           , labelMeasuredWidth = w
     }
   , Effects.none)
 

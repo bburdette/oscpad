@@ -20,6 +20,9 @@ import Touch
 -- and sizer.  They are mutually recursive so they have to
 -- both be in a single file.  
 
+border: Int
+border = 1
+
 -------------------- control container -------------------
 
 type Spec = CsButton SvgButton.Spec 
@@ -75,10 +78,10 @@ tupMap2 fa fb ab = (fa (fst ab), fb (snd ab))
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   case model of 
-    CmButton mod -> tupMap2 CmButton (Effects.map CaButton) (SvgButton.resize mod rect)
-    CmSlider mod -> tupMap2 CmSlider (Effects.map CaSlider) (SvgSlider.resize mod rect)
-    CmLabel mod -> tupMap2 CmLabel (Effects.map CaLabel) (SvgLabel.resize mod rect)
-    CmSizer mod -> tupMap2 CmSizer (Effects.map CaSizer) (szresize mod rect)
+    CmButton mod -> tupMap2 CmButton (Effects.map CaButton) (SvgButton.resize mod (SvgThings.shrinkRect border rect)) 
+    CmSlider mod -> tupMap2 CmSlider (Effects.map CaSlider) (SvgSlider.resize mod (SvgThings.shrinkRect border rect)) 
+    CmLabel mod -> tupMap2 CmLabel (Effects.map CaLabel) (SvgLabel.resize mod (SvgThings.shrinkRect border rect)) 
+    CmSizer mod -> tupMap2 CmSizer (Effects.map CaSizer) (szresize mod rect) 
 
 type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
     
@@ -153,13 +156,13 @@ init : (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -
 init sendf rect cid spec =
   case spec of 
     CsButton s -> 
-      let (a,b) = (SvgButton.init sendf rect cid s) in
+      let (a,b) = (SvgButton.init sendf (SvgThings.shrinkRect border rect) cid s) in
         (CmButton a, Effects.map CaButton b)
     CsSlider s -> 
-      let (a,b) = (SvgSlider.init sendf rect cid s) in
+      let (a,b) = (SvgSlider.init sendf (SvgThings.shrinkRect border rect) cid s) in
         (CmSlider a, Effects.map CaSlider b)
     CsLabel s -> 
-      let (a,b) = (SvgLabel.init rect cid s) in
+      let (a,b) = (SvgLabel.init (SvgThings.shrinkRect border rect) cid s) in
         (CmLabel a, Effects.map CaLabel b)
     CsSizer s -> 
       let (a,b) = (szinit sendf rect cid s) in
@@ -255,7 +258,7 @@ szupdate action model =
 szresize : SzModel -> SvgThings.Rect -> (SzModel, Effects SzAction)
 szresize model rect = 
   let clist = Dict.toList(model.controls)
-      rlist = mkRlist model.orientation rect (List.length clist) model.proportions 
+      rlist = mkRlist model.orientation rect (List.length clist) model.proportions
       ctlsNeffs = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
       controls = List.map (\(i,(c,efs)) -> (i,c)) ctlsNeffs
       effs = Effects.batch 
@@ -284,7 +287,7 @@ mkRlist orientation rect count mbproportions =
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
   -> (SzModel, Effects SzAction)
 szinit sendf rect cid szspec = 
-  let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions 
+  let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions
       blist = List.map 
                 (\(spec, rect, idx) -> init sendf rect (cid ++ [idx]) spec) 
                 (map3 (,,) szspec.controls rlist idxs)

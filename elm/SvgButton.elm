@@ -42,10 +42,10 @@ init sendf rect cid spec =
   ( Model (spec.name) 
           cid
           rect 
-          (SvgThings.SRect (toString (rect.x + 5)) 
-                           (toString (rect.y + 5))
-                           (toString (rect.w - 5))
-                           (toString (rect.h - 5)))
+          (SvgThings.SRect (toString rect.x)
+                           (toString rect.y)
+                           (toString rect.w)
+                           (toString rect.h))
           False sendf
   , Effects.none
   )
@@ -145,10 +145,10 @@ pressup model ut =
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   ({ model | rect = rect, 
-            srect = (SvgThings.SRect (toString (rect.x + 5)) 
-                                      (toString (rect.y + 5))
-                                      (toString (rect.w - 5))
-                                      (toString (rect.h - 5))) }
+            srect = (SvgThings.SRect (toString rect.x)
+                                     (toString rect.y)
+                                     (toString rect.w)
+                                     (toString rect.h))}
   , Effects.none)
 
 

@@ -46,10 +46,10 @@ init sendf rect cid spec =
   ( Model (spec.name) 
           cid 
           rect
-          (SvgThings.SRect (toString (rect.x + 5)) 
-                           (toString (rect.y + 5))
-                           (toString (rect.w - 5))
-                           (toString (rect.h - 5)))
+          (SvgThings.SRect (toString rect.x)
+                           (toString rect.y)
+                           (toString rect.w)
+                           (toString rect.h))
           spec.orientation
           False 0.5 sendf
   , Effects.none
@@ -126,8 +126,6 @@ jsUpdateType ut =
     "Unpress" -> JD.succeed Unpress 
     _ -> JD.succeed Unpress 
 
-
-
 -- get mouse/whatever location from the json message, 
 -- compute slider location from that.
 getLocation: Model -> JD.Value -> Result String Float
@@ -151,7 +149,6 @@ updLoc: Model -> JD.Value -> (Model, Effects Action)
         Ok l -> ({model | location = l}, Effects.none)
         _ -> (model, Effects.none)
 -}
-
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -210,21 +207,30 @@ update action model =
 
 updsend: Model -> UpdateType -> Float -> (Model, Effects Action)
 updsend model ut loc = 
-  let um = JE.encode 0 
-              (encodeUpdateMessage (UpdateMessage model.cid ut loc)) in
-  ( {model | location = loc, pressed = (ut /= Unpress) }
-    , Effects.task 
-        ((model.sendf um) `Task.andThen` 
-        (\_ -> Task.succeed UselessCrap)))
+  let bLoc = if (loc > 1.0) then 
+                1.0
+             else if (loc < 0.0) then
+                0.0
+             else
+                loc in
+  if (model.location == bLoc) then 
+    ({ model | pressed = (ut /= Unpress)}, Effects.none)
+  else
+    let um = JE.encode 0 
+              (encodeUpdateMessage (UpdateMessage model.cid ut bLoc)) in
+    ( {model | location = bLoc, pressed = (ut /= Unpress) }
+      , Effects.task 
+          ((model.sendf um) `Task.andThen` 
+          (\_ -> Task.succeed UselessCrap)))
 
 resize: Model -> SvgThings.Rect -> (Model, Effects Action)
 resize model rect = 
   ({ model | rect = rect, 
-            srect = (SvgThings.SRect (toString (rect.x + 5)) 
-                                      (toString (rect.y + 5))
-                                      (toString (rect.w - 5))
-                                      (toString (rect.h - 5))) }, 
-   Effects.none)
+            srect = (SvgThings.SRect (toString rect.x)
+                                     (toString rect.y)
+                                     (toString rect.w)
+                                     (toString rect.h)) }
+  , Effects.none)
  
 -- VIEW
 

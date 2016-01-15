@@ -51,6 +51,13 @@ toSRect rect = SRect
   (toString rect.w)
   (toString rect.h)
 
+shrinkRect: Int -> Rect -> Rect
+shrinkRect border rect = 
+  Rect (rect.x + border) 
+       (rect.y + border)
+       (rect.w - border - border)
+       (rect.h - border - border)
+
 -- make a number of horizontally evenly spaced rects.
 hrects: Rect -> Int -> List Rect
 hrects rct count = 

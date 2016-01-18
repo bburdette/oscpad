@@ -11,10 +11,13 @@ use std::io::{Error,ErrorKind};
 use std::string::*;
 
 use std::net::UdpSocket;
+use std::borrow::Cow;
+// use std::collections::borrow;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
 use websocket::stream::WebSocketStream;
+use websocket::message::Type;
 
 extern crate iron;
 
@@ -261,8 +264,8 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
     }
   
     let guistring = try!(serde_json::ser::to_string(&guival));
-    let message = Message::Text(guistring);
-    try!(client.send_message(message));
+    let message = Message::text(guistring);
+    try!(client.send_message(&message));
   }
  
   let (sender, mut receiver) = client.split();
@@ -271,27 +274,29 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
   
   broadcaster.register(sendmeh.clone());      
   
-  for message in receiver.incoming_messages() {
-    let message = try!(message);
+  for msg in receiver.incoming_messages() {
+    let message: Message = try!(msg);
     println!("message: {:?}", message);
 
-    match message {
-      Message::Close(_) => {
-        let message = Message::Close(None);
+    match message.opcode {
+      Type::Close => {
+        let message = Message::close();
         // let mut sender = try!(sendmeh.lock());
         let mut sender = sendmeh.lock().unwrap();
-        try!(sender.send_message(message));
+        try!(sender.send_message(&message));
         println!("Client {} disconnected", ip);
         return Ok(());
       }
-      Message::Ping(data) => {
+      Type::Ping => {
         println!("Message::Ping(data)");
-        let message = Message::Pong(data);
+        let message = Message::pong(message.payload);
         let mut sender = sendmeh.lock().unwrap();
-        try!(sender.send_message(message));
+        try!(sender.send_message(&message));
       }
-      Message::Text(texxt) => {
-        let jsonval: Value = try!(serde_json::from_str(&texxt[..]));
+      Type::Text => {
+        let u8 = message.payload.to_owned();
+        let str = try!(std::str::from_utf8(&*u8));
+        let jsonval: Value = try!(serde_json::from_str(str));
         let s_um = controls::decodeUpdateMessage(&jsonval);
         match s_um { 
           Some(updmsg) => {
@@ -301,7 +306,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
               Some(x) => {
                 (*x).update(&updmsg);
                 println!("some x: {:?}", *x);
-                broadcaster.broadcast_others(&ip, Message::Text(texxt));
+                broadcaster.broadcast_others(&ip, Message::text(str));
                 match ctrlUpdateToOsc(&updmsg, &**x) { 
                   Ok(v) => oscsocket.send_to(&v, &oscsendip[..]),
                   _ => Err(Error::new(ErrorKind::Other, "meh")) 
@@ -453,7 +458,7 @@ fn oscmain( recvsocket: UdpSocket,
                 let val = controls::encodeUpdateMessage(&updmsg); 
                 println!("sending control update {:?}", val);
                 match serde_json::ser::to_string(&val) { 
-                  Ok(s) => bc.broadcast(Message::Text(s)), 
+                  Ok(s) => bc.broadcast(Message::text(s)), 
                   Err(_) => ()
                 }
                 ()
@@ -485,7 +490,7 @@ fn oscmain( recvsocket: UdpSocket,
                           let mut sci = ci.lock().unwrap(); 
                           sci.cm = mapp;
                           sci.guijson = guistring.to_string();
-                          bc.broadcast(Message::Text(guistring.to_string()));
+                          bc.broadcast(Message::text(guistring.to_string()));
                         },
                         Err(e) => println!("error reading guiconfig from json: {:?}", e),
                       }

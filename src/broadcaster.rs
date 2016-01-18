@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use websocket::{Message, Sender};
 use websocket::stream::WebSocketStream;
-use websocket::server::sender;
+use websocket::sender;
 
 type sendBlah = Arc<Mutex<sender::Sender<WebSocketStream>>>;
 
@@ -39,7 +39,7 @@ impl Broadcaster {
 
     for tv in tvs.iter_mut() {
       let mut tvsend = tv.lock().unwrap();
-      match tvsend.send_message(msg.clone()) {
+      match tvsend.send_message(&msg) {
         Err(e) => {},
         _ => {}
       }
@@ -56,7 +56,7 @@ impl Broadcaster {
           // println!("checking eq: {:?}, {:?}", sa, sa_send);
           if !mysockeq(sa,&sa_send) {
             // println!("sending to: {:?}", sa_send);
-            match tvsend.send_message(msg.clone()) {
+            match tvsend.send_message(&msg) {
               Err(e) => {},
               _ => {}
             }

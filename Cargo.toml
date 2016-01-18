@@ -2,6 +2,13 @@
 name = "oscpad"
 version = "0.1.0"
 authors = ["Ben B <bburdette@gmail.com>"]
+description = "OSC 'control panel' server with shared-state web controls"
+documentation = "https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad"
+homepage = "https://github.com/bburdette/oscpad"
+repository = "https://github.com/bburdette/oscpad.git"
+readme = "README.md"
+keywords = ["osc", "audio", "opensoundcontrol"]
+license = "MIT"
 
 [dependencies]
 websocket = "0.15.0"
@@ -10,4 +17,7 @@ serde = "0.5.3"
 iron = "0.2.1"
 time = "0.1.34" 
 tinyosc = "0.0.2"
+
+
+
 

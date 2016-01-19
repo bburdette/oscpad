@@ -9,6 +9,18 @@ repository = "https://github.com/bburdette/oscpad.git"
 readme = "README.md"
 keywords = ["osc", "audio", "opensoundcontrol"]
 license = "MIT"
+include = [ "src/**/*", 
+            "example_projects/**/*", 
+            "example_projects/guisend/**/*", 
+            "example_projects/echotest/**/*", 
+            "elm/**/*", 
+            "Cargo.toml", 
+            "Cargo.lock", 
+            "README.md", 
+            "LICENSE", 
+            "runit.sh", 
+            "default.nix", 
+            "ns.sh"]
 
 [dependencies]
 websocket = "0.15.0"

@@ -5,14 +5,15 @@ use std::sync::{Arc, Mutex};
 use std::fs::File;
 use std::path::Path;
 use std::env;
-
+use std::str;
 use std::io::Read;
+use std::io::Write;
 use std::io::{Error,ErrorKind};
 use std::string::*;
+use std::collections::BTreeMap;
 
 use std::net::UdpSocket;
 use std::borrow::Cow;
-// use std::collections::borrow;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
@@ -30,12 +31,14 @@ mod tryopt;
 mod stringerror;
 mod controls;
 mod broadcaster;
+mod stringDefaults; 
 
 extern crate tinyosc;
 use tinyosc as osc;
 
 extern crate serde_json;
 use serde_json::Value;
+use serde_json::ser;
 
 fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
@@ -43,9 +46,28 @@ fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
   let mut inf = try!(File::open(path));
   let mut result = String::new();
   let len = try!(inf.read_to_string(&mut result));
-  // println!("read {} bytes", len);
   Ok(result)
 }
+
+fn writeString(text: &str, file_name: &str) -> Result<(), Box<std::error::Error> >
+{
+  let path = &Path::new(&file_name);
+  let mut inf = try!(File::create(path));
+  inf.write(text.as_bytes());
+  Ok(())
+}
+      
+fn makeDefaultPrefs(guifile: &str) -> BTreeMap<String, Value>
+{
+    let mut map = BTreeMap::new();
+    map.insert(String::from("guifile"), Value::String(guifile.to_string()));
+    map.insert(String::from("ip"), Value::String("0.0.0.0:3030".to_string()));
+    map.insert(String::from("wip"), Value::String("0.0.0.0:1234".to_string()));
+    map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
+    map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
+    
+    map
+}   
 
 fn main() {
   // read in the settings json.
@@ -53,16 +75,50 @@ fn main() {
   let mut iter = args.skip(1); // skip the program name
   match iter.next() {
     Some(file_name) => {
-      
-      match startserver(&file_name) {
-        Err(e) => println!("error starting server: {:?}", e),
-        _ => (),
+      if file_name == "-mkconfigs" 
+      {
+        let a = iter.next();
+        let b = iter.next();
+        match (a,b) { 
+          (Some(prefsFilename), Some(guiFilename)) => {
+            let value = Value::Object(makeDefaultPrefs(&guiFilename[..]));
+           
+            if let Ok(sv) = serde_json::to_string_pretty(&value) {
+              match writeString(&sv[..], &prefsFilename[..]) {
+                Ok(()) => println!("wrote example server config to file: {}", prefsFilename),
+                Err(e) => println!("error writing default config file: {:?}", e),
+              }
+              match writeString(stringDefaults::sampleGuiConfig, &guiFilename[..]) {
+                Ok(()) => println!("wrote example gui config to file: {}", guiFilename),
+                Err(e) => println!("error writing default config file: {:?}", e),
+              }
+            }
+          }
+          (Some(prefsFilename), _) => { 
+            let value = Value::Object(makeDefaultPrefs("gui.conf"));
+           
+            if let Ok(sv) = serde_json::to_string_pretty(&value) {
+              match writeString(&sv[..], &file_name[..]) {
+                Ok(()) => println!("wrote server config to file: {}", file_name),
+                Err(e) => println!("error writing default config file: {:?}", e),
+              }
+            }
+          }
+          _ => println!("no config filenames!"),
+        }
+      }
+      else {
+        match startserver(&file_name) {
+          Err(e) => println!("error starting server: {:?}", e),
+          _ => (),
+        }
       }
 
     }
     None => {
       println!("oscpad syntax: ");
       println!("oscpad <json config file>");
+      println!("oscpad -mkconfigs <example server config file> <example gui config file>");
     }
   }
 }
@@ -82,13 +138,15 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 
     let obj = try_opt_resbox!(configval.as_object(), "config file is not a json object!");
     
-    let htmlfilename = 
-      try_opt_resbox!(
-        try_opt_resbox!(obj.get("htmlfile"), 
-                        "'htmlfile' not found in config file").as_string(), 
-        "failed to convert to string");
-    let htmlstring = 
-        try!(loadString(&htmlfilename[..]));
+    let htmlstring = {  
+      match obj.get("htmlfile") {
+        Some(fname) => { 
+          let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
+          try!(loadString(&htmlfilename[..]))
+        }
+        None => stringDefaults::mainhtml.to_string(), 
+      }
+    };
 
     let guifilename = 
       try_opt_resbox!(

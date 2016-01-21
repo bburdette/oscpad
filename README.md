@@ -1,7 +1,7 @@
 # oscpad
 Configurable web controls with shared state, which send OSC messages.  [Overview/tutorial here](https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad)  
 
-[Arm executable here](https://drive.google.com/file/d/0B0C7MeOQIbZkbGk5WmRkRl9aWlE/view?usp=sharing) Compiled on bananapi arch, hopefully compatible with raspberry pi 2 (armv7).  You'll need to install openssl.
+[Arm executables here](https://drive.google.com/open?id=0B0C7MeOQIbZkQmJCZE5RSDY5Q2M) Compiled on bananapi arch, hopefully compatible with raspberry pi 2 (armv7).  You'll need to install openssl.
 
 This is my 'getting to know you' project for elm and rust.  
 

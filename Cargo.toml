@@ -1,7 +1,7 @@
 [package]
 name = "oscpad"
 version = "0.1.1"
-authors = ["Ben B <bburdette@gmail.com>"]
+authors = ["Ben Burdette <bburdette@gmail.com>"]
 description = "OSC 'control panel' server with shared-state web controls"
 documentation = "https://github.com/bburdette/oscpad/wiki/Get-started-with-oscpad"
 homepage = "https://github.com/bburdette/oscpad"

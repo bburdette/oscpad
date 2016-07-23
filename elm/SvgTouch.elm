@@ -1,7 +1,5 @@
 module SvgTouch
-    ( Touch, touches
-    , taps
-    ) where
+    exposing ( Touch, touches, taps ) 
 
 {-| This is an early version of the touch library. It will likely grow to
 include gestures that would be useful for both games and web-pages.
@@ -15,7 +13,7 @@ include gestures that would be useful for both games and web-pages.
 
 import Native.SvgTouch
 import Time exposing (Time)
-import Signal exposing (Signal)
+-- import Signal exposing (Signal)
 
 
 {-| Every `Touch` has `xy` coordinates. It also has an identifier

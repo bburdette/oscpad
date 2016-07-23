@@ -1,21 +1,22 @@
-module Main where
+module Main exposing (..) 
 
-import Effects exposing (Never)
+-- import Effects exposing (Never)
 import SvgButton 
 import SvgControlPage
 import SvgControl 
-import StartApp
+-- import StartApp
 import Task
-import Signal exposing (Signal)
+-- import Signal exposing (Signal)
 import Task exposing (Task)
-import Keyboard
+-- import Keyboard
 import Char
 import String
 import WebSocket exposing (WebSocket)
 import SvgThings
 import Window
-import SvgTouch
+-- import SvgTouch
 import SvgTextSize
+import Html
 
 ---------------------------------------
 
@@ -34,8 +35,8 @@ port listening = socket `Task.andThen`
 connected : Signal.Mailbox Bool
 connected = Signal.mailbox False
 
-send : String -> Task x ()
-send message = socket `Task.andThen` WebSocket.send message
+-- send : String -> Task x ()
+-- send message = socket `Task.andThen` WebSocket.send message
 
 port sending : Signal (Task x ())
 port sending = Signal.map send inputKeyboard
@@ -47,19 +48,23 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 
 ---------------------------------------
 
+{ init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
+
 app =
-  StartApp.start
-    { init = SvgControlPage.init send 
+  Html.program
+    { init = SvgControlPage.init 
+        (send "todo:www.wheretosend.com")
         (SvgThings.Rect 0 0 500 300)    
         (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
     , update = SvgControlPage.update
     , view = SvgControlPage.view
-    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
-              ]
-    , inputs = [ (Signal.map SvgControlPage.JsonMsg listen.signal)
-               , (Signal.map SvgControlPage.WinDims Window.dimensions)
-               , (Signal.map SvgControlPage.Touche SvgTouch.touches)
-               ]
+    , subscriptions = \_ -> Sub.none
+--    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
+--              ]
+--    , inputs = [ (Signal.map SvgControlPage.JsonMsg listen.signal)
+--               , (Signal.map SvgControlPage.WinDims Window.dimensions)
+--               , (Signal.map SvgControlPage.Touche SvgTouch.touches)
+--               ]
     }
 
 main =

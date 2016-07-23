@@ -1,6 +1,6 @@
-module SvgButton where
+module SvgButton exposing (..)
 
-import Effects exposing (Effects, Never)
+-- import Effects exposing (Effects, Never)
 import Html exposing (Html)
 -- import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
@@ -10,9 +10,10 @@ import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+import Html.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+-- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
-import Touch
+-- import SvgTouch
 
 -- how to specify a button in json.
 type alias Spec = 
@@ -34,12 +35,12 @@ type alias Model =
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , pressed: Bool
-  , sendf : (String -> Task.Task Never ())
-  , textSvg: List Svg
+  , sendf : (String -> Cmd Msg) 
+  , textSvg: List (Svg ())
   }
 
-init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Effects Action)
+init: (String -> Cmd Msg) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
+  -> (Model, Cmd Msg)
 init sendf rect cid spec =
   let ts = case spec.label of 
         Just lbtext -> SvgThings.calcTextSvg SvgThings.ff lbtext rect 
@@ -56,7 +57,7 @@ init sendf rect cid spec =
           False 
           sendf
           ts
-  , Effects.none
+  , Cmd.none
   )
 
 buttColor: Bool -> String
@@ -67,13 +68,13 @@ buttColor pressed =
 
 -- UPDATE
 
-type Action
+type Msg
     = SvgPress 
     | SvgUnpress 
     | UselessCrap 
     | Reply String
     | SvgUpdate UpdateMessage
-    | SvgTouch (List Touch.Touch)
+--    | SvgTouch (List Touch.Touch)
 
 type UpdateType 
   = Press
@@ -112,16 +113,16 @@ jsUpdateType ut =
 
 
 
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update : Msg -> Model -> (Model, Cmd Msg) 
+update msg model =
+  case msg of
     SvgPress -> pressup model Press
     SvgUnpress ->
       case model.pressed of
         True ->  pressup model Unpress
-        False -> (model, Effects.none)
-    UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name = s}, Effects.none)
+        False -> (model, Cmd.none)
+    UselessCrap -> (model, Cmd.none)
+    Reply s -> ({model | name = s}, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let pressedupdate = case um.updateType of 
@@ -129,28 +130,31 @@ update action model =
                       Unpress -> False
         in
       ({ model | pressed = pressedupdate }
-       , Effects.none )
-    SvgTouch touches -> 
+       , Cmd.none )
+{-    SvgTouch touches -> 
       if List.isEmpty touches then
         if model.pressed == True then 
           pressup model Unpress
         else
-          (model , Effects.none )
+          (model , Cmd.none )
       else
         if model.pressed == False then 
           pressup model Press
         else
-          (model , Effects.none )
+          (model , Cmd.none )
+-}
 
-pressup: Model -> UpdateType -> (Model, Effects Action) 
+pressup: Model -> UpdateType -> (Model, Cmd Msg)
 pressup model ut = 
   let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
   ({ model | pressed = (ut == Press)}
-    , Effects.task ((model.sendf um) 
-         `Task.andThen` (\_ -> Task.succeed UselessCrap)))
+    , (model.sendf um) )
+
+-- Effects.task ((model.sendf um) 
+--         `Task.andThen` (\_ -> Task.succeed UselessCrap)))
 
 
-resize: Model -> SvgThings.Rect -> (Model, Effects Action)
+resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
 resize model rect = 
   let ts = SvgThings.calcTextSvg SvgThings.ff model.label rect 
   in
@@ -159,17 +163,17 @@ resize model rect =
                                      (toString rect.y)
                                      (toString rect.w)
                                      (toString rect.h))}
-  , Effects.none)
+  , Cmd.none)
 
 
 -- VIEW
 (=>) = (,)
 
-view : Signal.Address Action -> Model -> Svg
-view address model =
-  g [ onMouseDown (Signal.message address SvgPress)
-    , onMouseUp (Signal.message address SvgUnpress)
-    , onMouseOut (Signal.message address SvgUnpress)
+view : Model -> Svg Msg
+view model =
+  g [ onMouseDown SvgPress
+    , onMouseUp SvgUnpress
+    , onMouseOut SvgUnpress
     ]
     [ rect
         [ x model.srect.x

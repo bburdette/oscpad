@@ -1,4 +1,25 @@
-module SvgThings where
+module SvgThings exposing (..)
+
+
+{-module SvgThings exposing ( Orientation, 
+                            Rect, 
+                            SRect, 
+                            ControlId, 
+                            jsOrientation,
+                            encodeControlId,
+                            decodeControlId,
+                            containsXY,
+                            toSRect,
+                            shrinkRect,
+                            computeFontScaling,
+                            calcText ,
+                            calcTextSvg, 
+                            processProps,
+                            mekvr,
+                            ff,
+                            vrects
+                            )
+-}
 
 import List exposing (..)
 import Json.Decode as JD exposing ((:=))
@@ -145,14 +166,14 @@ processProps controlcount lst =
 
 -- text scaling!
 
-calcTextSvg : String -> String -> Rect -> List Svg
+calcTextSvg : String -> String -> Rect -> List (Svg ())
 calcTextSvg fontFam textString rect = 
   let w = SvgTextSize.getTextWidth textString ("20px " ++ fontFam)
       fs = computeFontScaling (toFloat w) 20.0 (toFloat rect.w) (toFloat rect.h) 
   in calcText fontFam textString w fs rect 
  
   
-calcText : String -> String -> Int -> Float -> Rect -> List Svg
+calcText : String -> String -> Int -> Float -> Rect -> List (Svg ())
 calcText fontFam lbtext labelMeasuredWidth fontScaling rect = 
   let width = labelMeasuredWidth
       scale = fontScaling

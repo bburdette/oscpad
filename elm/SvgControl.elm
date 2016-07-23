@@ -1,19 +1,20 @@
-module SvgControl where 
+module SvgControl exposing (..) 
 
 import SvgButton
 import SvgSlider
 import SvgLabel
 import Json.Decode as JD exposing ((:=))
-import Effects exposing (Effects, Never)
+-- import Effects exposing (Effects, Never)
+-- import Platform exposing (Cmd, none) 
 import Task
 import Dict exposing (..)
 import List exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes as SA 
 import SvgThings
-import Signal
+-- import Signal
 import Html
-import Touch
+-- import Touch
 
 ----------------------------------------------------------
 -- Two things (objects?) in this file; control container 
@@ -35,10 +36,10 @@ type Model = CmButton SvgButton.Model
            | CmLabel SvgLabel.Model
            | CmSizer SzModel
 
-type Action = CaButton SvgButton.Action
-            | CaSlider SvgSlider.Action
-            | CaLabel SvgLabel.Action
-            | CaSizer SzAction
+type Msg = CaButton SvgButton.Msg
+            | CaSlider SvgSlider.Msg
+            | CaLabel SvgLabel.Msg
+            | CaSizer SzMsg
 
 findControl: Int -> Int -> Model -> Maybe Model
 findControl x y mod = 
@@ -83,6 +84,7 @@ resize model rect =
     CmLabel mod -> tupMap2 CmLabel (Effects.map CaLabel) (SvgLabel.resize mod (SvgThings.shrinkRect border rect)) 
     CmSizer mod -> tupMap2 CmSizer (Effects.map CaSizer) (szresize mod rect) 
 
+{-
 type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
     
 controlTouchActionMaker: Model -> ControlTam 
@@ -92,6 +94,7 @@ controlTouchActionMaker ctrl =
     CmSlider _ -> (\t -> Just (CaSlider (SvgSlider.SvgTouch t)))
     CmLabel _ -> (\t -> Nothing) 
     CmSizer _ -> (\t -> Nothing)
+-}
   
 jsSpec : JD.Decoder Spec
 jsSpec = 
@@ -236,15 +239,15 @@ firstJust f xs =
 
 -- UPDATE
 
-type SzAction
-    = SzCAction ID Action
+type SzMsg
+    = SzCMsg ID Msg
 
 zip = List.map2 (,)
 
-szupdate : SzAction -> SzModel -> (SzModel, Effects SzAction)
-szupdate action model =
-  case action of
-    SzCAction id act -> 
+szupdate : SzMsg -> SzModel -> (SzModel, Effects SzMsg)
+szupdate Msg model =
+  case Msg of
+    SzCMsg id act -> 
       let bb = get id model.controls in
       case bb of 
         Just bm -> 
@@ -252,10 +255,10 @@ szupdate action model =
               updcontrols = insert id (fst wha) model.controls
               newmod = { model | controls = updcontrols }
             in
-              (newmod, Effects.map (SzCAction id) (snd wha))
+              (newmod, Effects.map (SzCMsg id) (snd wha))
         Nothing -> (model, Effects.none) 
  
-szresize : SzModel -> SvgThings.Rect -> (SzModel, Effects SzAction)
+szresize : SzModel -> SvgThings.Rect -> (SzModel, Effects SzMsg)
 szresize model rect = 
   let clist = Dict.toList(model.controls)
       rlist = mkRlist model.orientation rect (List.length clist) model.proportions
@@ -263,7 +266,7 @@ szresize model rect =
       controls = List.map (\(i,(c,efs)) -> (i,c)) ctlsNeffs
       effs = Effects.batch 
           (List.map 
-            (\(i,(c,efs)) -> (Effects.map (\ef -> SzCAction i ef) efs))
+            (\(i,(c,efs)) -> (Effects.map (\ef -> SzCMsg i ef) efs))
             ctlsNeffs)
       cdict = Dict.fromList(controls)
     in
@@ -285,7 +288,7 @@ mkRlist orientation rect count mbproportions =
 
         
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
-  -> (SzModel, Effects SzAction)
+  -> (SzModel, Effects SzMsg)
 szinit sendf rect cid szspec = 
   let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions
       blist = List.map 
@@ -294,7 +297,7 @@ szinit sendf rect cid szspec =
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 
       fx = Effects.batch 
-             (List.map (\(i,a) -> Effects.map (SzCAction i) a)
+             (List.map (\(i,a) -> Effects.map (SzCMsg i) a)
                   (zip idxs (List.map snd blist)))
     in
      (SzModel cid rect (Dict.fromList controlz) szspec.orientation szspec.proportions, fx)
@@ -304,12 +307,12 @@ szinit sendf rect cid szspec =
 
 (=>) = (,)
 
-szview : Signal.Address SzAction -> SzModel -> Svg
+szview : Signal.Address SzMsg -> SzModel -> Svg
 szview address model =
   let controllst = Dict.toList model.controls in 
   Svg.g [] (List.map (viewSvgControls address) controllst)
 
-viewSvgControls : Signal.Address SzAction -> (ID, Model) -> Svg.Svg 
+viewSvgControls : Signal.Address SzMsg -> (ID, Model) -> Svg.Svg 
 viewSvgControls address (id, model) =
-  view (Signal.forwardTo address (SzCAction id)) model
+  view (Signal.forwardTo address (SzCMsg id)) model
 

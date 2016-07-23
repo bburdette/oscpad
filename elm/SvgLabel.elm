@@ -1,6 +1,5 @@
-module SvgLabel where
+module SvgLabel exposing (..) 
 
-import Effects exposing (Effects, Never)
 import Html exposing (Html)
 -- import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
@@ -10,9 +9,9 @@ import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
+-- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
-import Touch
+-- import SvgTouch
 import SvgTextSize exposing (..)
 import Time exposing (..)
 import String
@@ -37,11 +36,11 @@ type alias Model =
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
-  , textSvg: List Svg
+  , textSvg: List (Svg ())
   }
 
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Effects Action)
+  -> (Model, Cmd Msg)
 init rect cid spec =
   let ts = SvgThings.calcTextSvg SvgThings.ff spec.label rect 
   in
@@ -54,13 +53,13 @@ init rect cid spec =
                            (toString rect.w)
                            (toString rect.h))
           ts
-  , Effects.none)
+  , Cmd.none)
 
 -- UPDATE
 
-type Action
+type Msg
     = SvgUpdate UpdateMessage
-    | SvgTouch (List Touch.Touch)
+--    | SvgTouch (List Touch.Touch)
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
@@ -72,18 +71,18 @@ jsUpdateMessage = JD.object2 UpdateMessage
   ("controlId" := SvgThings.decodeControlId) 
   ("label" := JD.string)
   
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     SvgUpdate um ->
       let ts = SvgThings.calcTextSvg SvgThings.ff um.label model.rect 
       in
       -- when the text changes, measure it. 
       ({ model | label = um.label, textSvg = ts }
-      , Effects.none) 
-    SvgTouch touches -> (model, Effects.none)
+      , Cmd.none) 
+--    SvgTouch touches -> (model, Cmd.none)
 
-resize: Model -> SvgThings.Rect -> (Model, Effects Action)
+resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
 resize model rect = 
   let ts = SvgThings.calcTextSvg SvgThings.ff model.label rect 
   in
@@ -94,13 +93,13 @@ resize model rect =
                                       (toString rect.h))
            , textSvg = ts
     }
-  , Effects.none)
+  , Cmd.none)
 
 -- VIEW
 (=>) = (,)
 
-view : Signal.Address Action -> Model -> Svg
-view address model =
+view : Model -> Svg ()
+view model =
   let lbrect = rect
         [ x model.srect.x
         , y model.srect.y 

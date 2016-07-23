@@ -1,6 +1,7 @@
-module SvgControlPage where
+module SvgControlPage exposing (..)
 
-import Effects exposing (Effects, Never)
+-- import Effects exposing (Effects, Never)
+import Platform exposing (Cmd, none) 
 import Html 
 import SvgButton
 import SvgSlider
@@ -13,7 +14,7 @@ import Json.Decode as JD exposing ((:=))
 import Svg 
 import Svg.Attributes as SA 
 import Svg.Events as SE
-import SvgTouch
+-- import SvgTouch
 
 -- json spec
 type alias Spec = 
@@ -46,7 +47,7 @@ type Action
     = JsonMsg String 
     | CAction SvgControl.Action 
     | WinDims (Int, Int)
-    | Touche (List SvgTouch.Touch)
+--    | Touche (List SvgTouch.Touch)
 
 type JsMessage 
   = JmSpec Spec
@@ -84,6 +85,7 @@ update action model =
                , srect = (SvgThings.toSRect nr)
                , control = ctrl }, 
        Effects.map CAction eff)
+{-
     Touche touchlist ->
       let tdict = touchDict model.control touchlist
           curtouches = Dict.map (\_ v -> fst v) tdict
@@ -99,11 +101,11 @@ update action model =
               (List.filterMap (\(cid, tam) -> 
                 Maybe.map (SvgControl.toCtrlAction cid) (tam [])) 
                 (Dict.toList prevs)))))
-          
+-}          
 
 -- build a dict of controls -> touches.
 
-
+{-
 touchDict: SvgControl.Model -> (List SvgTouch.Touch) -> 
     Dict SvgThings.ControlId (SvgControl.ControlTam, (List SvgTouch.Touch))
 touchDict root touches = 
@@ -119,7 +121,7 @@ updict mt dict =
                 Nothing -> Just (SvgControl.controlTouchActionMaker (fst mt), [(snd mt)])
                 Just (a,b) -> Just (a, (snd mt) :: b))
               dict
-
+-}
 
 {-
 

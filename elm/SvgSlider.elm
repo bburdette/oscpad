@@ -1,6 +1,7 @@
-module SvgSlider where
+module SvgSlider exposing (..) 
 
-import Effects exposing (Effects, Never)
+-- import Effects exposing (Effects, Never)
+-- import Platform exposing (Cmd, none) 
 import Html exposing (Html)
 import Http
 import Json.Decode as JD exposing ((:=))
@@ -8,10 +9,11 @@ import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
-import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
-import SvgThings
+import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
+-- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
+import SvgThings exposing (Orientation(..)) 
 import VirtualDom as VD
-import Touch
+-- import SvgTouch
 
 
 type alias Spec = 
@@ -34,11 +36,11 @@ type alias Model =
   , orientation: SvgThings.Orientation
   , pressed: Bool
   , location: Float
-  , sendf : (String -> Task.Task Never ())
+  , sendf : (String -> Cmd Msg)
   }
 
-init: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Effects Action)
+init: (String -> Cmd Msg) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
+  -> (Model, Cmd Msg)
 init sendf rect cid spec =
   ( Model (spec.name) 
           cid 
@@ -49,7 +51,7 @@ init sendf rect cid spec =
                            (toString rect.h))
           spec.orientation
           False 0.5 sendf
-  , Effects.none
+  , Cmd.none
   )
 
 buttColor: Bool -> String
@@ -60,14 +62,14 @@ buttColor pressed =
 
 -- UPDATE
 
-type Action
+type Msg 
     = SvgPress JE.Value
     | SvgUnpress JE.Value 
     | UselessCrap 
     | Reply String 
     | SvgMoved JE.Value
     | SvgUpdate UpdateMessage
-    | SvgTouch (List Touch.Touch)
+--    | SvgTouch (List Touch.Touch)
 
 {-
 getX : JD.Decoder Int
@@ -140,33 +142,33 @@ getLocation model v =
         Err e -> Err e
 
 {-
-updLoc: Model -> JD.Value -> (Model, Effects Action) 
+updLoc: Model -> JD.Value -> (Model, Cmd Msg) 
 
       case (getLocation model v) of 
-        Ok l -> ({model | location = l}, Effects.none)
-        _ -> (model, Effects.none)
+        Ok l -> ({model | location = l}, Cmd.none)
+        _ -> (model, Cmd.none)
 -}
 
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     SvgPress v -> 
       case (getLocation model v) of 
         Ok l -> updsend model Press l
-        _ -> (model, Effects.none)
+        _ -> (model, Cmd.none)
     SvgUnpress v -> 
       case model.pressed of 
         True -> updsend model Unpress model.location 
-        False -> (model, Effects.none)
-    UselessCrap -> (model, Effects.none)
-    Reply s -> ({model | name = s}, Effects.none)
+        False -> (model, Cmd.none)
+    UselessCrap -> (model, Cmd.none)
+    Reply s -> ({model | name = s}, Cmd.none)
     SvgMoved v ->
       case model.pressed of 
         True -> 
           case (getLocation model v) of 
             Ok l -> updsend model Move l 
-            _ -> (model, Effects.none)
-        False -> (model, Effects.none)
+            _ -> (model, Cmd.none)
+        False -> (model, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let mod = case um.updateType of 
@@ -174,13 +176,14 @@ update action model =
           Move -> { model | location = um.location }
           Unpress -> { model | pressed = False, location = um.location }
         in
-      (mod, Effects.none )
-    SvgTouch touches -> 
+      (mod, Cmd.none )
+
+{-    SvgTouch touches -> 
       if List.isEmpty touches then
         if model.pressed then
           updsend model Unpress model.location
         else 
-          (model, Effects.none )
+          (model, Cmd.none )
       else
         case model.orientation of 
           SvgThings.Horizontal -> 
@@ -201,8 +204,9 @@ update action model =
               updsend model Press loc
             else 
               updsend model Move loc
+-}
 
-updsend: Model -> UpdateType -> Float -> (Model, Effects Action)
+updsend: Model -> UpdateType -> Float -> (Model, Cmd Msg)
 updsend model ut loc = 
   let bLoc = if (loc > 1.0) then 
                 1.0
@@ -213,35 +217,34 @@ updsend model ut loc =
       prest = ut /= Unpress
   in
   if (model.location == bLoc && model.pressed == prest) then 
-    (model, Effects.none)
+    (model, Cmd.none)
   else
     let um = JE.encode 0 
               (encodeUpdateMessage (UpdateMessage model.cid ut bLoc)) in
     ( {model | location = bLoc, pressed = prest }
-      , Effects.task 
-          ((model.sendf um) `Task.andThen` 
-          (\_ -> Task.succeed UselessCrap)))
+      ,(model.sendf um) )
+         
 
-resize: Model -> SvgThings.Rect -> (Model, Effects Action)
+resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
 resize model rect = 
   ({ model | rect = rect, 
             srect = (SvgThings.SRect (toString rect.x)
                                      (toString rect.y)
                                      (toString rect.w)
                                      (toString rect.h)) }
-  , Effects.none)
+  , Cmd.none)
  
 -- VIEW
 
 (=>) = (,)
 
+{-
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
 
-
-sliderEvt: String -> (JD.Value -> Action) -> Signal.Address Action -> VD.Property
+sliderEvt: String -> (JD.Value -> Msg) -> VD.Property
 sliderEvt evtname mkaction address =
-    VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> Signal.message address (mkaction v))
+    VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> (mkaction v))
 
 -- onClick = sliderEvt "click" SvgMoved
 --  , onClick address
@@ -249,9 +252,10 @@ onMouseMove = sliderEvt "mousemove" SvgMoved
 onMouseLeave = sliderEvt "mouseleave" SvgUnpress
 onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
+-}
 
-view : Signal.Address Action -> Model -> Svg
-view address model =
+view : Model -> JE.Value -> Svg Msg
+view model whut =
   let (sx, sy, sw, sh) = case model.orientation of 
      SvgThings.Vertical -> 
         (model.srect.x
@@ -264,10 +268,10 @@ view address model =
         ,"3"
         ,model.srect.h)
    in
-  g [ onMouseDown address 
-    , onMouseUp address 
-    , onMouseLeave address 
-    , onMouseMove address 
+  g [ onMouseDown (SvgPress whut) 
+    , onMouseUp (SvgUnpress whut) 
+    -- , onMouseOut
+    -- , onMouseMove  
     ]
     [ rect
         [ x model.srect.x

@@ -1,9 +1,9 @@
 module NoDragEvents
-    ( onBegin, onEnd, onRepeat
+    exposing ( onBegin, onEnd, onRepeat
     , onAbort, onError, onResize, onScroll, onLoad, onUnload, onZoom
     , onActivate, onClick, onFocusIn, onFocusOut, onMouseDown, onMouseMove
     , onMouseOut, onMouseOver, onMouseUp
-    ) where
+    ) 
 
 {-|
 
@@ -21,7 +21,7 @@ module NoDragEvents
 
 import Svg exposing (Attribute)
 import Json.Decode as Json
-import Signal
+-- import Signal
 import VirtualDom
 
 

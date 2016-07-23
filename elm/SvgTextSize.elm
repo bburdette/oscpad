@@ -1,10 +1,9 @@
 module SvgTextSize
-    ( getTextWidth
-    ) where
+   exposing ( getTextWidth
+    ) 
 
 import Native.SvgTextSize
 import Time exposing (Time)
-import Signal exposing (Signal)
 import Task exposing (..)
 
 getTextWidth : String -> String -> Int 

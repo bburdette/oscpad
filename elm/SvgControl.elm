@@ -4,14 +4,13 @@ import SvgButton
 import SvgSlider
 import SvgLabel
 import Json.Decode as JD exposing ((:=))
--- import Effects exposing (Effects, Never)
--- import Platform exposing (Cmd, none) 
 import Task
 import Dict exposing (..)
 import List exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes as SA 
 import SvgThings
+import VirtualDom as VD
 -- import Signal
 import Html
 -- import Touch
@@ -36,10 +35,12 @@ type Model = CmButton SvgButton.Model
            | CmLabel SvgLabel.Model
            | CmSizer SzModel
 
-type Msg = CaButton SvgButton.Msg
-            | CaSlider SvgSlider.Msg
-            | CaLabel SvgLabel.Msg
-            | CaSizer SzMsg
+type Msg = CaButton SvgButton.Msg   
+         | CaSlider SvgSlider.Msg
+         | CaLabel SvgLabel.Msg
+         | CaSizer SzMsg
+
+
 
 findControl: Int -> Int -> Model -> Maybe Model
 findControl x y mod = 
@@ -76,16 +77,16 @@ controlName mod =
 tupMap2: (a -> c) -> (b -> d) -> (a,b) -> (c,d)
 tupMap2 fa fb ab = (fa (fst ab), fb (snd ab))
 
-resize: Model -> SvgThings.Rect -> (Model, Effects Action)
+resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
 resize model rect = 
   case model of 
-    CmButton mod -> tupMap2 CmButton (Effects.map CaButton) (SvgButton.resize mod (SvgThings.shrinkRect border rect)) 
-    CmSlider mod -> tupMap2 CmSlider (Effects.map CaSlider) (SvgSlider.resize mod (SvgThings.shrinkRect border rect)) 
-    CmLabel mod -> tupMap2 CmLabel (Effects.map CaLabel) (SvgLabel.resize mod (SvgThings.shrinkRect border rect)) 
-    CmSizer mod -> tupMap2 CmSizer (Effects.map CaSizer) (szresize mod rect) 
+    CmButton mod -> tupMap2 CmButton (Cmd.map CaButton) (SvgButton.resize mod (SvgThings.shrinkRect border rect)) 
+    CmSlider mod -> tupMap2 CmSlider (Cmd.map CaSlider) (SvgSlider.resize mod (SvgThings.shrinkRect border rect)) 
+    CmLabel mod -> tupMap2 CmLabel (Cmd.map CaLabel) (SvgLabel.resize mod (SvgThings.shrinkRect border rect)) 
+    CmSizer mod -> tupMap2 CmSizer (Cmd.map CaSizer) (szresize mod rect) 
 
 {-
-type alias ControlTam = ((List Touch.Touch) -> Maybe Action)
+type alias ControlTam = ((List Touch.Touch) -> Maybe Msg)
     
 controlTouchActionMaker: Model -> ControlTam 
 controlTouchActionMaker ctrl = 
@@ -109,19 +110,19 @@ jsCs t =
     "sizer" -> jsSzSpec `JD.andThen` (\a -> JD.succeed (CsSizer a))
     _ -> JD.fail ("unkown type: " ++ t)
 
-jsUpdateMessage: JD.Decoder Action
+jsUpdateMessage: JD.Decoder Msg
 jsUpdateMessage = 
   ("controlType" := JD.string) `JD.andThen` jsUmType
 
-jsUmType: String -> JD.Decoder Action
+jsUmType: String -> JD.Decoder Msg
 jsUmType wat = 
   case wat of 
     "button" -> SvgButton.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (toCtrlAction x.controlId (CaButton (SvgButton.SvgUpdate x))))
+                  (\x -> JD.succeed (toCtrlMsg x.controlId (CaButton (SvgButton.SvgUpdate x))))
     "slider" -> SvgSlider.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (toCtrlAction x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
+                  (\x -> JD.succeed (toCtrlMsg x.controlId (CaSlider (SvgSlider.SvgUpdate x))))
     "label" -> SvgLabel.jsUpdateMessage `JD.andThen` 
-                  (\x -> JD.succeed (toCtrlAction x.controlId (CaLabel (SvgLabel.SvgUpdate x))))
+                  (\x -> JD.succeed (toCtrlMsg x.controlId (CaLabel (SvgLabel.SvgUpdate x))))
     _ -> JD.fail ("unknown update type" ++ wat)
 
 myTail: List a -> List a
@@ -131,53 +132,54 @@ myTail lst =
     Just l -> l
     Nothing -> []
 
-toCtrlAction: SvgThings.ControlId -> Action -> Action
-toCtrlAction id action = 
+toCtrlMsg: SvgThings.ControlId -> Msg -> Msg
+toCtrlMsg id msg = 
   case (head id) of 
-    Nothing -> action
-    Just x -> CaSizer (SzCAction x (toCtrlAction (myTail id) action))
+    Nothing -> msg
+    Just x -> CaSizer (SzCMsg x (toCtrlMsg (myTail id) msg))
 
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case (action,model) of 
-    (CaButton act, CmButton m) -> 
-      let (a,b) = (SvgButton.update act m) in
-        (CmButton a, Effects.map CaButton b)
-    (CaSlider act, CmSlider m) -> 
-      let (a,b) = (SvgSlider.update act m) in
-        (CmSlider a, Effects.map CaSlider b)
-    (CaLabel act, CmLabel m) -> 
-      let (a,b) = (SvgLabel.update act m) in
-        (CmLabel a, Effects.map CaLabel b)
-    (CaSizer act, CmSizer m) -> 
-      let (a,b) = (szupdate act m) in
-        (CmSizer a, Effects.map CaSizer b)
-    _ -> (model, Effects.none)    -- should probably produce an error.  to the user??
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case (msg,model) of 
+    (CaButton ms, CmButton m) -> 
+      let (a,b) = (SvgButton.update ms m) in
+        (CmButton a, Cmd.map CaButton b)
+    (CaSlider ms, CmSlider m) -> 
+      let (a,b) = (SvgSlider.update ms m) in
+        (CmSlider a, Cmd.map CaSlider b)
+    (CaLabel ms, CmLabel m) -> 
+      let (a,b) = (SvgLabel.update ms m) in
+        (CmLabel a, Cmd.map CaLabel b)
+    (CaSizer ms, CmSizer m) -> 
+      let (a,b) = (szupdate ms m) in
+        (CmSizer a, Cmd.map CaSizer b)
+    _ -> (model, Cmd.none)    -- should probably produce an error.  to the user??
 
 init : (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Effects Action)
+  -> (Model, Cmd Msg)
 init sendf rect cid spec =
   case spec of 
     CsButton s -> 
       let (a,b) = (SvgButton.init sendf (SvgThings.shrinkRect border rect) cid s) in
-        (CmButton a, Effects.map CaButton b)
+        (CmButton a, Cmd.map CaButton b)
     CsSlider s -> 
       let (a,b) = (SvgSlider.init sendf (SvgThings.shrinkRect border rect) cid s) in
-        (CmSlider a, Effects.map CaSlider b)
+        (CmSlider a, Cmd.map CaSlider b)
     CsLabel s -> 
       let (a,b) = (SvgLabel.init (SvgThings.shrinkRect border rect) cid s) in
-        (CmLabel a, Effects.map CaLabel b)
+        (CmLabel a, Cmd.map CaLabel b)
     CsSizer s -> 
       let (a,b) = (szinit sendf rect cid s) in
-        (CmSizer a, Effects.map CaSizer b)
+        (CmSizer a, Cmd.map CaSizer b)
 
-view : Signal.Address Action -> Model -> Svg
-view address model = 
+view : Model -> Svg Msg
+view model = 
   case model of 
-    CmButton m -> SvgButton.view (Signal.forwardTo address CaButton)  m
-    CmSlider m -> SvgSlider.view (Signal.forwardTo address CaSlider)  m
-    CmLabel m -> SvgLabel.view (Signal.forwardTo address CaLabel)  m
-    CmSizer m -> szview (Signal.forwardTo address CaSizer)  m
+    CmButton m -> VD.map CaButton (SvgButton.view m)
+    CmSlider m -> VD.map CaSlider (SvgSlider.view m)
+    CmLabel m -> VD.map CaLabel (SvgLabel.view m)
+    CmSizer m -> VD.map CaSizer (szview m)
+
 
 -------------------- sizer -------------------
 
@@ -244,9 +246,9 @@ type SzMsg
 
 zip = List.map2 (,)
 
-szupdate : SzMsg -> SzModel -> (SzModel, Effects SzMsg)
-szupdate Msg model =
-  case Msg of
+szupdate : SzMsg -> SzModel -> (SzModel, Cmd SzMsg)
+szupdate msg model =
+  case msg of
     SzCMsg id act -> 
       let bb = get id model.controls in
       case bb of 
@@ -255,18 +257,18 @@ szupdate Msg model =
               updcontrols = insert id (fst wha) model.controls
               newmod = { model | controls = updcontrols }
             in
-              (newmod, Effects.map (SzCMsg id) (snd wha))
-        Nothing -> (model, Effects.none) 
+              (newmod, Cmd.map (SzCMsg id) (snd wha))
+        Nothing -> (model, Cmd.none) 
  
-szresize : SzModel -> SvgThings.Rect -> (SzModel, Effects SzMsg)
+szresize : SzModel -> SvgThings.Rect -> (SzModel, Cmd SzMsg)
 szresize model rect = 
   let clist = Dict.toList(model.controls)
       rlist = mkRlist model.orientation rect (List.length clist) model.proportions
       ctlsNeffs = List.map (\((i,c),r) -> (i, resize c r)) (zip clist rlist)
       controls = List.map (\(i,(c,efs)) -> (i,c)) ctlsNeffs
-      effs = Effects.batch 
+      effs = Cmd.batch 
           (List.map 
-            (\(i,(c,efs)) -> (Effects.map (\ef -> SzCMsg i ef) efs))
+            (\(i,(c,efs)) -> (Cmd.map (\ef -> SzCMsg i ef) efs))
             ctlsNeffs)
       cdict = Dict.fromList(controls)
     in
@@ -288,7 +290,7 @@ mkRlist orientation rect count mbproportions =
 
         
 szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
-  -> (SzModel, Effects SzMsg)
+  -> (SzModel, Cmd SzMsg)
 szinit sendf rect cid szspec = 
   let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions
       blist = List.map 
@@ -296,8 +298,8 @@ szinit sendf rect cid szspec =
                 (map3 (,,) szspec.controls rlist idxs)
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 
-      fx = Effects.batch 
-             (List.map (\(i,a) -> Effects.map (SzCMsg i) a)
+      fx = Cmd.batch 
+             (List.map (\(i,a) -> Cmd.map (SzCMsg i) a)
                   (zip idxs (List.map snd blist)))
     in
      (SzModel cid rect (Dict.fromList controlz) szspec.orientation szspec.proportions, fx)
@@ -307,12 +309,12 @@ szinit sendf rect cid szspec =
 
 (=>) = (,)
 
-szview : Signal.Address SzMsg -> SzModel -> Svg
-szview address model =
+szview : SzModel -> Svg SzMsg
+szview model =
   let controllst = Dict.toList model.controls in 
-  Svg.g [] (List.map (viewSvgControls address) controllst)
+  Svg.g [] (List.map viewSvgControls controllst)
 
-viewSvgControls : Signal.Address SzMsg -> (ID, Model) -> Svg.Svg 
-viewSvgControls address (id, model) =
-  view (Signal.forwardTo address (SzCMsg id)) model
+viewSvgControls : (ID, Model) -> Svg.Svg SzMsg 
+viewSvgControls (id, model) =
+  VD.map (SzCMsg id) (view model)
 

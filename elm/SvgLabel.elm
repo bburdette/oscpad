@@ -9,12 +9,14 @@ import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
+import VirtualDom as VD
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
 -- import SvgTouch
 import SvgTextSize exposing (..)
 import Time exposing (..)
 import String
+import Html.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import Template exposing (template, render)
 import Template.Infix exposing ((<%), (%>))
 
@@ -36,7 +38,7 @@ type alias Model =
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
-  , textSvg: List (Svg ())
+  , textSvg: List (Svg Msg)
   }
 
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -52,13 +54,14 @@ init rect cid spec =
                            (toString rect.y)
                            (toString rect.w)
                            (toString rect.h))
-          ts
+          (List.map (\meh -> (VD.map (\_ -> NoOp) meh)) ts)
   , Cmd.none)
 
 -- UPDATE
 
 type Msg
     = SvgUpdate UpdateMessage
+    | NoOp
 --    | SvgTouch (List Touch.Touch)
 
 type alias UpdateMessage = 
@@ -75,11 +78,14 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     SvgUpdate um ->
-      let ts = SvgThings.calcTextSvg SvgThings.ff um.label model.rect 
+      let tswk = SvgThings.calcTextSvg SvgThings.ff um.label model.rect 
+          ts = (List.map (\meh -> (VD.map (\_ -> NoOp) meh)) tswk)
       in
       -- when the text changes, measure it. 
       ({ model | label = um.label, textSvg = ts }
       , Cmd.none) 
+    NoOp -> 
+      (model, Cmd.none)
 --    SvgTouch touches -> (model, Cmd.none)
 
 resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
@@ -91,14 +97,14 @@ resize model rect =
                                       (toString rect.y)
                                       (toString rect.w)
                                       (toString rect.h))
-           , textSvg = ts
+           , textSvg = (List.map (\meh -> (VD.map (\_ -> NoOp) meh)) ts)
     }
   , Cmd.none)
 
 -- VIEW
 (=>) = (,)
 
-view : Model -> Svg ()
+view : Model -> Svg Msg
 view model =
   let lbrect = rect
         [ x model.srect.x
@@ -112,7 +118,7 @@ view model =
         []
       svgl = lbrect :: model.textSvg 
   in
-  g [ ] svgl
+  VD.map (\_ -> NoOp) (g [ ] svgl)
 
 
  

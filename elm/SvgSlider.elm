@@ -254,8 +254,8 @@ onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
 -}
 
-view : Model -> JE.Value -> Svg Msg
-view model whut =
+view : Model -> Svg Msg
+view model =
   let (sx, sy, sw, sh) = case model.orientation of 
      SvgThings.Vertical -> 
         (model.srect.x
@@ -268,8 +268,8 @@ view model whut =
         ,"3"
         ,model.srect.h)
    in
-  g [ onMouseDown (SvgPress whut) 
-    , onMouseUp (SvgUnpress whut) 
+  g [ onMouseDown (SvgPress (JE.float model.location))
+    , onMouseUp (SvgUnpress (JE.float model.location))
     -- , onMouseOut
     -- , onMouseMove  
     ]

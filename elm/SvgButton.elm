@@ -167,7 +167,6 @@ resize model rect =
 
 
 -- VIEW
-(=>) = (,)
 
 view : Model -> Svg Msg
 view model =

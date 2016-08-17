@@ -14,6 +14,7 @@ import Html.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
 -- import SvgTouch
+import WebSocket 
 
 -- how to specify a button in json.
 type alias Spec = 
@@ -35,13 +36,14 @@ type alias Model =
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
   , pressed: Bool
-  , sendf : (String -> Cmd Msg) 
+  , sendaddr : String 
+  -- , sendf : (String -> Cmd msg) 
   , textSvg: List (Svg ())
   }
 
-init: (String -> Cmd Msg) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
+init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Cmd Msg)
-init sendf rect cid spec =
+init sendaddr rect cid spec =
   let ts = case spec.label of 
         Just lbtext -> SvgThings.calcTextSvg SvgThings.ff lbtext rect 
         Nothing -> []
@@ -55,7 +57,7 @@ init sendf rect cid spec =
                            (toString rect.w)
                            (toString rect.h))
           False 
-          sendf
+          sendaddr
           ts
   , Cmd.none
   )
@@ -148,7 +150,7 @@ pressup: Model -> UpdateType -> (Model, Cmd Msg)
 pressup model ut = 
   let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
   ({ model | pressed = (ut == Press)}
-    , (model.sendf um) )
+    , (WebSocket.send model.sendaddr um) )
 
 -- Effects.task ((model.sendf um) 
 --         `Task.andThen` (\_ -> Task.succeed UselessCrap)))

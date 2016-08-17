@@ -14,7 +14,7 @@ import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMous
 import SvgThings exposing (Orientation(..)) 
 import VirtualDom as VD
 -- import SvgTouch
-
+import WebSocket
 
 type alias Spec = 
   { name: String
@@ -36,12 +36,12 @@ type alias Model =
   , orientation: SvgThings.Orientation
   , pressed: Bool
   , location: Float
-  , sendf : (String -> Cmd Msg)
+  , sendaddr: String
   }
 
-init: (String -> Cmd Msg) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Cmd Msg)
-init sendf rect cid spec =
+init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
+  -> (Model, Cmd msg)
+init sendaddr rect cid spec =
   ( Model (spec.name) 
           cid 
           rect
@@ -50,7 +50,9 @@ init sendf rect cid spec =
                            (toString rect.w)
                            (toString rect.h))
           spec.orientation
-          False 0.5 sendf
+          False 
+          0.5 
+          sendaddr
   , Cmd.none
   )
 
@@ -222,7 +224,7 @@ updsend model ut loc =
     let um = JE.encode 0 
               (encodeUpdateMessage (UpdateMessage model.cid ut bLoc)) in
     ( {model | location = bLoc, pressed = prest }
-      ,(model.sendf um) )
+      ,(WebSocket.send model.sendaddr um) )
          
 
 resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)

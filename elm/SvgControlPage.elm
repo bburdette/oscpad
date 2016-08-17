@@ -1,26 +1,27 @@
 module SvgControlPage exposing (..)
 
 -- import Effects exposing (Effects, Never)
-import Platform exposing (Cmd, none) 
+-- import Platform exposing (Cmd, none) 
 import Html 
 import SvgButton
 import SvgSlider
 import SvgControl
 import SvgThings
-import Task
+-- import Task
 import List exposing (..)
 import Dict exposing (..)
 import Json.Decode as JD exposing ((:=))
 import Svg 
 import Svg.Attributes as SA 
 import Svg.Events as SE
+import VirtualDom as VD
 -- import SvgTouch
 
 -- json spec
 type alias Spec = 
   { title: String
   , rootControl: SvgControl.Spec
-  , state: Maybe (List SvgControl.Action)
+  , state: Maybe (List SvgControl.Msg)
   }
 
 jsSpec : JD.Decoder Spec
@@ -35,47 +36,47 @@ type alias Model =
   , srect: SvgThings.SRect 
   , spec: Spec
   , control: SvgControl.Model
-  , prevtouches: Dict SvgThings.ControlId SvgControl.ControlTam
-  , mahsend : (String -> Task.Task Never ())
+--  , prevtouches: Dict SvgThings.ControlId SvgControl.ControlTam
+  , sendaddr: String
   }
 
 type alias ID = Int
 
 -- UPDATE
 
-type Action
+type Msg 
     = JsonMsg String 
-    | CAction SvgControl.Action 
+    | CMsg SvgControl.Msg 
     | WinDims (Int, Int)
 --    | Touche (List SvgTouch.Touch)
 
 type JsMessage 
   = JmSpec Spec
-  | JmUpdate Action
+  | JmUpdate Msg
 
 jsMessage: JD.Decoder JsMessage
 jsMessage = JD.oneOf
   [ jsSpec `JD.andThen` (\x -> JD.succeed (JmSpec x))
   , SvgControl.jsUpdateMessage `JD.andThen` 
-      (\x -> JD.succeed (JmUpdate (CAction x)))
+      (\x -> JD.succeed (JmUpdate (CMsg x)))
   ] 
 
 
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     JsonMsg s -> 
       case (JD.decodeString jsMessage s) of 
         Ok (JmSpec spec) -> 
-          init model.mahsend model.mahrect spec 
+          init model.sendaddr model.mahrect spec 
         Ok (JmUpdate jmact) -> 
           update jmact model
-        Err e -> ({model | title = e}, Effects.none)
-    CAction act -> 
+        Err e -> ({model | title = e}, Cmd.none)
+    CMsg act -> 
       let wha = SvgControl.update act model.control 
           newmod = { model | control = fst wha }
         in
-          (newmod, Effects.map CAction (snd wha))
+          (newmod, Cmd.map CMsg (snd wha))
     WinDims (x,y) -> 
       -- init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
       let nr = (SvgThings.Rect 0 0 x y)
@@ -84,22 +85,22 @@ update action model =
       ({ model | mahrect = nr
                , srect = (SvgThings.toSRect nr)
                , control = ctrl }, 
-       Effects.map CAction eff)
+       Cmd.map CMsg eff)
 {-
     Touche touchlist ->
       let tdict = touchDict model.control touchlist
           curtouches = Dict.map (\_ v -> fst v) tdict
           prevs = Dict.diff model.prevtouches curtouches in 
-      ({model | prevtouches = curtouches}, Effects.batch 
+      ({model | prevtouches = curtouches}, Cmd.batch 
         (
-          (List.map (\t -> Effects.task (Task.succeed (CAction t)))
+          (List.map (\t -> Cmd.task (Task.succeed (CMsg t)))
               (List.filterMap (\(cid, (tam, tl)) -> 
-                Maybe.map (SvgControl.toCtrlAction cid) (tam tl)) 
+                Maybe.map (SvgControl.toCtrlMsg cid) (tam tl)) 
                 (Dict.toList tdict)))
           ++
-          (List.map (\t -> Effects.task (Task.succeed (CAction t)))
+          (List.map (\t -> Cmd.task (Task.succeed (CMsg t)))
               (List.filterMap (\(cid, tam) -> 
-                Maybe.map (SvgControl.toCtrlAction cid) (tam [])) 
+                Maybe.map (SvgControl.toCtrlMsg cid) (tam [])) 
                 (Dict.toList prevs)))))
 -}          
 
@@ -118,7 +119,7 @@ updict: (SvgControl.Model, SvgTouch.Touch)
 updict mt dict =
   Dict.update (SvgControl.controlId (fst mt)) 
               (\mbpair -> case mbpair of 
-                Nothing -> Just (SvgControl.controlTouchActionMaker (fst mt), [(snd mt)])
+                Nothing -> Just (SvgControl.controlTouchMsgMaker (fst mt), [(snd mt)])
                 Just (a,b) -> Just (a, (snd mt) :: b))
               dict
 -}
@@ -127,12 +128,12 @@ updict mt dict =
 
     Touche touchlist ->
       case head touchlist of 
-        Nothing -> ({model | title = "no touches" }, Effects.none)
+        Nothing -> ({model | title = "no touches" }, Cmd.none)
         Just touch -> 
           case SvgControl.findControl touch.x touch.y model.control of
             Just control ->  
-              ({model | title = SvgControl.controlName control }, Effects.none)
-            Nothing -> ({model | title = "no touches" }, Effects.none)
+              ({model | title = SvgControl.controlName control }, Cmd.none)
+            Nothing -> ({model | title = "no touches" }, Cmd.none)
 
 
 -}
@@ -144,23 +145,30 @@ updict mt dict =
 -- Ok could make a touch event list.  
 
 
-init: (String -> Task.Task Never ()) -> SvgThings.Rect -> Spec 
-  -> (Model, Effects Action)
-init sendf rect spec = 
-  let (conmod, conevt) = SvgControl.init sendf rect [] spec.rootControl
-      statefx = List.map (\t -> Effects.task (Task.succeed (CAction t)))
-                          (Maybe.withDefault [] spec.state)
-      fx = Effects.batch ((Effects.map CAction conevt) :: statefx)
+init: String -> SvgThings.Rect -> Spec 
+  -> (Model, Cmd Msg)
+init sendaddr rect spec = 
+  let (conmod, conevt) = SvgControl.init sendaddr rect [] spec.rootControl
+--      statefx = List.map (\t -> Cmd.task (Task.succeed (CMsg t)))
+--                          (Maybe.withDefault [] spec.state)
+--      fx = Cmd.batch ((Cmd.map CMsg conevt) :: statefx)
     in
-     (Model spec.title rect (SvgThings.toSRect rect) spec conmod Dict.empty sendf, fx)
+     (Model spec.title 
+        rect 
+        (SvgThings.toSRect rect) 
+        spec 
+        conmod 
+        -- Dict.empty 
+        sendaddr, 
+      Cmd.none)
       
 -- VIEW
 
 (=>) = (,)
 
 
-view : Signal.Address Action -> Model -> Html.Html
-view address model =
+view : Model -> Html.Html Msg
+view model =
   Html.div [] (
     [Svg.svg
       [ SA.width model.srect.w
@@ -170,7 +178,7 @@ view address model =
                  ++ model.srect.w ++ " "
                  ++ model.srect.h)
       ]
-      [(viewSvgControl address model.control)]
+      [(VD.map CMsg (viewSvgControl model.control))]
     ])
 
 
@@ -182,8 +190,8 @@ view address model =
 
 -}
 
-viewSvgControl : Signal.Address Action -> SvgControl.Model -> Svg.Svg 
-viewSvgControl address conmodel =
-  SvgControl.view (Signal.forwardTo address CAction) conmodel
+viewSvgControl : SvgControl.Model -> Svg.Svg SvgControl.Msg
+viewSvgControl conmodel =
+  SvgControl.view conmodel
 
 

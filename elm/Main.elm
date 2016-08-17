@@ -11,17 +11,25 @@ import Task exposing (Task)
 -- import Keyboard
 import Char
 import String
-import WebSocket exposing (WebSocket)
+import WebSocket 
 import SvgThings
 import Window
 -- import SvgTouch
 import SvgTextSize
 import Html
+import Html.App as App
 
 ---------------------------------------
+-- see this:
+-- http://guide.elm-lang.org/architecture/effects/web_sockets.html
+
+{-
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  WebSocket.listen "ws://localhost:1234" NewMessage
 
 socket : Task x WebSocket
-socket = WebSocket.createToHost "1234"
+socket = WebSocket.createToHost "ws1234"
 
 listen : Signal.Mailbox String
 listen = Signal.mailbox ""
@@ -45,20 +53,30 @@ port sending = Signal.map send inputKeyboard
 -- text entry control or other keyboard oriented controls.  
 inputKeyboard : Signal String
 inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
+-}
 
 ---------------------------------------
 
-{ init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
+-- { init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
 
-app =
-  Html.program
+wsUrl : String
+wsUrl = "ws://localhost:3000"
+
+type Msg 
+  = Receive String
+  | Send
+
+
+main =
+  App.program
     { init = SvgControlPage.init 
-        (send "todo:www.wheretosend.com")
+        wsUrl
         (SvgThings.Rect 0 0 500 300)    
         (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
     , update = SvgControlPage.update
     , view = SvgControlPage.view
-    , subscriptions = \_ -> Sub.none
+    , subscriptions = \_ -> WebSocket.listen wsUrl SvgControlPage.JsonMsg
+--    , subscriptions = \_ -> Sub.none
 --    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
 --              ]
 --    , inputs = [ (Signal.map SvgControlPage.JsonMsg listen.signal)
@@ -67,11 +85,11 @@ app =
 --               ]
     }
 
-main =
-  app.html
+-- main =
+--   app.html
 
-port tasks : Signal (Task.Task Never ())
-port tasks =
-  app.tasks
+-- port tasks : Signal (Task.Task Never ())
+-- port tasks =
+--  app.tasks
 
 

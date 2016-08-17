@@ -40,8 +40,6 @@ type Msg = CaButton SvgButton.Msg
          | CaLabel SvgLabel.Msg
          | CaSizer SzMsg
 
-
-
 findControl: Int -> Int -> Model -> Maybe Model
 findControl x y mod = 
   case mod of 
@@ -155,22 +153,29 @@ update msg model =
         (CmSizer a, Cmd.map CaSizer b)
     _ -> (model, Cmd.none)    -- should probably produce an error.  to the user??
 
-init : (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> Spec
+init : String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Cmd Msg)
-init sendf rect cid spec =
+init sendaddr rect cid spec =
   case spec of 
     CsButton s -> 
-      let (a,b) = (SvgButton.init sendf (SvgThings.shrinkRect border rect) cid s) in
+      let (a,b) = (SvgButton.init sendaddr (SvgThings.shrinkRect border rect) cid s) in
         (CmButton a, Cmd.map CaButton b)
     CsSlider s -> 
-      let (a,b) = (SvgSlider.init sendf (SvgThings.shrinkRect border rect) cid s) in
+      let (a,b) = (SvgSlider.init sendaddr (SvgThings.shrinkRect border rect) cid s) in
         (CmSlider a, Cmd.map CaSlider b)
     CsLabel s -> 
       let (a,b) = (SvgLabel.init (SvgThings.shrinkRect border rect) cid s) in
         (CmLabel a, Cmd.map CaLabel b)
     CsSizer s -> 
-      let (a,b) = (szinit sendf rect cid s) in
+      let (a,b) = (szinit sendaddr rect cid s) in
         (CmSizer a, Cmd.map CaSizer b)
+
+{-
+type Msg = CaButton SvgButton.Msg   
+         | CaSlider SvgSlider.Msg
+         | CaLabel SvgLabel.Msg
+         | CaSizer SzMsg
+-}
 
 view : Model -> Svg Msg
 view model = 
@@ -289,12 +294,12 @@ mkRlist orientation rect count mbproportions =
 
 
         
-szinit: (String -> Task.Task Never ()) -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
+szinit: String -> SvgThings.Rect -> SvgThings.ControlId -> SzSpec
   -> (SzModel, Cmd SzMsg)
-szinit sendf rect cid szspec = 
+szinit sendaddr rect cid szspec = 
   let rlist = mkRlist szspec.orientation rect (List.length szspec.controls) szspec.proportions
       blist = List.map 
-                (\(spec, rect, idx) -> init sendf rect (cid ++ [idx]) spec) 
+                (\(spec, rect, idx) -> init sendaddr rect (cid ++ [idx]) spec) 
                 (map3 (,,) szspec.controls rlist idxs)
       idxs = [0..(length szspec.controls)]  
       controlz = zip idxs (List.map fst blist) 

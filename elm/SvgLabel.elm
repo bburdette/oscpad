@@ -42,7 +42,7 @@ type alias Model =
   }
 
 init: SvgThings.Rect -> SvgThings.ControlId -> Spec
-  -> (Model, Cmd Msg)
+  -> (Model, Cmd msg)
 init rect cid spec =
   let ts = SvgThings.calcTextSvg SvgThings.ff spec.label rect 
   in

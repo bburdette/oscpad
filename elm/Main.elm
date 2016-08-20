@@ -1,12 +1,9 @@
 module Main exposing (..) 
 
--- import Effects exposing (Never)
 import SvgButton 
 import SvgControlPage
 import SvgControl 
--- import StartApp
 import Task
--- import Signal exposing (Signal)
 import Task exposing (Task)
 -- import Keyboard
 import Char
@@ -65,7 +62,6 @@ wsUrl = "ws://localhost:3000"
 type Msg 
   = Receive String
   | Send
-
 
 main =
   App.program

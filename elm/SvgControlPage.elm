@@ -169,7 +169,7 @@ init sendaddr rect spec =
 
 view : Model -> Html.Html Msg
 view model =
-  Html.div [] (
+  Html.div [] 
     [Svg.svg
       [ SA.width model.srect.w
       , SA.height model.srect.h
@@ -179,8 +179,11 @@ view model =
                  ++ model.srect.h)
       ]
       [(VD.map CMsg (viewSvgControl model.control))]
-    ])
+    ]
 
+{-
+    [Html.text "meh"]
+-}
 
 {-
     [Html.text "meh", 

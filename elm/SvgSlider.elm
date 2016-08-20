@@ -3,7 +3,7 @@ module SvgSlider exposing (..)
 -- import Effects exposing (Effects, Never)
 -- import Platform exposing (Cmd, none) 
 import Html exposing (Html)
-import Http
+-- import Http
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE 
 import Task

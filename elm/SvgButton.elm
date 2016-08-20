@@ -4,7 +4,7 @@ module SvgButton exposing (..)
 import Html exposing (Html)
 -- import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
-import Http
+-- import Http
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE
 import Task

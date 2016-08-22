@@ -1,6 +1,7 @@
 module Main exposing (..) 
 
 import SvgButton 
+import SvgSlider 
 import SvgControlPage
 import SvgControl 
 import Task
@@ -68,7 +69,8 @@ main =
     { init = SvgControlPage.init 
         wsUrl
         (SvgThings.Rect 0 0 500 300)    
-        (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
+        (SvgControlPage.Spec "mehtitle" (SvgControl.CsSlider (SvgSlider.Spec "blah" SvgThings.Vertical)) Nothing)
+        -- (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
     , update = SvgControlPage.update
     , view = SvgControlPage.view
     , subscriptions = \_ -> WebSocket.listen wsUrl SvgControlPage.JsonMsg

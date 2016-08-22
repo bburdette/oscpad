@@ -7,7 +7,7 @@ import SvgButton
 import SvgSlider
 import SvgControl
 import SvgThings
--- import Task
+import Task
 import List exposing (..)
 import Dict exposing (..)
 import Json.Decode as JD exposing ((:=))
@@ -15,6 +15,7 @@ import Svg
 import Svg.Attributes as SA 
 import Svg.Events as SE
 import VirtualDom as VD
+import Window
 -- import SvgTouch
 
 -- json spec
@@ -38,6 +39,7 @@ type alias Model =
   , control: SvgControl.Model
 --  , prevtouches: Dict SvgThings.ControlId SvgControl.ControlTam
   , sendaddr: String
+  , windowSize: Window.Size
   }
 
 type alias ID = Int
@@ -47,7 +49,8 @@ type alias ID = Int
 type Msg 
     = JsonMsg String 
     | CMsg SvgControl.Msg 
-    | WinDims (Int, Int)
+    | Resize Window.Size
+    | NoOp
 --    | Touche (List SvgTouch.Touch)
 
 type JsMessage 
@@ -77,6 +80,18 @@ update msg model =
           newmod = { model | control = fst wha }
         in
           (newmod, Cmd.map CMsg (snd wha))
+    Resize newSize ->
+      let nr = (SvgThings.Rect 0 0 newSize.width newSize.height)
+          (ctrl, eff) = SvgControl.resize model.control nr 
+        in
+      ({ model | mahrect = nr
+               , srect = (SvgThings.toSRect nr)
+               , windowSize = newSize
+               , control = ctrl }, 
+       Cmd.map CMsg eff)
+    NoOp -> (model, Cmd.none)
+
+{-
     WinDims (x,y) -> 
       -- init model.mahsend (SvgThings.Rect 0 0 x y) model.spec 
       let nr = (SvgThings.Rect 0 0 x y)
@@ -86,7 +101,6 @@ update msg model =
                , srect = (SvgThings.toSRect nr)
                , control = ctrl }, 
        Cmd.map CMsg eff)
-{-
     Touche touchlist ->
       let tdict = touchDict model.control touchlist
           curtouches = Dict.map (\_ v -> fst v) tdict
@@ -144,7 +158,6 @@ updict mt dict =
 
 -- Ok could make a touch event list.  
 
-
 init: String -> SvgThings.Rect -> Spec 
   -> (Model, Cmd Msg)
 init sendaddr rect spec = 
@@ -159,8 +172,11 @@ init sendaddr rect spec =
         spec 
         conmod 
         -- Dict.empty 
-        sendaddr, 
-      Cmd.none)
+        sendaddr
+        (Window.Size 0 0)
+    , Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size)
+
+--      Cmd.none)
       
 -- VIEW
 

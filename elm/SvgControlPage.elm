@@ -82,13 +82,15 @@ update msg model =
           (newmod, Cmd.map CMsg (snd wha))
     Resize newSize ->
       let nr = (SvgThings.Rect 0 0 newSize.width newSize.height)
-          (ctrl, eff) = SvgControl.resize model.control nr 
+          (ctrl, cmds) = SvgControl.resize model.control nr 
         in
       ({ model | mahrect = nr
                , srect = (SvgThings.toSRect nr)
                , windowSize = newSize
-               , control = ctrl }, 
-       Cmd.map CMsg eff)
+               , control = ctrl }
+    , (Cmd.batch 
+       [(Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size),
+        (Cmd.map CMsg cmds)]))
     NoOp -> (model, Cmd.none)
 
 {-

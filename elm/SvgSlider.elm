@@ -240,20 +240,22 @@ resize model rect =
 
 (=>) = (,)
 
-{-
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
 
-sliderEvt: String -> (JD.Value -> Msg) -> VD.Property
-sliderEvt evtname mkaction address =
-    VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> (mkaction v))
+sliderEvt: String -> (JD.Value -> Msg) -> VD.Property Msg
+sliderEvt evtname mkmsg =
+    VD.onWithOptions evtname (VD.Options True True) (JD.map (\v -> mkmsg v) JD.value)
+    -- VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> (mkaction v))
 
--- onClick = sliderEvt "click" SvgMoved
---  , onClick address
+onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseMove = sliderEvt "mousemove" SvgMoved
 onMouseLeave = sliderEvt "mouseleave" SvgUnpress
-onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
+
+{-
+-- onClick = sliderEvt "click" SvgMoved
+--  , onClick address
 -}
 
 view : Model -> Svg Msg
@@ -270,10 +272,11 @@ view model =
         ,"3"
         ,model.srect.h)
    in
-  g [ onMouseDown (SvgPress (JE.float model.location))
-    , onMouseUp (SvgUnpress (JE.float model.location))
-    -- , onMouseOut
-    -- , onMouseMove  
+--  g [ onMouseDown (SvgPress (JE.float model.location))
+  g [ onMouseDown 
+    , onMouseUp 
+    , onMouseLeave
+    , onMouseMove  
     ]
     [ rect
         [ x model.srect.x

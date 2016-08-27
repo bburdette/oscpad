@@ -58,7 +58,7 @@ inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
 -- { init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
 
 wsUrl : String
-wsUrl = "ws://localhost:3000"
+wsUrl = "ws://localhost:1234"
 
 type Msg 
   = Receive String

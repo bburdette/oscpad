@@ -1,12 +1,10 @@
 module SvgSlider exposing (..) 
 
--- import Effects exposing (Effects, Never)
 -- import Platform exposing (Cmd, none) 
 import Html exposing (Html)
--- import Http
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE 
-import Task
+-- import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)

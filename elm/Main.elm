@@ -18,44 +18,6 @@ import Html
 import Html.App as App
 
 ---------------------------------------
--- see this:
--- http://guide.elm-lang.org/architecture/effects/web_sockets.html
-
-{-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  WebSocket.listen "ws://localhost:1234" NewMessage
-
-socket : Task x WebSocket
-socket = WebSocket.createToHost "ws1234"
-
-listen : Signal.Mailbox String
-listen = Signal.mailbox ""
-
-port listening : Task x (List ())
-port listening = socket `Task.andThen` 
-  (\s -> 
-    Task.sequence [WebSocket.listen listen.address s, 
-                   WebSocket.connected connected.address s])
-
-connected : Signal.Mailbox Bool
-connected = Signal.mailbox False
-
--- send : String -> Task x ()
--- send message = socket `Task.andThen` WebSocket.send message
-
-port sending : Signal (Task x ())
-port sending = Signal.map send inputKeyboard
-
--- not really used yet!  but hopefully will be soon, for a 
--- text entry control or other keyboard oriented controls.  
-inputKeyboard : Signal String
-inputKeyboard = Signal.map (\c -> toString c) Keyboard.presses
--}
-
----------------------------------------
-
--- { init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
 
 wsUrl : String
 wsUrl = "ws://localhost:1234"
@@ -82,12 +44,5 @@ main =
 --               , (Signal.map SvgControlPage.Touche SvgTouch.touches)
 --               ]
     }
-
--- main =
---   app.html
-
--- port tasks : Signal (Task.Task Never ())
--- port tasks =
---  app.tasks
 
 

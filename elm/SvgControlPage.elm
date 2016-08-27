@@ -81,7 +81,7 @@ update msg model =
         in
           (newmod, Cmd.map CMsg (snd wha))
     Resize newSize ->
-      let nr = (SvgThings.Rect 0 0 newSize.width newSize.height)
+      let nr = (SvgThings.Rect 0 0 (newSize.width - 1) ( newSize.height - 4))
           (ctrl, cmds) = SvgControl.resize model.control nr 
         in
       ({ model | mahrect = nr

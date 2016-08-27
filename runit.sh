@@ -1,3 +1,3 @@
 
-./target/debug/oscpad examples/genericconfig.json
+./target/debug/oscpad example_projects/genericconfig.json
 

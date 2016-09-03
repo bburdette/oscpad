@@ -27,15 +27,22 @@ type Msg
   | Send
 
 main =
-  App.program
-    { init = SvgControlPage.init 
-        wsUrl
-        (SvgThings.Rect 0 0 500 300)    
-        (SvgControlPage.Spec "mehtitle" (SvgControl.CsSlider (SvgSlider.Spec "blah" SvgThings.Vertical)) Nothing)
-        -- (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
+  App.programWithFlags
+    { init = init
     , update = SvgControlPage.update
     , view = SvgControlPage.view
-    , subscriptions = \_ -> WebSocket.listen wsUrl SvgControlPage.JsonMsg
+    , subscriptions = (\model -> WebSocket.listen model.sendaddr SvgControlPage.JsonMsg)
+    }
+
+init : String -> (SvgControlPage.Model, Cmd SvgControlPage.Msg)
+init wsUrl = 
+  SvgControlPage.init 
+        wsUrl
+        (SvgThings.Rect 0 0 500 300)    
+        (SvgControlPage.Spec wsUrl (SvgControl.CsSlider (SvgSlider.Spec "blah" SvgThings.Vertical)) Nothing)
+
+
+        -- (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
 --    , subscriptions = \_ -> Sub.none
 --    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
 --              ]
@@ -43,6 +50,4 @@ main =
 --               , (Signal.map SvgControlPage.WinDims Window.dimensions)
 --               , (Signal.map SvgControlPage.Touche SvgTouch.touches)
 --               ]
-    }
-
-
+ 

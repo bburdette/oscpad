@@ -15,15 +15,7 @@ Ultimately I'll probably break out the control server into a library separate fr
 
 ### Some notes on elm compiling.
 
-I've already compiled the elm to elm/Main.html, so an elm compiler isn't needed just to run oscpad.  But if you want to build it yourself (on 0.16 now, which is much faster!) there are a few items to note.
+use elm/build-elm.sh to build the elm into elm.js.  Then open index.html from the web browser.
+Inside index.html is the address of the rust server, for now hardcoded to ws://localhost:1234.  
 
-First, the mainstream elm websockets library is actually a socketio library, and socketio is not supported by any rust libraries. So, this project depends on this somewhat fly-by-night elm websockets library:
-
-https://github.com/bburdette/testing-elm-websockets
-
-Also there's this thing where I need the window size on program start.  That capability comes from this fork of start-app:
-
-https://github.com/seanhess/start-app
-
-To compile, use git to clone both of the above into the same directory where you've cloned oscpad.  Then run elm-make or elm-reactor as normal.
-
+TODO: have the rust server edit index.html and replace the hardcoded address with its actual address.

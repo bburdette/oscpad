@@ -1,3 +1,6 @@
+# requires ambr, part of the amber cargo package.  install with
+# "cargo install amber"
+
 elm-make Main.elm --output main.js
 
 cp index.html.template meh1

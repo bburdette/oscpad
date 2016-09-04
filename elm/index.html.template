@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oscpad</title>
+  </head>
+  <style>html,head,body { padding:0; margin:0; }
+  body { font-family: calibri, helvetica, arial, sans-serif; }
+  </style>  
+    <body>
+    <script>elm-main.js</script>
+    <script>
+      Elm.Main.fullscreen("ws://localhost:1234");
+    </script>
+  </body>
+</html>
+

@@ -60,9 +60,11 @@ pub const mainhtml: &'static str = r##"<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oscpad</title>
   </head>
-  <body>
+  <style>html,head,body { padding:0; margin:0; }
+  body { font-family: calibri, helvetica, arial, sans-serif; }
+  </style>  
+    <body>
     <script>
-
 (function() {
 'use strict';
 
@@ -11274,11 +11276,9 @@ for (var publicModule in Elm)
 
 </script>
     <script>
-      // Elm.Main.fullscreen({
-      //  wsUrl: "ws://localhost:1234",
-      //});
       Elm.Main.fullscreen("ws://localhost:1234");
     </script>
   </body>
 </html>
+
 "##;

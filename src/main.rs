@@ -63,6 +63,7 @@ fn makeDefaultPrefs(guifile: &str) -> BTreeMap<String, Value>
     map.insert(String::from("guifile"), Value::String(guifile.to_string()));
     map.insert(String::from("ip"), Value::String("0.0.0.0:3030".to_string()));
     map.insert(String::from("wip"), Value::String("0.0.0.0:1234".to_string()));
+    map.insert(String::from("client-wip"), Value::String("ws://localhost:1234".to_string()));
     map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
     map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
     
@@ -138,16 +139,6 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 
     let obj = try_opt_resbox!(configval.as_object(), "config file is not a json object!");
     
-    let htmlstring = {  
-      match obj.get("htmlfile") {
-        Some(fname) => { 
-          let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
-          try!(loadString(&htmlfilename[..]))
-        }
-        None => stringDefaults::mainhtml.to_string(), 
-      }
-    };
-
     let guifilename = 
       try_opt_resbox!(
         try_opt_resbox!(obj.get("guifile"), 
@@ -178,6 +169,25 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
         try_opt_resbox!(obj.get("oscsendip"), 
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
+
+    let client_wip = String::new() + 
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("client-wip"), 
+                       "'client-wip' not found!").as_string(), 
+        "'client-wip' not a string!");
+
+    let htmlstring = {  
+      match obj.get("htmlfile") {
+        Some(fname) => { 
+          let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
+          try!(loadString(&htmlfilename[..]))
+        }
+        None => stringDefaults::mainhtml.to_string().replace("<websocket-client-ip>", &client_wip)
+      }
+    };
+
+//    println!("htmlstring is:");
+//    println!("{}", htmlstring);
 
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 

@@ -11276,7 +11276,7 @@ for (var publicModule in Elm)
 
 </script>
     <script>
-      Elm.Main.fullscreen("ws://localhost:1234");
+      Elm.Main.fullscreen("<websocket-client-ip>");
     </script>
   </body>
 </html>

@@ -11,8 +11,10 @@ import Svg.Events exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMous
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 import SvgThings exposing (Orientation(..)) 
 import VirtualDom as VD
--- import SvgTouch
+import SvgTouch as ST
 import WebSocket
+import String
+import List
 
 type alias Spec = 
   { name: String
@@ -35,6 +37,7 @@ type alias Model =
   , pressed: Bool
   , location: Float
   , sendaddr: String
+  , touchstate: ST.Model
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -51,6 +54,7 @@ init sendaddr rect cid spec =
           False 
           0.5 
           sendaddr
+          ST.init
   , Cmd.none
   )
 
@@ -68,6 +72,7 @@ type Msg
     | UselessCrap 
     | Reply String 
     | SvgMoved JE.Value
+    | SvgTouch ST.Msg 
     | SvgUpdate UpdateMessage
 --    | SvgTouch (List Touch.Touch)
 
@@ -166,9 +171,10 @@ update msg model =
       case model.pressed of 
         True -> 
           case (getLocation model v) of 
-            Ok l -> updsend model Move l 
+            Ok l -> Debug.log "blah" (updsend model Move l)
             _ -> (model, Cmd.none)
         False -> (model, Cmd.none)
+    SvgTouch stm -> ({model | touchstate = ST.update stm model.touchstate}, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let mod = case um.updateType of 
@@ -244,6 +250,7 @@ resize model rect =
 sliderEvt: String -> (JD.Value -> Msg) -> VD.Property Msg
 sliderEvt evtname mkmsg =
     VD.onWithOptions evtname (VD.Options True True) (JD.map (\v -> mkmsg v) JD.value)
+
     -- VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> (mkaction v))
 
 onMouseDown = sliderEvt "mousedown" SvgPress
@@ -251,7 +258,18 @@ onMouseMove = sliderEvt "mousemove" SvgMoved
 onMouseLeave = sliderEvt "mouseleave" SvgUnpress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
 
+onTouchStart = sliderEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
+onTouchEnd = sliderEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))
+onTouchCancel = sliderEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
+onTouchLeave = sliderEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
+onTouchMove = sliderEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
+
 {-
+listen('touchmove', function(_) {});
+./elm/Native/SvgTouch.js: listen('touchend', end);
+./elm/Native/SvgTouch.js: listen('touchcancel', end);
+./elm/Native/SvgTouch.js: listen('touchleave', end);
+
 -- onClick = sliderEvt "click" SvgMoved
 --  , onClick address
 -}
@@ -270,11 +288,15 @@ view model =
         ,"3"
         ,model.srect.h)
    in
---  g [ onMouseDown (SvgPress (JE.float model.location))
   g [ onMouseDown 
     , onMouseUp 
     , onMouseLeave
     , onMouseMove  
+    , onTouchStart
+    , onTouchEnd 
+    , onTouchCancel 
+    , onTouchLeave 
+    , onTouchMove 
     ]
     [ rect
         [ x model.srect.x

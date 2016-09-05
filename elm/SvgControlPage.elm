@@ -3,8 +3,6 @@ module SvgControlPage exposing (..)
 -- import Effects exposing (Effects, Never)
 -- import Platform exposing (Cmd, none) 
 import Html 
-import SvgButton
-import SvgSlider
 import SvgControl
 import SvgThings
 import Task
@@ -16,7 +14,6 @@ import Svg.Attributes as SA
 import Svg.Events as SE
 import VirtualDom as VD
 import Window
--- import SvgTouch
 
 -- json spec
 type alias Spec = 

@@ -79,17 +79,31 @@ parseTouch =
 -- parseTouchList: JD.Decoder (Dict.Dict String String)
 -- parseTouchList = JD.dict JD.string
 
+parseTouchCount: JD.Decoder Int 
+parseTouchCount =
+  JD.at [ "touches", "length" ] JD.int
+
+{-
 parseTouchEvt: JD.Decoder Touch 
 parseTouchEvt =
   JD.andThen 
     (JD.at [ "touches", "length" ] JD.int)
     parseTouches 
+-}
 
 -- parseTouches: Int -> JD.Decoder (Dict.Dict Int Touch)
-parseTouches: Int -> JD.Decoder Touch 
-parseTouches c = 
+parseTouchez: Int -> JD.Decoder Touch 
+parseTouchez c = 
   JD.at [ "touches", (toString (c - 1)) ] parseTouch
 --  (\c -> JD.at [ (toString c) ] parseTouch)
+
+{-
+parseTouches: Int -> JD.Value -> List Touch
+parseTouches count = 
+          touches = List.map 
+            (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch))
+            [0..touchcount]
+ -}
 
 -- should update take a different message for each touch message type, or just one generic one and do the detect?
 -- hmm the detect will be done regardless.  
@@ -98,9 +112,13 @@ update msg model =
   -- let _ = Debug.log "meh" msg
   case msg of 
     SvgTouchStart v -> 
-      let touchies = JD.decodeValue parseTouchEvt v
+      let touchcount = JD.decodeValue parseTouchCount v
+          touches = Result.map 
+            (\tc -> (List.map 
+              (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) v)
+              [0..(tc - 1)])) touchcount
         in 
-        Debug.log (toString touchies) model
+        Debug.log (toString touches) model
 {-
       let dcr = JD.decodeValue (JD.dict JD.value) v
           kstr = 

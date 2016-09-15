@@ -16,6 +16,7 @@ import Dict
 import Json.Decode as JD exposing ((:=))
 import String
 import List
+import Dict
 
 {- Every `Touch` has `xy` coordinates. It also has an identifier
 `id` to distinguish one touch from another.
@@ -71,39 +72,13 @@ parseTouch =
     ("identifier" := JD.int)
 --    ("t0" := JD.int)
 
--- parseTouchList: JD.Value -> Result String (List Touch)
-
--- parseTouchList: JD.Decoder (Dict.Dict String Touch)
--- parseTouchList = JD.dict parseTouch 
-
--- parseTouchList: JD.Decoder (Dict.Dict String String)
--- parseTouchList = JD.dict JD.string
-
 parseTouchCount: JD.Decoder Int 
 parseTouchCount =
   JD.at [ "touches", "length" ] JD.int
 
-{-
-parseTouchEvt: JD.Decoder Touch 
-parseTouchEvt =
-  JD.andThen 
-    (JD.at [ "touches", "length" ] JD.int)
-    parseTouches 
--}
-
--- parseTouches: Int -> JD.Decoder (Dict.Dict Int Touch)
-parseTouchez: Int -> JD.Decoder Touch 
-parseTouchez c = 
-  JD.at [ "touches", (toString (c - 1)) ] parseTouch
---  (\c -> JD.at [ (toString c) ] parseTouch)
-
-{-
-parseTouches: Int -> JD.Value -> List Touch
-parseTouches count = 
-          touches = List.map 
-            (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch))
-            [0..touchcount]
- -}
+makeTd: List Touch -> Dict.Dict Int Touch
+makeTd touchlist = 
+  Dict.fromList <| List.map (\t -> (t.id, t)) touchlist
 
 -- should update take a different message for each touch message type, or just one generic one and do the detect?
 -- hmm the detect will be done regardless.  
@@ -112,32 +87,21 @@ update msg model =
   -- let _ = Debug.log "meh" msg
   case msg of 
     SvgTouchStart v -> 
-      let touchcount = JD.decodeValue parseTouchCount v
-          touches = Result.map 
-            (\tc -> (List.map 
-              (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) v)
-              [0..(tc - 1)])) touchcount
-        in 
-        Debug.log (toString touches) model
-{-
-      let dcr = JD.decodeValue (JD.dict JD.value) v
-          kstr = 
-            case dcr of 
-              Ok kvd -> let dastrings = Dict.keys kvd
-                            _ = case (Dict.get "touches" kvd) of 
-                                    Just x -> 
-                                      let _ = Debug.log "decoding" " x"
-                                          tl = JD.decodeValue parseTouchList x 
-                                          _ = Debug.log "touches" tl
-                                        in Nothing
-                                    Nothing -> Nothing
-                in 
-                          String.join " " dastrings
-              Err meh -> meh
-        in 
-        Debug.log kstr model
--}
-      -- does this event only contain new touches???? 
+      case JD.decodeValue parseTouchCount v of 
+        Ok touchcount -> 
+          let touchresults = List.map 
+                (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) v)
+                [0..(touchcount - 1)]
+              touches = List.foldr (\rst tl -> 
+                case rst of 
+                  Ok touch -> touch :: tl
+                  Err _ -> tl) [] touchresults
+              newmodel = { model | touches = makeTd touches } 
+            in
+              Debug.log "newmodel: " newmodel
+        Err str_msg -> 
+          Debug.log str_msg model 
+
     SvgTouchMove v -> model 
       -- I guess this never contains new touches, only changed ones?  Are all included every time?
     SvgTouchEnd v -> model

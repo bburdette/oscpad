@@ -15,6 +15,7 @@ import SvgTouch as ST
 import WebSocket
 import String
 import List
+import Dict
 
 type alias Spec = 
   { name: String
@@ -174,7 +175,6 @@ update msg model =
             Ok l -> Debug.log "blah" (updsend model Move l)
             _ -> (model, Cmd.none)
         False -> (model, Cmd.none)
-    SvgTouch stm -> ({model | touchstate = ST.update stm model.touchstate}, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
       let mod = case um.updateType of 
@@ -183,34 +183,39 @@ update msg model =
           Unpress -> { model | pressed = False, location = um.location }
         in
       (mod, Cmd.none )
+    SvgTouch stm -> 
+      let touchstate = ST.update stm model.touchstate 
+          touches = Dict.values touchstate.touches
+          newmodel = { model | touchstate = touchstate }
+        in
+        if List.isEmpty touches then
+          if model.pressed then
+            updsend model Unpress model.location
+          else 
+            (newmodel, Cmd.none )
+        else
+          case model.orientation of 
+            SvgThings.Horizontal -> 
+              let locsum = List.foldl (+) 0 (List.map (\t -> t.x) touches)
+                  locavg = (toFloat locsum) / (toFloat (List.length touches))
+                  loc = (locavg - (toFloat model.rect.x)) 
+                         / toFloat model.rect.w in 
+              if model.pressed then
+                updsend newmodel Press loc
+              else 
+                updsend newmodel Move loc
+            SvgThings.Vertical -> 
+              let locsum = List.foldl (+) 0 (List.map (\t -> t.y) touches)
+                  locavg = (toFloat locsum) / (toFloat (List.length touches))
+                  loc = (locavg - (toFloat model.rect.y)) 
+                         / toFloat model.rect.h in 
+              if model.pressed then
+                updsend newmodel Press loc
+              else 
+                updsend newmodel Move loc
 
-{-    SvgTouch touches -> 
-      if List.isEmpty touches then
-        if model.pressed then
-          updsend model Unpress model.location
-        else 
-          (model, Cmd.none )
-      else
-        case model.orientation of 
-          SvgThings.Horizontal -> 
-            let locsum = List.foldl (+) 0 (List.map (\t -> t.x) touches)
-                locavg = (toFloat locsum) / (toFloat (List.length touches))
-                loc = (locavg - (toFloat model.rect.x)) 
-                       / toFloat model.rect.w in 
-            if model.pressed then
-              updsend model Press loc
-            else 
-              updsend model Move loc
-          SvgThings.Vertical -> 
-            let locsum = List.foldl (+) 0 (List.map (\t -> t.y) touches)
-                locavg = (toFloat locsum) / (toFloat (List.length touches))
-                loc = (locavg - (toFloat model.rect.y)) 
-                       / toFloat model.rect.h in 
-            if model.pressed then
-              updsend model Press loc
-            else 
-              updsend model Move loc
--}
+
+
 
 updsend: Model -> UpdateType -> Float -> (Model, Cmd Msg)
 updsend model ut loc = 

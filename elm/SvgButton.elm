@@ -13,8 +13,10 @@ import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
--- import SvgTouch
+import SvgTouch as ST
+import VirtualDom as VD
 import WebSocket 
+import Dict
 
 -- how to specify a button in json.
 type alias Spec = 
@@ -37,8 +39,8 @@ type alias Model =
   , srect: SvgThings.SRect
   , pressed: Bool
   , sendaddr : String 
-  -- , sendf : (String -> Cmd msg) 
   , textSvg: List (Svg ())
+  , touchstate: ST.Model
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -59,6 +61,7 @@ init sendaddr rect cid spec =
           False 
           sendaddr
           ts
+          ST.init
   , Cmd.none
   )
 
@@ -75,6 +78,7 @@ type Msg
     | SvgUnpress 
     | UselessCrap 
     | Reply String
+    | SvgTouch ST.Msg 
     | SvgUpdate UpdateMessage
 --    | SvgTouch (List Touch.Touch)
 
@@ -133,18 +137,21 @@ update msg model =
         in
       ({ model | pressed = pressedupdate }
        , Cmd.none )
-{-    SvgTouch touches -> 
+    SvgTouch stm -> 
+      let touchstate = ST.update stm model.touchstate 
+          touches = Dict.values touchstate.touches
+          newmodel = { model | touchstate = touchstate }
+        in
       if List.isEmpty touches then
         if model.pressed == True then 
           pressup model Unpress
         else
-          (model , Cmd.none )
+          (newmodel , Cmd.none )
       else
         if model.pressed == False then 
           pressup model Press
         else
-          (model , Cmd.none )
--}
+          (newmodel , Cmd.none )
 
 pressup: Model -> UpdateType -> (Model, Cmd Msg)
 pressup model ut = 
@@ -169,12 +176,27 @@ resize model rect =
 
 
 -- VIEW
+buttonEvt: String -> (JD.Value -> Msg) -> VD.Property Msg
+buttonEvt evtname mkmsg =
+    VD.onWithOptions evtname (VD.Options True True) (JD.map (\v -> mkmsg v) JD.value)
+
+onTouchStart = buttonEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
+onTouchEnd = buttonEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))
+onTouchCancel = buttonEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
+onTouchLeave = buttonEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
+onTouchMove = buttonEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
+
 
 view : Model -> Svg Msg
 view model =
   g [ onMouseDown SvgPress
     , onMouseUp SvgUnpress
     , onMouseOut SvgUnpress
+    , onTouchStart
+    , onTouchEnd 
+    , onTouchCancel 
+    , onTouchLeave 
+    , onTouchMove 
     ]
     [ rect
         [ x model.srect.x

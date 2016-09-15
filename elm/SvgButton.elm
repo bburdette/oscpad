@@ -139,7 +139,7 @@ update msg model =
        , Cmd.none )
     SvgTouch stm -> 
       let touchstate = ST.update stm model.touchstate 
-          touches = Dict.values touchstate.touches
+          touches = touchstate.touches
           newmodel = { model | touchstate = touchstate }
         in
       if List.isEmpty touches then

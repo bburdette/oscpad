@@ -41,7 +41,7 @@ taps =
 
 
 type alias Model = { 
-  touches: Dict.Dict Int Touch
+  touches: List Touch
   }
 
 type Msg 
@@ -52,7 +52,7 @@ type Msg
   | SvgTouchLeave JD.Value
    
 init: Model
-init = Model Dict.empty
+init = Model []
 
 
 type alias Touch =
@@ -87,21 +87,7 @@ update msg model =
   -- let _ = Debug.log "meh" msg
   case msg of 
     SvgTouchStart v -> 
-      case JD.decodeValue parseTouchCount v of 
-        Ok touchcount -> 
-          let touchresults = List.map 
-                (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) v)
-                [0..(touchcount - 1)]
-              touches = List.foldr (\rst tl -> 
-                case rst of 
-                  Ok touch -> touch :: tl
-                  Err _ -> tl) [] touchresults
-              newmodel = { model | touches = makeTd touches } 
-            in
-              Debug.log "newmodel: " newmodel
-        Err str_msg -> 
-          Debug.log str_msg model 
-
+      { model | touches = extractTouches v }
     SvgTouchMove v -> model 
       -- I guess this never contains new touches, only changed ones?  Are all included every time?
     SvgTouchEnd v -> model
@@ -109,4 +95,41 @@ update msg model =
     SvgTouchCancel v -> model
     SvgTouchLeave v -> model
  
+extractTouches: JD.Value -> List Touch
+extractTouches evt = 
+  case JD.decodeValue parseTouchCount evt of 
+    Ok touchcount -> 
+      let touchresults = List.map 
+            (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) evt)
+            [0..(touchcount - 1)]
+          touches = List.foldr (\rst tl -> 
+            case rst of 
+              Ok touch -> touch :: tl
+              Err e -> Debug.log e tl) [] touchresults
+        in
+        touches 
+    Err str_msg -> 
+      Debug.log str_msg [] 
+
+extractTouchDict: JD.Value -> Dict.Dict Int Touch
+extractTouchDict evt = 
+  case JD.decodeValue parseTouchCount evt of 
+    Ok touchcount -> 
+      let touchresults = List.map 
+            (\idx -> JD.decodeValue (JD.at [ "touches", (toString idx) ] parseTouch) evt)
+            [0..(touchcount - 1)]
+          touches = List.foldr (\rst tl -> 
+            case rst of 
+              Ok touch -> touch :: tl
+              Err e -> Debug.log e tl) [] touchresults
+        in
+        makeTd touches 
+    Err str_msg -> 
+      Debug.log str_msg Dict.empty 
+
+extractFirstTouch: JD.Value -> Maybe Touch
+extractFirstTouch evt = 
+  case JD.decodeValue (JD.at [ "touches", "0" ] parseTouch) evt of
+    Ok touch -> Just touch
+    Err e -> Debug.log e Nothing
 

@@ -186,8 +186,8 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
       }
     };
 
-//    println!("htmlstring is:");
-//    println!("{}", htmlstring);
+    println!("htmlstring is:");
+    println!("{}", htmlstring);
 
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 
@@ -344,7 +344,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
   
   for msg in receiver.incoming_messages() {
     let message: Message = try!(msg);
-    println!("message: {:?}", message);
+    // println!("message: {:?}", message);
 
     match message.opcode {
       Type::Close => {

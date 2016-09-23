@@ -40,7 +40,6 @@ type alias Model =
   , pressed: Bool
   , sendaddr : String 
   , textSvg: List (Svg ())
-  , touchstate: ST.Model
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -61,7 +60,6 @@ init sendaddr rect cid spec =
           False 
           sendaddr
           ts
-          ST.init
   , Cmd.none
   )
 
@@ -137,29 +135,23 @@ update msg model =
       ({ model | pressed = pressedupdate }
        , Cmd.none )
     SvgTouch stm -> 
-      let touchstate = ST.update stm model.touchstate 
-          touches = touchstate.touches
-          newmodel = { model | touchstate = touchstate }
-        in
-      if List.isEmpty touches then
-        if model.pressed == True then 
-          pressup model Unpress
-        else
-          (newmodel , Cmd.none )
-      else
-        if model.pressed == False then 
-          pressup model Press
-        else
-          (newmodel , Cmd.none )
+      case ST.extractFirstTouchSE stm of
+        Nothing -> 
+          if model.pressed == True then 
+            pressup model Unpress
+          else
+            (model , Cmd.none )
+        Just _ -> 
+          if model.pressed == False then 
+            pressup model Press
+          else
+            (model , Cmd.none )
 
 pressup: Model -> UpdateType -> (Model, Cmd Msg)
 pressup model ut = 
   let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
   ({ model | pressed = (ut == Press)}
     , (WebSocket.send model.sendaddr um) )
-
--- Effects.task ((model.sendf um) 
---         `Task.andThen` (\_ -> Task.succeed UselessCrap)))
 
 
 resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)

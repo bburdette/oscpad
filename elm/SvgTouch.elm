@@ -12,7 +12,6 @@ module SvgTouch exposing (..)
 -}
 
 import Time
-import Dict
 import Json.Decode as JD exposing ((:=))
 import String
 import List
@@ -89,12 +88,22 @@ update msg model =
     SvgTouchStart v -> 
       { model | touches = extractTouches v }
     SvgTouchMove v -> model 
-      -- I guess this never contains new touches, only changed ones?  Are all included every time?
     SvgTouchEnd v -> model
-      -- time to take out the ids from the map I spose. 
     SvgTouchCancel v -> model
     SvgTouchLeave v -> model
- 
+
+-- should update take a different message for each touch message type, or just one generic one and do the detect?
+-- hmm the detect will be done regardless.  
+extractFirstTouchSE : Msg -> Maybe Touch 
+extractFirstTouchSE msg = 
+  -- let _ = Debug.log "meh" msg
+  case msg of 
+    SvgTouchStart v -> extractFirstTouch v
+    SvgTouchMove v -> extractFirstTouch v
+    SvgTouchEnd v -> Nothing
+    SvgTouchCancel v -> Nothing
+    SvgTouchLeave v -> Nothing
+
 extractTouches: JD.Value -> List Touch
 extractTouches evt = 
   case JD.decodeValue parseTouchCount evt of 

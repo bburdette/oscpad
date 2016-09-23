@@ -38,7 +38,7 @@ type alias Model =
   , pressed: Bool
   , location: Float
   , sendaddr: String
-  , touchstate: ST.Model
+--  , touchstate: ST.Model
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -55,7 +55,7 @@ init sendaddr rect cid spec =
           False 
           0.5 
           sendaddr
-          ST.init
+--          ST.init
   , Cmd.none
   )
 
@@ -172,7 +172,9 @@ update msg model =
       case model.pressed of 
         True -> 
           case (getLocation model v) of 
-            Ok l -> Debug.log "blah" (updsend model Move l)
+            Ok l -> 
+               -- Debug.log "not blah" (updsend model Move l)
+               updsend model Move l
             _ -> (model, Cmd.none)
         False -> (model, Cmd.none)
     SvgUpdate um -> 
@@ -184,35 +186,28 @@ update msg model =
         in
       (mod, Cmd.none )
     SvgTouch stm -> 
-      let touchstate = ST.update stm model.touchstate 
-          touches = touchstate.touches
-          newmodel = { model | touchstate = touchstate }
-        in
-        if List.isEmpty touches then
+      case ST.extractFirstTouchSE stm of
+        Nothing -> 
           if model.pressed then
             updsend model Unpress model.location
           else 
-            (newmodel, Cmd.none )
-        else
+            (model, Cmd.none )
+        Just touch -> 
           case model.orientation of 
             SvgThings.Horizontal -> 
-              let locsum = List.foldl (+) 0 (List.map (\t -> t.x) touches)
-                  locavg = (toFloat locsum) / (toFloat (List.length touches))
-                  loc = (locavg - (toFloat model.rect.x)) 
+              let loc = (toFloat (touch.x - model.rect.x)) 
                          / toFloat model.rect.w in 
               if model.pressed then
-                updsend newmodel Press loc
+                updsend model Press loc
               else 
-                updsend newmodel Move loc
+                updsend model Move loc
             SvgThings.Vertical -> 
-              let locsum = List.foldl (+) 0 (List.map (\t -> t.y) touches)
-                  locavg = (toFloat locsum) / (toFloat (List.length touches))
-                  loc = (locavg - (toFloat model.rect.y)) 
+              let loc = (toFloat (touch.y - model.rect.y)) 
                          / toFloat model.rect.h in 
               if model.pressed then
-                updsend newmodel Press loc
+                updsend model Press loc
               else 
-                updsend newmodel Move loc
+                updsend model Move loc
 
 
 
@@ -262,6 +257,14 @@ onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseMove = sliderEvt "mousemove" SvgMoved
 onMouseLeave = sliderEvt "mouseleave" SvgUnpress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
+
+{-
+  onTouchStart = sliderEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
+  onTouchEnd = sliderEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))
+  onTouchCancel = sliderEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
+  onTouchLeave = sliderEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
+  onTouchMove = sliderEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
+-}
 
 onTouchStart = sliderEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
 onTouchEnd = sliderEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))

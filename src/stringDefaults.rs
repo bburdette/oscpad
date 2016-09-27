@@ -8217,9 +8217,34 @@ _lukewestby$elm_template$Template_Infix_ops['%>'] = _lukewestby$elm_template$Tem
 var _lukewestby$elm_template$Template_Infix_ops = _lukewestby$elm_template$Template_Infix_ops || {};
 _lukewestby$elm_template$Template_Infix_ops['<%'] = _lukewestby$elm_template$Template$andValue;
 
+var _bburdette$oscpad$Native_SvgTextSize = function() {
+  
+  function getTextWidth (t, f) {
+    var blah = getTextMetrics(t, f);
+    return blah.width; 
+  };
+
+  var getTextMetrics = function (text, font) {
+     // re-use canvas object for better performance
+     var canvas = getTextMetrics.canvas || (getTextMetrics.canvas = document.createElement("canvas"));
+     var context = canvas.getContext("2d");
+     context.font = font;
+     var metrics = context.measureText(text);
+     return metrics;
+    };
+  
+  return {
+    getTextWidth: F2(getTextWidth)
+  };
+
+  
+}();
+
+
+
 var _bburdette$oscpad$SvgTextSize$getTextWidth = F2(
 	function (text, font) {
-		return 100;
+		return A2(_bburdette$oscpad$Native_SvgTextSize.getTextWidth, text, font);
 	});
 
 var _bburdette$oscpad$SvgThings$computeFontScaling = F4(

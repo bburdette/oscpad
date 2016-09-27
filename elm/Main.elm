@@ -31,7 +31,8 @@ main =
     { init = init
     , update = SvgControlPage.update
     , view = SvgControlPage.view
-    , subscriptions = (\model -> WebSocket.listen model.sendaddr SvgControlPage.JsonMsg)
+    , subscriptions = (\model -> Sub.batch [WebSocket.listen model.sendaddr SvgControlPage.JsonMsg
+                                           , Window.resizes SvgControlPage.Resize])
     }
 
 init : String -> (SvgControlPage.Model, Cmd SvgControlPage.Msg)

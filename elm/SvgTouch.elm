@@ -55,8 +55,8 @@ init = Model []
 
 
 type alias Touch =
-    { x : Int
-    , y : Int
+    { x : Float
+    , y : Float
     , id : Int
 --    , x0 : Int
 --    , y0 : Int
@@ -66,8 +66,8 @@ type alias Touch =
 parseTouch: JD.Decoder Touch
 parseTouch = 
   JD.object3 Touch
-    ("clientX" := JD.int)
-    ("clientY" := JD.int)
+    ("clientX" := JD.float)
+    ("clientY" := JD.float)
     ("identifier" := JD.int)
 --    ("t0" := JD.int)
 

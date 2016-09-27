@@ -38,7 +38,7 @@ type alias Model =
   , pressed: Bool
   , location: Float
   , sendaddr: String
---  , touchstate: ST.Model
+  , touchonly: Bool
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -55,7 +55,7 @@ init sendaddr rect cid spec =
           False 
           0.5 
           sendaddr
---          ST.init
+          True
   , Cmd.none
   )
 
@@ -75,15 +75,6 @@ type Msg
     | SvgMoved JE.Value
     | SvgTouch ST.Msg 
     | SvgUpdate UpdateMessage
---    | SvgTouch (List Touch.Touch)
-
-{-
-getX : JD.Decoder Int
-getX = "offsetX" := JD.int 
-
-getY : JD.Decoder Int
-getY = "offsetY" := JD.int 
--}
 
 getX : JD.Decoder Int
 getX = "clientX" := JD.int 
@@ -147,14 +138,6 @@ getLocation model v =
                     / toFloat model.rect.h)
         Err e -> Err e
 
-{-
-updLoc: Model -> JD.Value -> (Model, Cmd Msg) 
-
-      case (getLocation model v) of 
-        Ok l -> ({model | location = l}, Cmd.none)
-        _ -> (model, Cmd.none)
--}
-
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
@@ -195,14 +178,14 @@ update msg model =
         Just touch -> 
           case model.orientation of 
             SvgThings.Horizontal -> 
-              let loc = (toFloat (touch.x - model.rect.x)) 
+              let loc = (touch.x - (toFloat model.rect.x)) 
                          / toFloat model.rect.w in 
               if model.pressed then
                 updsend model Press loc
               else 
                 updsend model Move loc
             SvgThings.Vertical -> 
-              let loc = (toFloat (touch.y - model.rect.y)) 
+              let loc = (touch.y - (toFloat model.rect.y)) 
                          / toFloat model.rect.h in 
               if model.pressed then
                 updsend model Press loc
@@ -242,7 +225,7 @@ resize model rect =
  
 -- VIEW
 
-(=>) = (,)
+-- (=>) = (,)
 
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
@@ -258,54 +241,41 @@ onMouseMove = sliderEvt "mousemove" SvgMoved
 onMouseLeave = sliderEvt "mouseleave" SvgUnpress
 onMouseUp = sliderEvt "mouseup" SvgUnpress
 
-{-
-  onTouchStart = sliderEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
-  onTouchEnd = sliderEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))
-  onTouchCancel = sliderEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
-  onTouchLeave = sliderEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
-  onTouchMove = sliderEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
--}
-
 onTouchStart = sliderEvt "touchstart" (\e -> SvgTouch (ST.SvgTouchStart e))
 onTouchEnd = sliderEvt "touchend" (\e -> SvgTouch (ST.SvgTouchEnd e))
 onTouchCancel = sliderEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
 onTouchLeave = sliderEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
 onTouchMove = sliderEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
 
-{-
-listen('touchmove', function(_) {});
-./elm/Native/SvgTouch.js: listen('touchend', end);
-./elm/Native/SvgTouch.js: listen('touchcancel', end);
-./elm/Native/SvgTouch.js: listen('touchleave', end);
-
--- onClick = sliderEvt "click" SvgMoved
---  , onClick address
--}
+buildEvtHandlerList: Bool -> List (VD.Property Msg)
+buildEvtHandlerList touchonly = 
+ let te =  [ onTouchStart
+            , onTouchEnd 
+            , onTouchCancel 
+            , onTouchLeave 
+            , onTouchMove ] 
+     me = [ onMouseDown 
+          , onMouseUp 
+          , onMouseLeave
+          , onMouseMove ] in
+  if touchonly then te else (List.append me te)
 
 view : Model -> Svg Msg
 view model =
   let (sx, sy, sw, sh) = case model.orientation of 
-     SvgThings.Vertical -> 
-        (model.srect.x
-        ,toString ((round (model.location * toFloat (model.rect.h))) + model.rect.y)
-        ,model.srect.w
-        ,"3")
-     SvgThings.Horizontal -> 
-        (toString ((round (model.location * toFloat (model.rect.w))) + model.rect.x)
-        ,model.srect.y
-        ,"3"
-        ,model.srect.h)
+                             SvgThings.Vertical -> 
+                                (model.srect.x
+                                ,toString ((round (model.location * toFloat (model.rect.h))) + model.rect.y)
+                                ,model.srect.w
+                                ,"3")
+                             SvgThings.Horizontal -> 
+                                (toString ((round (model.location * toFloat (model.rect.w))) + model.rect.x)
+                                ,model.srect.y
+                                ,"3"
+                                ,model.srect.h)
+      evtlist = buildEvtHandlerList model.touchonly
    in
-  g [ onMouseDown 
-    , onMouseUp 
-    , onMouseLeave
-    , onMouseMove  
-    , onTouchStart
-    , onTouchEnd 
-    , onTouchCancel 
-    , onTouchLeave 
-    , onTouchMove 
-    ]
+  g evtlist 
     [ rect
         [ x model.srect.x
         , y model.srect.y 

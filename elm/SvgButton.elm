@@ -40,6 +40,7 @@ type alias Model =
   , pressed: Bool
   , sendaddr : String 
   , textSvg: List (Svg ())
+  , touchonly: Bool
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
@@ -60,6 +61,7 @@ init sendaddr rect cid spec =
           False 
           sendaddr
           ts
+          True
   , Cmd.none
   )
 
@@ -177,18 +179,23 @@ onTouchCancel = buttonEvt "touchcancel" (\e -> SvgTouch (ST.SvgTouchCancel e))
 onTouchLeave = buttonEvt "touchleave" (\e -> SvgTouch (ST.SvgTouchLeave e))
 onTouchMove = buttonEvt "touchmove" (\e -> SvgTouch (ST.SvgTouchMove e))
 
+buildEvtHandlerList: Bool -> List (VD.Property Msg)
+buildEvtHandlerList touchonly = 
+ let te =  [ onTouchStart
+            , onTouchEnd 
+            , onTouchCancel 
+            , onTouchLeave 
+            , onTouchMove ] 
+     me = [ onMouseDown SvgPress
+          , onMouseUp SvgUnpress
+          , onMouseOut SvgUnpress
+          ] in
+  if touchonly then te else (List.append me te)
+
 
 view : Model -> Svg Msg
 view model =
-  g [ onMouseDown SvgPress
-    , onMouseUp SvgUnpress
-    , onMouseOut SvgUnpress
-    , onTouchStart
-    , onTouchEnd 
-    , onTouchCancel 
-    , onTouchLeave 
-    , onTouchMove 
-    ]
+  g (buildEvtHandlerList model.touchonly)
     [ rect
         [ x model.srect.x
         , y model.srect.y 

@@ -85,10 +85,11 @@ update msg model =
                , srect = (SvgThings.toSRect nr)
                , windowSize = newSize
                , control = ctrl }
-    , (Cmd.batch 
-       [(Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size),
-        (Cmd.map CMsg cmds)]))
+      , (Cmd.map CMsg cmds))
+--         [(Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size),
+--          (Cmd.map CMsg cmds)]))
     NoOp -> (model, Cmd.none)
+
 
 {-
     WinDims (x,y) -> 
@@ -179,11 +180,12 @@ init sendaddr rect spec =
       
 -- VIEW
 
-(=>) = (,)
+-- (=>) = (,)
 
 
 view : Model -> Html.Html Msg
 view model =
+--  Debug.log "svgcontrolpage view: "
   Html.div [] 
     [Svg.svg
       [ SA.width model.srect.w

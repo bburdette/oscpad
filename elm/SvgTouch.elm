@@ -1,15 +1,5 @@
 module SvgTouch exposing (..)
 
-{-
-    exposing ( Touch, Model, init, update, Msg 
-         )
-         , SvgTouchStart 
-         , SvgTouchMove 
-         , SvgTouchEnd 
-         , SvgTouchCancel 
-         , SvgTouchLeave 
-         ) 
--}
 
 import Time
 import Json.Decode as JD exposing ((:=))
@@ -23,19 +13,6 @@ import Dict
 A touch also keeps info about the initial point and time of contact:
 `x0`, `y0`, and `t0`. This helps compute more complicated gestures
 like taps, drags, and swipes which need to know about timing or direction.
--}
-
-{- A list of ongoing touches. 
-touches : Signal (List Touch)
-touches =
-  Native.SvgTouch.touches
--}
-
-{- The last position that was tapped. Default value is `{x=0,y=0}`.
-Updates whenever the user taps the screen.
-taps : Signal { x:Int, y:Int }
-taps =
-  Native.SvgTouch.taps
 -}
 
 
@@ -69,7 +46,6 @@ parseTouch =
     ("clientX" := JD.float)
     ("clientY" := JD.float)
     ("identifier" := JD.int)
---    ("t0" := JD.int)
 
 parseTouchCount: JD.Decoder Int 
 parseTouchCount =

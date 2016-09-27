@@ -9512,7 +9512,7 @@ var _bburdette$oscpad$SvgButton$init = F4(
 				false,
 				sendaddr,
 				ts,
-				true),
+				false),
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	});
@@ -9867,7 +9867,7 @@ var _bburdette$oscpad$SvgSlider$init = F4(
 				false,
 				0.5,
 				sendaddr,
-				true),
+				false),
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	});

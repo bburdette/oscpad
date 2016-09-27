@@ -34,7 +34,6 @@ type alias Model =
   , srect: SvgThings.SRect 
   , spec: Spec
   , control: SvgControl.Model
---  , prevtouches: Dict SvgThings.ControlId SvgControl.ControlTam
   , sendaddr: String
   , windowSize: Window.Size
   }
@@ -48,7 +47,6 @@ type Msg
     | CMsg SvgControl.Msg 
     | Resize Window.Size
     | NoOp
---    | Touche (List SvgTouch.Touch)
 
 type JsMessage 
   = JmSpec Spec
@@ -86,8 +84,6 @@ update msg model =
                , windowSize = newSize
                , control = ctrl }
       , (Cmd.map CMsg cmds))
---         [(Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size),
---          (Cmd.map CMsg cmds)]))
     NoOp -> (model, Cmd.none)
 
 
@@ -152,19 +148,10 @@ updict mt dict =
 
 -}
 
--- Now update the controls from the dict?  
-
-
-
--- Ok could make a touch event list.  
-
 init: String -> SvgThings.Rect -> Spec 
   -> (Model, Cmd Msg)
 init sendaddr rect spec = 
   let (conmod, conevt) = SvgControl.init sendaddr rect [] spec.rootControl
---      statefx = List.map (\t -> Cmd.task (Task.succeed (CMsg t)))
---                          (Maybe.withDefault [] spec.state)
---      fx = Cmd.batch ((Cmd.map CMsg conevt) :: statefx)
     in
      (Model spec.title 
         rect 
@@ -175,17 +162,12 @@ init sendaddr rect spec =
         sendaddr
         (Window.Size 0 0)
     , Task.perform (\_ -> NoOp) (\x -> Resize x) Window.size)
-
---      Cmd.none)
       
 -- VIEW
-
--- (=>) = (,)
 
 
 view : Model -> Html.Html Msg
 view model =
---  Debug.log "svgcontrolpage view: "
   Html.div [] 
     [Svg.svg
       [ SA.width model.srect.w
@@ -197,18 +179,6 @@ view model =
       ]
       [(VD.map CMsg (viewSvgControl model.control))]
     ]
-
-{-
-    [Html.text "meh"]
--}
-
-{-
-    [Html.text "meh", 
-     Html.br [] [],
-     Html.text model.title, 
-     Html.br [] []] 
-
--}
 
 viewSvgControl : SvgControl.Model -> Svg.Svg SvgControl.Msg
 viewSvgControl conmodel =

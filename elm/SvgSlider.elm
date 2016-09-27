@@ -55,7 +55,7 @@ init sendaddr rect cid spec =
           False 
           0.5 
           sendaddr
-          True
+          False
   , Cmd.none
   )
 
@@ -225,16 +225,12 @@ resize model rect =
  
 -- VIEW
 
--- (=>) = (,)
-
 -- try VD.onWithOptions for preventing scrolling on touchscreens and 
 -- etc. See virtualdom docs.
 
 sliderEvt: String -> (JD.Value -> Msg) -> VD.Property Msg
 sliderEvt evtname mkmsg =
     VD.onWithOptions evtname (VD.Options True True) (JD.map (\v -> mkmsg v) JD.value)
-
-    -- VD.onWithOptions evtname (VD.Options True True) JD.value (\v -> (mkaction v))
 
 onMouseDown = sliderEvt "mousedown" SvgPress
 onMouseMove = sliderEvt "mousemove" SvgMoved

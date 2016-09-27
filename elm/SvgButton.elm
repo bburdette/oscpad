@@ -1,17 +1,12 @@
 module SvgButton exposing (..)
 
--- import Effects exposing (Effects, Never)
 import Html exposing (Html)
--- import Html.Attributes exposing (style)
--- import Html.Events exposing (onClick)
--- import Http
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE
 import Task
 import Svg exposing (Svg, svg, rect, g, text, text', Attribute)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
--- import NoDragEvents exposing (onClick, onMouseUp, onMouseDown, onMouseOut)
 import SvgThings
 import SvgTouch as ST
 import VirtualDom as VD
@@ -61,7 +56,7 @@ init sendaddr rect cid spec =
           False 
           sendaddr
           ts
-          True
+          False
   , Cmd.none
   )
 
@@ -80,7 +75,6 @@ type Msg
     | Reply String
     | SvgTouch ST.Msg 
     | SvgUpdate UpdateMessage
---    | SvgTouch (List Touch.Touch)
 
 type UpdateType 
   = Press

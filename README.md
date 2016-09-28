@@ -11,4 +11,11 @@ Ultimately I'll make oscpad into a rust library as well as an application, for s
 
 ### Some notes on elm compiling.
 
-From the project directory, use ./build-elm.sh to build the elm and merge the js into stringDefaults.rs.  Then do cargo build to get the rust server.  Run the rust server with ./runit.sh.  
+The elm build requires ambr, part of the amber cargo package.  Install that with cargo install amber.
+
+From the project directory, use ./build-elm.sh to build the elm and merge the js into stringDefaults.rs.  Then do cargo build to get the rust server.  Run the rust server with ./runit.sh.  So to sum up:
+
+0) cargo install amber
+1) ./build-elm.sh
+2) cargo build
+3) ./runit.sh

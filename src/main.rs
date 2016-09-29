@@ -170,11 +170,11 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
 
-    let client_wip = String::new() + 
+    let websock_port = String::new() + 
       try_opt_resbox!(
-        try_opt_resbox!(obj.get("client-wip"), 
-                       "'client-wip' not found!").as_string(), 
-        "'client-wip' not a string!");
+        try_opt_resbox!(obj.get("websockets-port"), 
+                       "'websockets-port' not found!").as_string(), 
+        "'websockets-port' not a string!");
 
     let htmlstring = {  
       match obj.get("htmlfile") {
@@ -182,11 +182,11 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
           try!(loadString(&htmlfilename[..]))
         }
-        None => stringDefaults::mainhtml.to_string().replace("<websocket-client-ip>", &client_wip)
+        None => stringDefaults::mainhtml.to_string().replace("<websockets-port>", &websock_port)
       }
     };
 
-    println!("htmlstring is:");
+    // println!("htmlstring is:");
     println!("{}", htmlstring);
 
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 

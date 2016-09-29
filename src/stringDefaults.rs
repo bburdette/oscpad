@@ -11585,8 +11585,10 @@ for (var publicModule in Elm)
 
 </script>
     <script>
-      var wsurl = "ws://" + window.location.host;
-      wsurl = wsurl.replace(":3030", ":1234");
+      var wsurl = window.location.host;
+      wsurl = wsurl.split(":")[0];
+      wsurl = "ws://" + wsurl + ":<websockets-port>";
+      console.debug("wsurl: " + wsurl);
       Elm.Main.fullscreen(wsurl);
       // Elm.Main.fullscreen("<websocket-client-ip>");
     </script>

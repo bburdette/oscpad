@@ -81,7 +81,6 @@ update msg model =
       let tswk = SvgThings.calcTextSvg SvgThings.ff um.label model.rect 
           ts = (List.map (\meh -> (VD.map (\_ -> NoOp) meh)) tswk)
       in
-      -- when the text changes, measure it. 
       ({ model | label = um.label, textSvg = ts }
       , Cmd.none) 
     NoOp -> 

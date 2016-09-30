@@ -39,12 +39,15 @@
         }
       , { "type": "button"
         , "name": "b1"
+        , "label": "b1"
         }
       , { "type": "button"
         , "name": "b2"
+        , "label": "b2"
         }
       , { "type": "button"
         , "name": "b3"
+        , "label": "b3"
         }
        ]
     }

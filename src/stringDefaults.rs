@@ -9453,7 +9453,8 @@ var _bburdette$oscpad$SvgButton$resize = F2(
 						_elm_lang$core$Basics$toString(rect.x),
 						_elm_lang$core$Basics$toString(rect.y),
 						_elm_lang$core$Basics$toString(rect.w),
-						_elm_lang$core$Basics$toString(rect.h))
+						_elm_lang$core$Basics$toString(rect.h)),
+					textSvg: ts
 				}),
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
@@ -9589,7 +9590,7 @@ var _bburdette$oscpad$SvgButton$onTouchMove = A2(
 var _bburdette$oscpad$SvgButton$Reply = function (a) {
 	return {ctor: 'Reply', _0: a};
 };
-var _bburdette$oscpad$SvgButton$UselessCrap = {ctor: 'UselessCrap'};
+var _bburdette$oscpad$SvgButton$NoOp = {ctor: 'NoOp'};
 var _bburdette$oscpad$SvgButton$SvgUnpress = {ctor: 'SvgUnpress'};
 var _bburdette$oscpad$SvgButton$SvgPress = {ctor: 'SvgPress'};
 var _bburdette$oscpad$SvgButton$buildEvtHandlerList = function (touchonly) {
@@ -9631,23 +9632,22 @@ var _bburdette$oscpad$SvgButton$view = function (model) {
 				_elm_lang$core$Native_List.fromArray(
 					[])),
 				A2(
-				_elm_lang$svg$Svg$text$,
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$svg$Svg_Attributes$fill('white'),
-						_elm_lang$svg$Svg_Attributes$textAnchor('middle')
-					]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$svg$Svg$text(model.name)
-					]))
+				_elm_lang$virtual_dom$VirtualDom$map,
+				function (_p3) {
+					return _bburdette$oscpad$SvgButton$NoOp;
+				},
+				A2(
+					_elm_lang$svg$Svg$g,
+					_elm_lang$core$Native_List.fromArray(
+						[]),
+					model.textSvg))
 			]));
 };
 var _bburdette$oscpad$SvgButton$Unpress = {ctor: 'Unpress'};
 var _bburdette$oscpad$SvgButton$Press = {ctor: 'Press'};
 var _bburdette$oscpad$SvgButton$jsUpdateType = function (ut) {
-	var _p3 = ut;
-	switch (_p3) {
+	var _p4 = ut;
+	switch (_p4) {
 		case 'Press':
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgButton$Press);
 		case 'Unpress':
@@ -9683,31 +9683,31 @@ var _bburdette$oscpad$SvgButton$pressup = F2(
 	});
 var _bburdette$oscpad$SvgButton$update = F2(
 	function (msg, model) {
-		var _p4 = msg;
-		switch (_p4.ctor) {
+		var _p5 = msg;
+		switch (_p5.ctor) {
 			case 'SvgPress':
 				return A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Press);
 			case 'SvgUnpress':
-				var _p5 = model.pressed;
-				if (_p5 === true) {
+				var _p6 = model.pressed;
+				if (_p6 === true) {
 					return A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Unpress);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
-			case 'UselessCrap':
+			case 'NoOp':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'Reply':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{name: _p4._0}),
+						{name: _p5._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SvgUpdate':
 				var pressedupdate = function () {
-					var _p6 = _p4._0.updateType;
-					if (_p6.ctor === 'Press') {
+					var _p7 = _p5._0.updateType;
+					if (_p7.ctor === 'Press') {
 						return true;
 					} else {
 						return false;
@@ -9721,8 +9721,8 @@ var _bburdette$oscpad$SvgButton$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				var _p7 = _bburdette$oscpad$SvgTouch$extractFirstTouchSE(_p4._0);
-				if (_p7.ctor === 'Nothing') {
+				var _p8 = _bburdette$oscpad$SvgTouch$extractFirstTouchSE(_p5._0);
+				if (_p8.ctor === 'Nothing') {
 					return _elm_lang$core$Native_Utils.eq(model.pressed, true) ? A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Unpress) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					return _elm_lang$core$Native_Utils.eq(model.pressed, false) ? A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Press) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};

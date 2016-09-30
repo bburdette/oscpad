@@ -71,7 +71,7 @@ buttColor pressed =
 type Msg
     = SvgPress 
     | SvgUnpress 
-    | UselessCrap 
+    | NoOp 
     | Reply String
     | SvgTouch ST.Msg 
     | SvgUpdate UpdateMessage
@@ -120,7 +120,7 @@ update msg model =
       case model.pressed of
         True ->  pressup model Unpress
         False -> (model, Cmd.none)
-    UselessCrap -> (model, Cmd.none)
+    NoOp -> (model, Cmd.none)
     Reply s -> ({model | name = s}, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
@@ -158,7 +158,9 @@ resize model rect =
             srect = (SvgThings.SRect (toString rect.x)
                                      (toString rect.y)
                                      (toString rect.w)
-                                     (toString rect.h))}
+                                     (toString rect.h))
+           , textSvg = ts
+   }
   , Cmd.none)
 
 
@@ -200,7 +202,7 @@ view model =
         , style ("fill: " ++ buttColor(model.pressed) ++ ";")
         ]
         []
-    , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
+      , VD.map (\_ -> NoOp) (g [ ] model.textSvg)
     ]
 
 

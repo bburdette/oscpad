@@ -61,9 +61,9 @@ fn makeDefaultPrefs(guifile: &str) -> BTreeMap<String, Value>
 {
     let mut map = BTreeMap::new();
     map.insert(String::from("guifile"), Value::String(guifile.to_string()));
-    map.insert(String::from("ip"), Value::String("0.0.0.0:3030".to_string()));
-    map.insert(String::from("wip"), Value::String("0.0.0.0:1234".to_string()));
-    map.insert(String::from("client-wip"), Value::String("ws://localhost:1234".to_string()));
+    map.insert(String::from("ip"), Value::String("0.0.0.0".to_string()));
+    map.insert(String::from("http-port"), Value::String("3030".to_string()));
+    map.insert(String::from("websockets-port"), Value::String("1234".to_string()));
     map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
     map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
     
@@ -152,12 +152,26 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'ip' not found!").as_string(), 
         "'ip' not a string!");
 
-    let wip = String::new() + 
+    let http_port = String::new() + 
       try_opt_resbox!(
-        try_opt_resbox!(obj.get("wip"), 
-                       "'wip' not found!").as_string(), 
-        "'wip' not a string!");
+        try_opt_resbox!(obj.get("http-port"), 
+                       "'http-port' not found!").as_string(), 
+        "'http-port' not a string!");
+  
+    let mut http_ip = String::from(ip.as_str());
+    http_ip.push_str(":");
+    http_ip.push_str(&http_port);
 
+    let websockets_port = String::new() + 
+      try_opt_resbox!(
+        try_opt_resbox!(obj.get("websockets-port"), 
+                       "'websockets-port' not found!").as_string(), 
+        "'websockets-port' not a string!");
+
+    let mut websockets_ip = String::from(ip.as_str());
+    websockets_ip.push_str(":");
+    websockets_ip.push_str(&websockets_port);
+    
     let oscrecvip = String::new() + 
       try_opt_resbox!(
         try_opt_resbox!(obj.get("oscrecvip"), 
@@ -170,19 +184,13 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
 
-    let websock_port = String::new() + 
-      try_opt_resbox!(
-        try_opt_resbox!(obj.get("websockets-port"), 
-                       "'websockets-port' not found!").as_string(), 
-        "'websockets-port' not a string!");
-
-    let htmlstring = {  
+     let htmlstring = {  
       match obj.get("htmlfile") {
         Some(fname) => { 
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
           try!(loadString(&htmlfilename[..]))
         }
-        None => stringDefaults::mainhtml.to_string().replace("<websockets-port>", &websock_port)
+        None => stringDefaults::mainhtml.to_string().replace("<websockets-port>", &websockets_port)
       }
     };
 
@@ -222,7 +230,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
       }); 
 
     thread::spawn(move || { 
-      match websockets_main(wip, wscmshare, wsbc, wsoscsendip, wsos) {
+      match websockets_main(websockets_ip, wscmshare, wsbc, wsoscsendip, wsos) {
         Ok(_) => (),
         Err(e) => println!("error in websockets_main: {:?}", e),
       }
@@ -231,7 +239,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     try!(Iron::new(move |req: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
-    }).http(&ip[..]));
+    }).http(&http_ip[..]));
 
     Ok(())
 }

@@ -19,18 +19,21 @@ import Dict
 
 type alias Spec = 
   { name: String
+  , label: Maybe String
   , orientation: SvgThings.Orientation
   }
 
 jsSpec : JD.Decoder Spec
-jsSpec = JD.object2 Spec 
+jsSpec = JD.object3 Spec 
   ("name" := JD.string)
+  (JD.maybe ("label" := JD.string)) 
   (("orientation" := JD.string) `JD.andThen` SvgThings.jsOrientation)
 
 -- MODEL
 
 type alias Model =
   { name : String
+  , label: String
   , cid: SvgThings.ControlId 
   , rect: SvgThings.Rect
   , srect: SvgThings.SRect
@@ -38,13 +41,19 @@ type alias Model =
   , pressed: Bool
   , location: Float
   , sendaddr: String
+  , textSvg: List (Svg ())
   , touchonly: Bool
   }
 
 init: String -> SvgThings.Rect -> SvgThings.ControlId -> Spec
   -> (Model, Cmd msg)
 init sendaddr rect cid spec =
-  ( Model (spec.name) 
+  let ts = case spec.label of 
+        Just lbtext -> SvgThings.calcTextSvg SvgThings.ff lbtext rect 
+        Nothing -> []
+    in
+   (Model (spec.name)
+          (Maybe.withDefault "" (spec.label))
           cid 
           rect
           (SvgThings.SRect (toString rect.x)
@@ -55,6 +64,7 @@ init sendaddr rect cid spec =
           False 
           0.5 
           sendaddr
+          ts
           False
   , Cmd.none
   )
@@ -70,7 +80,7 @@ buttColor pressed =
 type Msg 
     = SvgPress JE.Value
     | SvgUnpress JE.Value 
-    | UselessCrap 
+    | NoOp 
     | Reply String 
     | SvgMoved JE.Value
     | SvgTouch ST.Msg 
@@ -149,7 +159,7 @@ update msg model =
       case model.pressed of 
         True -> updsend model Unpress model.location 
         False -> (model, Cmd.none)
-    UselessCrap -> (model, Cmd.none)
+    NoOp -> (model, Cmd.none)
     Reply s -> ({model | name = s}, Cmd.none)
     SvgMoved v ->
       case model.pressed of 
@@ -216,11 +226,14 @@ updsend model ut loc =
 
 resize: Model -> SvgThings.Rect -> (Model, Cmd Msg)
 resize model rect = 
-  ({ model | rect = rect, 
-            srect = (SvgThings.SRect (toString rect.x)
+  let ts = SvgThings.calcTextSvg SvgThings.ff model.label rect in
+  ({ model | rect = rect
+           , srect = (SvgThings.SRect (toString rect.x)
                                      (toString rect.y)
                                      (toString rect.w)
-                                     (toString rect.h)) }
+                                     (toString rect.h))
+           , textSvg = ts
+            }
   , Cmd.none)
  
 -- VIEW
@@ -292,7 +305,7 @@ view model =
         , style ("fill: " ++ buttColor(model.pressed) ++ ";")
         ]
         []
-    , text' [ fill "white", textAnchor "middle" ] [ text model.name ]
+    , VD.map (\_ -> NoOp) (g [ ] model.textSvg)
     ]
 
 

@@ -40,10 +40,10 @@ init wsUrl =
   SvgControlPage.init 
         wsUrl
         (SvgThings.Rect 0 0 500 300)    
-        (SvgControlPage.Spec wsUrl (SvgControl.CsSlider (SvgSlider.Spec "blah" SvgThings.Vertical)) Nothing)
+        (SvgControlPage.Spec wsUrl (SvgControl.CsSlider (SvgSlider.Spec "blah" Nothing SvgThings.Vertical)) Nothing)
 
 
-        -- (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing)) Nothing)
+        -- (SvgControlPage.Spec "mehtitle" (SvgControl.CsButton (SvgButton.Spec "blah" Nothing Nothing)) Nothing)
 --    , subscriptions = \_ -> Sub.none
 --    , inits = [ (Signal.map SvgControlPage.WinDims Window.dimensions)
 --              ]

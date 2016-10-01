@@ -10,10 +10,12 @@
            "orientation": "horizontal",
            "controls": [
              { "type": "slider"
+             , "label": "hs1"
              , "orientation": "horizontal"
              , "name": "hs1"
              }
             ,{ "type": "slider"
+             , "label": "hs2"
              , "orientation": "horizontal"
              , "name": "hs2"
              }

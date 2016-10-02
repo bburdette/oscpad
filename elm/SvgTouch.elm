@@ -6,6 +6,7 @@ import Json.Decode as JD exposing ((:=))
 import String
 import List
 import Dict
+import SvgThings
 
 {- Every `Touch` has `xy` coordinates. It also has an identifier
 `id` to distinguish one touch from another.
@@ -80,6 +81,16 @@ extractFirstTouchSE msg =
     SvgTouchCancel v -> Nothing
     SvgTouchLeave v -> Nothing
 
+extractFirstRectTouchSE : Msg -> SvgThings.Rect -> Maybe Touch 
+extractFirstRectTouchSE msg rect = 
+  -- let _ = Debug.log "meh" msg
+  case msg of 
+    SvgTouchStart v -> extractFirstTouchInRect v rect
+    SvgTouchMove v -> extractFirstTouchInRect v rect
+    SvgTouchEnd v -> Nothing
+    SvgTouchCancel v -> Nothing
+    SvgTouchLeave v -> Nothing
+
 extractTouches: JD.Value -> List Touch
 extractTouches evt = 
   case JD.decodeValue parseTouchCount evt of 
@@ -117,4 +128,11 @@ extractFirstTouch evt =
   case JD.decodeValue (JD.at [ "touches", "0" ] parseTouch) evt of
     Ok touch -> Just touch
     Err e -> Debug.log e Nothing
+
+extractFirstTouchInRect: JD.Value -> SvgThings.Rect -> Maybe Touch
+extractFirstTouchInRect evt rect = 
+  let touches = extractTouches evt in
+    List.head (List.filter (\touch -> 
+      SvgThings.containsXY rect (truncate touch.x) (truncate touch.y))
+                 touches) 
 

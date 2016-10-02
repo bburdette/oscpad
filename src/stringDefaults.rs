@@ -8805,9 +8805,40 @@ var _bburdette$oscpad$SvgTouch$update = F2(
 				return model;
 		}
 	});
+var _bburdette$oscpad$SvgTouch$extractFirstTouchInRect = F2(
+	function (evt, rect) {
+		var touches = _bburdette$oscpad$SvgTouch$extractTouches(evt);
+		return _elm_lang$core$List$head(
+			A2(
+				_elm_lang$core$List$filter,
+				function (touch) {
+					return A3(
+						_bburdette$oscpad$SvgThings$containsXY,
+						rect,
+						_elm_lang$core$Basics$truncate(touch.x),
+						_elm_lang$core$Basics$truncate(touch.y));
+				},
+				touches));
+	});
+var _bburdette$oscpad$SvgTouch$extractFirstRectTouchSE = F2(
+	function (msg, rect) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
+			case 'SvgTouchStart':
+				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p3._0, rect);
+			case 'SvgTouchMove':
+				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p3._0, rect);
+			case 'SvgTouchEnd':
+				return _elm_lang$core$Maybe$Nothing;
+			case 'SvgTouchCancel':
+				return _elm_lang$core$Maybe$Nothing;
+			default:
+				return _elm_lang$core$Maybe$Nothing;
+		}
+	});
 var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
-	var _p3 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgTouch$parseTouchCount, evt);
-	if (_p3.ctor === 'Ok') {
+	var _p4 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgTouch$parseTouchCount, evt);
+	if (_p4.ctor === 'Ok') {
 		var touchresults = A2(
 			_elm_lang$core$List$map,
 			function (idx) {
@@ -8823,16 +8854,16 @@ var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
 						_bburdette$oscpad$SvgTouch$parseTouch),
 					evt);
 			},
-			_elm_lang$core$Native_List.range(0, _p3._0 - 1));
+			_elm_lang$core$Native_List.range(0, _p4._0 - 1));
 		var touches = A3(
 			_elm_lang$core$List$foldr,
 			F2(
 				function (rst, tl) {
-					var _p4 = rst;
-					if (_p4.ctor === 'Ok') {
-						return A2(_elm_lang$core$List_ops['::'], _p4._0, tl);
+					var _p5 = rst;
+					if (_p5.ctor === 'Ok') {
+						return A2(_elm_lang$core$List_ops['::'], _p5._0, tl);
 					} else {
-						return A2(_elm_lang$core$Debug$log, _p4._0, tl);
+						return A2(_elm_lang$core$Debug$log, _p5._0, tl);
 					}
 				}),
 			_elm_lang$core$Native_List.fromArray(
@@ -8840,11 +8871,11 @@ var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
 			touchresults);
 		return _bburdette$oscpad$SvgTouch$makeTd(touches);
 	} else {
-		return A2(_elm_lang$core$Debug$log, _p3._0, _elm_lang$core$Dict$empty);
+		return A2(_elm_lang$core$Debug$log, _p4._0, _elm_lang$core$Dict$empty);
 	}
 };
 var _bburdette$oscpad$SvgTouch$extractFirstTouch = function (evt) {
-	var _p5 = A2(
+	var _p6 = A2(
 		_elm_lang$core$Json_Decode$decodeValue,
 		A2(
 			_elm_lang$core$Json_Decode$at,
@@ -8852,19 +8883,19 @@ var _bburdette$oscpad$SvgTouch$extractFirstTouch = function (evt) {
 				['touches', '0']),
 			_bburdette$oscpad$SvgTouch$parseTouch),
 		evt);
-	if (_p5.ctor === 'Ok') {
-		return _elm_lang$core$Maybe$Just(_p5._0);
+	if (_p6.ctor === 'Ok') {
+		return _elm_lang$core$Maybe$Just(_p6._0);
 	} else {
-		return A2(_elm_lang$core$Debug$log, _p5._0, _elm_lang$core$Maybe$Nothing);
+		return A2(_elm_lang$core$Debug$log, _p6._0, _elm_lang$core$Maybe$Nothing);
 	}
 };
 var _bburdette$oscpad$SvgTouch$extractFirstTouchSE = function (msg) {
-	var _p6 = msg;
-	switch (_p6.ctor) {
+	var _p7 = msg;
+	switch (_p7.ctor) {
 		case 'SvgTouchStart':
-			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p6._0);
+			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p7._0);
 		case 'SvgTouchMove':
-			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p6._0);
+			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p7._0);
 		case 'SvgTouchEnd':
 			return _elm_lang$core$Maybe$Nothing;
 		case 'SvgTouchCancel':
@@ -10178,7 +10209,7 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 				}();
 				return {ctor: '_Tuple2', _0: mod, _1: _elm_lang$core$Platform_Cmd$none};
 			default:
-				var _p17 = _bburdette$oscpad$SvgTouch$extractFirstTouchSE(_p10._0);
+				var _p17 = A2(_bburdette$oscpad$SvgTouch$extractFirstRectTouchSE, _p10._0, model.rect);
 				if (_p17.ctor === 'Nothing') {
 					return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Unpress, model.location) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {

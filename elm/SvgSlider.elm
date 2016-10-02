@@ -179,7 +179,7 @@ update msg model =
         in
       (mod, Cmd.none )
     SvgTouch stm -> 
-      case ST.extractFirstTouchSE stm of
+      case ST.extractFirstRectTouchSE stm model.rect of
         Nothing -> 
           if model.pressed then
             updsend model Unpress model.location

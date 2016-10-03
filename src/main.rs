@@ -184,15 +184,17 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
 
-     let htmlstring = {  
+    let htmltemplate = {  
       match obj.get("htmlfile") {
         Some(fname) => { 
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
           try!(loadString(&htmlfilename[..]))
         }
-        None => stringDefaults::mainhtml.to_string().replace("<websockets-port>", &websockets_port)
+        None => stringDefaults::mainhtml.to_string()
       }
     };
+    
+    let htmlstring = htmltemplate.replace("<websockets-port>", &websockets_port);
 
     // println!("htmlstring is:");
     println!("{}", htmlstring);

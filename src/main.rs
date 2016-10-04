@@ -196,8 +196,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     
     let htmlstring = htmltemplate.replace("<websockets-port>", &websockets_port);
 
-    // println!("htmlstring is:");
-    println!("{}", htmlstring);
+    // println!("{}", htmlstring);
 
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 

@@ -203,8 +203,6 @@ update msg model =
                 updsend model Move loc
 
 
-
-
 updsend: Model -> UpdateType -> Float -> (Model, Cmd Msg)
 updsend model ut loc = 
   let bLoc = if (loc > 1.0) then 

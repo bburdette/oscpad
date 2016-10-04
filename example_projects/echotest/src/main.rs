@@ -62,7 +62,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
        
             match (q,r) {
               (&osc::Argument::s(_), &osc::Argument::f(b)) => {
-                  let outpath = format(format_args!("lb{}", &inpath[2..]));    
+                  let outpath = format(format_args!("hs{}", &inpath[2..]));    
                   let labtext = format(format_args!("{}", b));
                   let mut arghs = Vec::new();
                   // arghs.push(osc::Argument::f(b * 100.0 - 100.0)); 

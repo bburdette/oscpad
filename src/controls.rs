@@ -56,6 +56,7 @@ pub trait Control : Debug + Send {
 pub struct Slider {
   controlId: Vec<i32>,
   name: String,
+  label: Option<String>,
   pressed: bool,
   location: f32,
 }
@@ -67,6 +68,7 @@ impl Control for Slider {
     Box::new( 
       Slider { controlId: self.controlId.clone(), 
                name: self.name.clone(), 
+               label: self.label.clone(), 
                pressed: self.pressed.clone(), 
                location: self.location.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
@@ -75,6 +77,10 @@ impl Control for Slider {
       &UpdateMsg::Slider { controlId: _, updateType: ref ut, location: l} => {
         self.pressed = match ut { &SliderUpType::Moved => true, &SliderUpType::Pressed => true, &SliderUpType::Unpressed => false };
         self.location = l as f32;
+        ()
+        }
+      &UpdateMsg::Label { controlId: _, label: ref l } => {
+        self.label = Some(l.clone());
         ()
         }
       _ => ()
@@ -91,6 +97,7 @@ impl Control for Slider {
 pub struct Button { 
   controlId: Vec<i32>,
   name: String,
+  label: Option<String>,
   pressed: bool,
 }
 
@@ -100,13 +107,18 @@ impl Control for Button {
   fn cloneTrol(&self) -> Box<Control> { 
     Box::new( 
       Button { controlId: self.controlId.clone(), 
-              name: self.name.clone(), 
-              pressed: self.pressed.clone() } ) }
+               name: self.name.clone(), 
+               label: self.label.clone(), 
+               pressed: self.pressed.clone() } ) }
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
   fn update(&mut self, um: &UpdateMsg) {
     match um { 
       &UpdateMsg::Button { controlId: _, updateType: ref ut } => {
         self.pressed = match ut { &ButtonUpType::Pressed => true, &ButtonUpType::Unpressed => false };
+        ()
+        }
+      &UpdateMsg::Label { controlId: _, label: ref l } => {
+        self.label = Some(l.clone());
         ()
         }
       _ => ()
@@ -179,12 +191,37 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
 
   match objtype {
     "button" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
-      Ok(Box::new(Button { controlId: aVId.clone(), name: String::from(name), pressed: false }))
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), 
+                                                 "'name' not found!").as_string(), 
+                                 "'name' is not a string!");
+      let label =  match obj.get("label") { 
+          Some(x) => {
+            let s = try_opt_resbox!(x.as_string(), "'label' is not a string!");
+            Some(String::from(s))
+            },
+          None => None,
+          };
+      Ok(Box::new(Button { controlId: aVId.clone()
+                         , name: String::from(name)
+                         , label: label // String::from(label)
+                         , pressed: false }))
     },
     "slider" => { 
-      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
-      Ok(Box::new(Slider { controlId: aVId.clone(), name: String::from(name), pressed: false, location: 0.5 }))
+      let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), 
+                                                 "'name' not found!").as_string(), 
+                                 "'name' is not a string!");
+      let label =  match obj.get("label") { 
+          Some(x) => {
+            let s = try_opt_resbox!(x.as_string(), "'label' is not a string!");
+            Some(String::from(s))
+            },
+          None => None,
+          };
+      Ok(Box::new(Slider { controlId: aVId.clone()
+                         , name: String::from(name)
+                         , label: label 
+                         , pressed: false
+                         , location: 0.5 }))
     },
     "label" => { 
       let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");

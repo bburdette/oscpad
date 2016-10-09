@@ -11,6 +11,7 @@ use std::io::Write;
 use std::io::{Error,ErrorKind};
 use std::string::*;
 use std::collections::BTreeMap;
+use std::fmt::Debug;
 
 use std::net::UdpSocket;
 use std::borrow::Cow;
@@ -405,35 +406,64 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
   Ok(())
 }
 
+// TODO:
+// break out osc encode/decode into a separate file, looking to be a 
+// separate project at some point.
+// how should osc messages be structured?
+//  - seperate messages for each control attribute?
+//  - named pairs, attrib + amount
+//  - positional: <location> <state> <labelval>
+//  I'm tending towards the named pairs.  But, look at the client code and
+// see if that would be an undue hardship.  
+
 fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
 {
   match um {
     &controls::UpdateMsg::Button { controlId: ref id
-             , updateType: ref ut
-             } => { 
+                                 , label: ref optLab
+                                 , state: ref st
+                                 } => { 
       // find the control in the map.
       let mut arghs = Vec::new();
-      arghs.push (
-        match ut { 
-          &controls::ButtonUpType::Pressed => osc::Argument::s("b_pressed"),
-          &controls::ButtonUpType::Unpressed => osc::Argument::s("b_unpressed"),
-        });
+      if let &Some(ref state) = st {
+        arghs.push (
+          match state { 
+            &controls::ButtonState::Pressed => osc::Argument::s("b_pressed"),
+            &controls::ButtonState::Unpressed => osc::Argument::s("b_unpressed"),
+          })
+        };
+
+      if let &Some(ref lb) = optLab {
+        arghs.push(osc::Argument::s("l_label"));
+        // arghs.push(osc::Argument::s(lr));  // &labs[..]));
+        arghs.push(osc::Argument::s(&lb[..]));
+      };
+        
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
     &controls::UpdateMsg::Slider  { controlId: ref id
-            , updateType: ref ut
-            , location: ref loc
-            } => {
+                                  , label: ref lb
+                                  , state: ref st
+                                  , location: ref loc
+                                  } => {
       let mut arghs = Vec::new();
-      arghs.push (
-        match ut { 
-          &controls::SliderUpType::Pressed => osc::Argument::s("s_pressed"),
-          &controls::SliderUpType::Moved => osc::Argument::s("s_moved"),
-          &controls::SliderUpType::Unpressed => osc::Argument::s("s_unpressed"),
-        });
-      let l = *loc as f32;
-      arghs.push(osc::Argument::f(l));
+      if let &Some(ref state) = st {
+        arghs.push (
+          match state { 
+            &controls::SliderState::Pressed => osc::Argument::s("s_pressed"),
+            &controls::SliderState::Unpressed => osc::Argument::s("s_unpressed"),
+          });
+        };
+      if let &Some(ref location) = loc { 
+        let l = *location as f32;
+        arghs.push(osc::Argument::f(l));
+        };
+      if let &Some(ref label) = lb {
+        arghs.push(osc::Argument::s("l_label"));
+        arghs.push(osc::Argument::s(&label[..]));
+      };
+      
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
@@ -450,11 +480,129 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
    } 
 } 
 
-fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<controls::UpdateMsg, Box<std::error::Error> >
+/*
+
+parsing the osc messages:
+
+ "b_pressed", "b_
+
+
+*/
+
+// TODO: find the control itself and check its type.
+// then build an update message based on that type.
+
+// building the update message based on type:
+//  - create an update message with all None
+//  - make a function that takes the args array and an index.
+//  - check for the various things at the index.
+//  - recursively call self with updated update message.
+
+/*
+pub trait ControlUpdate : Debug + Send {
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg>;
+}
+
+impl ControlUpdate for controls::Slider
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Button
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Label
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Sizer
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
+    None
+    }
+}
+*/
+
+/*
+impl ControlUpdate for controls::Slider
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Slider> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Button
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Button> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Label
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Label> {
+    None
+    }
+}
+
+impl ControlUpdate for controls::Sizer
+{  
+  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
+    None
+    }
+}
+
+
+*/
+
+fn parseOscSliderUpdate(om: &osc::Message,
+                        argIndex: i32, 
+                        update: controls::UpdateMsg )
+  -> Result<controls::UpdateMsg, Box<std::error::Error> >
+{
+  Err(Box::new(Error::new(ErrorKind::Other, "unimplemented")))
+  
+}
+                        
+
+fn oscToCtrlUpdate(om: &osc::Message, 
+                   cnm: &controls::controlNameMap,
+                   cm: &controls::controlMap) 
+   -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
   let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
+  
+  let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
+  match &(*control.controlType()) {
+   "slider" => parseOscSliderUpdate(om, 0, controls::UpdateMsg::Slider 
+            { controlId: cid.clone(), 
+              state: None,
+              location: None,
+              label: None }),  
+   _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown type"))),
+   }
+
+/*
+  match **control {
+   controls::Slider {..} => println!("slider"),
+   controls::Button {..} => println!("button"),
+   controls::Label {..} => println!("label"),
+   };
+*/
+
+
+  /*
   match om.arguments.len() {
     1 => {
       let evt = &om.arguments[0];
@@ -462,11 +610,15 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
         &osc::Argument::s("b_pressed") => {
           // blah
           Ok(controls::UpdateMsg::Button 
-            { controlId: cid.clone(), updateType: controls::ButtonUpType::Pressed })
+            { controlId: cid.clone()
+            , state: Some(controls::ButtonState::Pressed) 
+            , label: Some(controls::ButtonState::Pressed) 
+            })
         }, 
         &osc::Argument::s("b_unpressed") => {
           Ok(controls::UpdateMsg::Button 
-            { controlId: cid.clone(), updateType: controls::ButtonUpType::Unpressed })
+            { controlId: cid.clone()
+            , state: Some(controls::ButtonState::Unpressed) })
         },
         _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid button event"))),
       }
@@ -476,20 +628,20 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
         (&osc::Argument::s("s_pressed"), &osc::Argument::f(loc))  => {
           Ok(controls::UpdateMsg::Slider 
             { controlId: cid.clone(), 
-              updateType: controls::SliderUpType::Pressed,
-              location: loc as f64 })
+              state: Some(controls::SliderState::Pressed),
+              location: Some(loc as f64) })
         },
         (&osc::Argument::s("s_moved"), &osc::Argument::f(loc))  => {
           Ok(controls::UpdateMsg::Slider 
             { controlId: cid.clone(), 
-              updateType: controls::SliderUpType::Moved,
-              location: loc as f64 })
+              state: Some(controls::SliderState::Moved),
+              location: Some(loc as f64) })
         },
         (&osc::Argument::s("s_unpressed"), &osc::Argument::f(loc))  => {
           Ok(controls::UpdateMsg::Slider 
             { controlId: cid.clone(), 
-              updateType: controls::SliderUpType::Unpressed,
-              location: loc as f64 })
+              state: Some(controls::SliderState::Unpressed),
+              location: Some(loc as f64) })
         },
         (&osc::Argument::s("l_label"), &osc::Argument::s(txt))  => {
           Ok(controls::UpdateMsg::Label
@@ -502,6 +654,7 @@ fn oscToCtrlUpdate(om: &osc::Message, cnm: &controls::controlNameMap) -> Result<
     },
     _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid osc message"))),
   } 
+  */
 }
 
 fn oscmain( recvsocket: UdpSocket, 
@@ -525,7 +678,9 @@ fn oscmain( recvsocket: UdpSocket,
           println!("invalid osc messsage: {:?}", e)
         },
       Ok(inmsg) => {
-        match oscToCtrlUpdate(&inmsg, &cnm) {
+        let sci  = ci.lock().unwrap(); 
+
+        match oscToCtrlUpdate(&inmsg, &cnm, &sci.cm) {
           Ok(updmsg) => { 
             let mut sci  = ci.lock().unwrap(); 
             match sci.cm.get_mut(controls::getUmId(&updmsg)) {

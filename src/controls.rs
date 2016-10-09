@@ -48,6 +48,7 @@ pub trait Control : Debug + Send {
   fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
   fn update(&mut self, &UpdateMsg); 
+  // build full update message of current state.
   fn toUpdate(&self) -> Option<UpdateMsg>;
   fn oscname(&self) -> &str;
 }
@@ -74,21 +75,34 @@ impl Control for Slider {
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
   fn update(&mut self, um: &UpdateMsg) {
     match um { 
-      &UpdateMsg::Slider { controlId: _, updateType: ref ut, location: l} => {
-        self.pressed = match ut { &SliderUpType::Moved => true, &SliderUpType::Pressed => true, &SliderUpType::Unpressed => false };
-        self.location = l as f32;
-        ()
-        }
-      &UpdateMsg::Label { controlId: _, label: ref l } => {
-        self.label = Some(l.clone());
+      &UpdateMsg::Slider { controlId: _
+                         , state: ref optState
+                         , location: ref optLoc
+                         , label: ref optLabel
+                         } => {
+        if let &Some(ref st) = optState {
+          self.pressed = match st { &SliderState::Pressed => true
+                                  , &SliderState::Unpressed => false };
+          };
+        if let &Some(ref loc) = optLoc { 
+          self.location = *loc as f32;
+        };
+        if let &Some(ref t) = optLabel {
+          self.label = Some(t.clone());
+        };
         ()
         }
       _ => ()
       }
     }
   fn toUpdate(&self) -> Option<UpdateMsg> {
-    let ut = if self.pressed { SliderUpType::Pressed  } else { SliderUpType::Moved };
-    Some(UpdateMsg::Slider { controlId: self.controlId.clone(), updateType: ut, location: self.location as f64 })
+    let state = if self.pressed { SliderState::Pressed  } 
+                else { SliderState::Unpressed };
+    Some(UpdateMsg::Slider  { controlId: self.controlId.clone()
+                            , state: Some(state)
+                            , location: Some(self.location as f64) 
+                            , label: self.label.clone()
+                            })
   }
   fn oscname(&self) -> &str { &self.name[..] }
 }
@@ -113,20 +127,27 @@ impl Control for Button {
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { None } 
   fn update(&mut self, um: &UpdateMsg) {
     match um { 
-      &UpdateMsg::Button { controlId: _, updateType: ref ut } => {
-        self.pressed = match ut { &ButtonUpType::Pressed => true, &ButtonUpType::Unpressed => false };
-        ()
-        }
-      &UpdateMsg::Label { controlId: _, label: ref l } => {
-        self.label = Some(l.clone());
+      &UpdateMsg::Button { controlId: _ 
+                         , state: ref optState
+                         , label: ref optLabel } => {
+        if let &Some(ref st) = optState { 
+          self.pressed = match st { &ButtonState::Pressed => true
+                                  , &ButtonState::Unpressed => false };
+          };
+        if let &Some(ref t) = optLabel {
+          self.label = Some(t.clone());
+        };
         ()
         }
       _ => ()
       }
     }
   fn toUpdate(&self) -> Option<UpdateMsg> {
-    let ut = if self.pressed { ButtonUpType::Pressed  } else { ButtonUpType::Unpressed };
-    Some(UpdateMsg::Button { controlId: self.controlId.clone(), updateType: ut })
+    let ut = if self.pressed { ButtonState::Pressed  } 
+                        else { ButtonState::Unpressed };
+    Some(UpdateMsg::Button { controlId: self.controlId.clone()
+                           , state: Some(ut)
+                           , label: self.label.clone() })
   }
   fn oscname(&self) -> &str { &self.name[..] }
 }
@@ -266,24 +287,25 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
 
 */
 
-pub enum ButtonUpType { 
+pub enum ButtonState { 
   Pressed,
   Unpressed
   }
 
-pub enum SliderUpType { 
+pub enum SliderState { 
   Pressed,
-  Moved,
   Unpressed
   }
 
 pub enum UpdateMsg { 
   Button  { controlId: Vec<i32>
-          , updateType: ButtonUpType
+          , state: Option<ButtonState>
+          , label: Option<String>
           },
   Slider  { controlId: Vec<i32>
-          , updateType: SliderUpType 
-          , location: f64
+          , state: Option<SliderState>
+          , location: Option<f64>
+          , label: Option<String>
           },
   Label   { controlId: Vec<i32>
           , label: String 
@@ -292,8 +314,8 @@ pub enum UpdateMsg {
 
 pub fn getUmId(um: &UpdateMsg) -> &Vec<i32> {
   match um { 
-    &UpdateMsg::Button { controlId: ref cid, updateType: _ } => &cid,
-    &UpdateMsg::Slider { controlId: ref cid, updateType: _, location: _ } => &cid, 
+    &UpdateMsg::Button { controlId: ref cid, state: _, label: _ } => &cid,
+    &UpdateMsg::Slider { controlId: ref cid, state: _, label: _, location: _ } => &cid, 
     &UpdateMsg::Label { controlId: ref cid, label: _ } => &cid, 
     }
 }
@@ -308,26 +330,40 @@ fn convarrayi32(inp: &Vec<Value>) -> Vec<i32> {
 
 pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value { 
   match um { 
-    &UpdateMsg::Button { controlId: ref cid, updateType: ref ut } => {
+    &UpdateMsg::Button { controlId: ref cid 
+                       , state: ref optState
+                       , label: ref optLabel } => {
       let mut btv = BTreeMap::new();
       btv.insert(String::from("controlType"), Value::String(String::from("button")));
       btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
-      btv.insert(String::from("updateType"), 
-        Value::String(String::from( 
-          (match ut { &ButtonUpType::Pressed => "Press", 
-                      &ButtonUpType::Unpressed => "Unpress" }))));
+      if let &Some(ref st) = optState { 
+        btv.insert(String::from("state"), 
+          Value::String(String::from( 
+            (match st { &ButtonState::Pressed => "Press", 
+                        &ButtonState::Unpressed => "Unpress", }))));
+        };
       Value::Object(btv)
     }, 
-    &UpdateMsg::Slider { controlId: ref cid, updateType: ref ut, location: ref loc } => {
+    &UpdateMsg::Slider { controlId: ref cid
+                       , state: ref optState
+                       , label: ref lb
+                       , location: ref loc } => 
+    {
       let mut btv = BTreeMap::new();
-      btv.insert(String::from("controlType"), Value::String(String::from("slider")));
-      btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
-      btv.insert(String::from("updateType"), 
-        Value::String(String::from( 
-          (match ut { &SliderUpType::Pressed => "Press",
-                      &SliderUpType::Moved => "Move", 
-                      &SliderUpType::Unpressed => "Unpress" }))));
-      btv.insert(String::from("location"), Value::F64(*loc));
+      btv.insert(String::from("controlType"), 
+                 Value::String(String::from("slider")));
+      btv.insert(String::from("controlId"), 
+                 Value::Array(convi32array(cid)));
+      if let &Some(ref st) = optState { 
+        btv.insert(String::from("state"), 
+          Value::String(String::from( 
+            (match st { &SliderState::Pressed => "Press",
+                        &SliderState::Unpressed => "Unpress" }))));
+      };
+      if let &Some(loc) = loc { 
+        btv.insert(String::from("location"), Value::F64(loc));
+      };
+      
       Value::Object(btv)
     },
     &UpdateMsg::Label { controlId: ref cid, label: ref labtext } => {
@@ -342,30 +378,39 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
  
 pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   let obj = try_opt!(data.as_object());
-  
+ 
   let contype = try_opt!(try_opt!(obj.get("controlType")).as_string());
   let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
-  let utstring = try_opt!(try_opt!(obj.get("updateType")).as_string());
+  // TODO: MAKE THESE OPTIONAL
+  let ststring = try_opt!(try_opt!(obj.get("state")).as_string());
  
   match contype {
     "slider" => {
       let location = try_opt!(try_opt!(obj.get("location")).as_f64());
-      let ut = try_opt!(match utstring 
-        { "Press" => Some( SliderUpType::Pressed ) 
-        , "Move" => Some( SliderUpType::Moved ) 
-        , "Unpress" => Some( SliderUpType::Unpressed )
+      let st = try_opt!(match ststring 
+        { "Press" => Some( SliderState::Pressed ) 
+      //  , "Move" => Some( SliderState::Moved ) 
+        , "Unpress" => Some( SliderState::Unpressed )
         , _ => None
         });
-      Some( UpdateMsg::Slider { controlId: conid, updateType: ut, location: location } )
+      let lab = obj.get("label").and_then(|s| s.as_string()).map(|s| String::from(s));
+      Some( UpdateMsg::Slider { controlId: conid
+                              , state: Some(st)
+                              , location: Some(location)
+                              , label: lab
+                              } )
       },
     "button" => {
-      let ut = try_opt!(match utstring 
-        { "Press" => Some( ButtonUpType::Pressed ) 
-        , "Unpress" => Some( ButtonUpType::Unpressed ) 
+      let st = try_opt!(match ststring 
+        { "Press" => Some( ButtonState::Pressed ) 
+        , "Unpress" => Some( ButtonState::Unpressed ) 
         , _ => None
         });
+      let lab = obj.get("label").and_then(|s| s.as_string()).map(|s| String::from(s));
         
-      Some( UpdateMsg::Button { controlId: conid, updateType: ut } )
+      Some( UpdateMsg::Button { controlId: conid
+                              , state: Some(st)
+                              , label: lab } )
       },
     _ => None
     }

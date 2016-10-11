@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 extern crate websocket;
 
 use std::thread;
@@ -5,20 +7,20 @@ use std::sync::{Arc, Mutex};
 use std::fs::File;
 use std::path::Path;
 use std::env;
-use std::str;
+// use std::str;
 use std::io::Read;
 use std::io::Write;
 use std::io::{Error,ErrorKind};
 use std::string::*;
 use std::collections::BTreeMap;
-use std::fmt::Debug;
+// use std::fmt::Debug;
 
 use std::net::UdpSocket;
-use std::borrow::Cow;
+// use std::borrow::Cow;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
-use websocket::stream::WebSocketStream;
+// use websocket::stream::WebSocketStream;
 use websocket::message::Type;
 
 extern crate iron;
@@ -39,14 +41,15 @@ use tinyosc as osc;
 
 extern crate serde_json;
 use serde_json::Value;
-use serde_json::ser;
+// use serde_json::ser;
 
 fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::open(path));
   let mut result = String::new();
-  let len = try!(inf.read_to_string(&mut result));
+  // let len = try!(inf.read_to_string(&mut result));
+  try!(inf.read_to_string(&mut result));
   Ok(result)
 }
 
@@ -565,7 +568,7 @@ impl ControlUpdate for controls::Sizer
 */
 
 // wow this code is hideous!  do not look!
-fn parseOscSliderUpdate(om: &osc::Message,
+fn parseOscControlUpdate(om: &osc::Message,
                         argIndex: usize, 
                         update: controls::UpdateMsg )
   -> Result<controls::UpdateMsg, Box<std::error::Error> >
@@ -584,7 +587,7 @@ fn parseOscSliderUpdate(om: &osc::Message,
             { *state = Some(controls::SliderState::Pressed); },
           _ => (),
           };
-        parseOscSliderUpdate(om, 
+        parseOscControlUpdate(om, 
                              argIndex + 1, newupd)
         },
       osc::Argument::s("unpressed") => {
@@ -596,11 +599,11 @@ fn parseOscSliderUpdate(om: &osc::Message,
             { *state = Some(controls::SliderState::Unpressed); },
           _ => (),
           };
-        parseOscSliderUpdate(om, 
+        parseOscControlUpdate(om, 
                              argIndex + 1, newupd)
         },
       osc::Argument::s("location") => {
-        if (om.arguments.len() <= argIndex + 1)
+        if om.arguments.len() <= argIndex + 1
         {
           Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!")))
         }
@@ -614,14 +617,14 @@ fn parseOscSliderUpdate(om: &osc::Message,
                   { *location = Some(loc as f64); },
                 _ => (),
                 };
-              parseOscSliderUpdate(om, argIndex + 2, newupd)
+              parseOscControlUpdate(om, argIndex + 2, newupd)
               },
             _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
             }
           }
         },
       osc::Argument::s("label") => {
-        if (om.arguments.len() <= argIndex + 1)
+        if om.arguments.len() <= argIndex + 1
         {
           Err(Box::new(Error::new(ErrorKind::Other, "'label' should be followed by a string!")))
         }
@@ -638,7 +641,7 @@ fn parseOscSliderUpdate(om: &osc::Message,
                 controls::UpdateMsg::Label { ref mut label, .. } => 
                   { *label= txt.to_string(); },
                 };
-              parseOscSliderUpdate(om, argIndex + 2, newupd)
+              parseOscControlUpdate(om, argIndex + 2, newupd)
               },
             _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
             }
@@ -647,7 +650,6 @@ fn parseOscSliderUpdate(om: &osc::Message,
       _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown keyword!"))),
       }
   }
-  
 }
                         
 
@@ -662,11 +664,18 @@ fn oscToCtrlUpdate(om: &osc::Message,
   let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
   match &(*control.controlType()) {
-   "slider" => parseOscSliderUpdate(om, 0, controls::UpdateMsg::Slider 
+   "slider" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Slider 
             { controlId: cid.clone(), 
               state: None,
               location: None,
               label: None }),  
+   "button" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Button 
+            { controlId: cid.clone(), 
+              state: None,
+              label: None }),  
+   "label" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Label 
+            { controlId: cid.clone(), 
+              label: String::from("") }),  
    _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown type"))),
    }
 

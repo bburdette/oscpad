@@ -287,16 +287,19 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
 
 */
 
+#[derive(Clone)]
 pub enum ButtonState { 
   Pressed,
   Unpressed
   }
 
+#[derive(Clone)]
 pub enum SliderState { 
   Pressed,
   Unpressed
   }
 
+#[derive(Clone)]
 pub enum UpdateMsg { 
   Button  { controlId: Vec<i32>
           , state: Option<ButtonState>

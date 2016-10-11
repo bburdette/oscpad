@@ -564,12 +564,89 @@ impl ControlUpdate for controls::Sizer
 
 */
 
+// wow this code is hideous!  do not look!
 fn parseOscSliderUpdate(om: &osc::Message,
-                        argIndex: i32, 
+                        argIndex: usize, 
                         update: controls::UpdateMsg )
   -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
-  Err(Box::new(Error::new(ErrorKind::Other, "unimplemented")))
+  if argIndex >= om.arguments.len() {
+    Ok(update)
+  }
+  else {
+    match om.arguments[argIndex] { 
+      osc::Argument::s("pressed") => {
+        let mut newupd = update.clone();
+        match newupd { 
+          controls::UpdateMsg::Button { ref mut state, .. } => 
+            { *state = Some(controls::ButtonState::Pressed); },
+          controls::UpdateMsg::Slider { ref mut state, .. } => 
+            { *state = Some(controls::SliderState::Pressed); },
+          _ => (),
+          };
+        parseOscSliderUpdate(om, 
+                             argIndex + 1, newupd)
+        },
+      osc::Argument::s("unpressed") => {
+        let mut newupd = update.clone();
+        match newupd { 
+          controls::UpdateMsg::Button { ref mut state, .. } => 
+            { *state = Some(controls::ButtonState::Unpressed); },
+          controls::UpdateMsg::Slider { ref mut state, .. } => 
+            { *state = Some(controls::SliderState::Unpressed); },
+          _ => (),
+          };
+        parseOscSliderUpdate(om, 
+                             argIndex + 1, newupd)
+        },
+      osc::Argument::s("location") => {
+        if (om.arguments.len() <= argIndex + 1)
+        {
+          Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!")))
+        }
+        else
+        {
+          match &om.arguments[argIndex + 1] {
+            &osc::Argument::f(loc) => { 
+              let mut newupd = update.clone();
+              match newupd { 
+                controls::UpdateMsg::Slider { ref mut location, .. } => 
+                  { *location = Some(loc as f64); },
+                _ => (),
+                };
+              parseOscSliderUpdate(om, argIndex + 2, newupd)
+              },
+            _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
+            }
+          }
+        },
+      osc::Argument::s("label") => {
+        if (om.arguments.len() <= argIndex + 1)
+        {
+          Err(Box::new(Error::new(ErrorKind::Other, "'label' should be followed by a string!")))
+        }
+        else
+        {
+          match &om.arguments[argIndex + 1] {
+            &osc::Argument::s(txt) => { 
+              let mut newupd = update.clone();
+              match newupd { 
+                controls::UpdateMsg::Button { ref mut label, .. } => 
+                  { *label= Some(txt.to_string()); },
+                controls::UpdateMsg::Slider { ref mut label, .. } => 
+                  { *label= Some(txt.to_string()); },
+                controls::UpdateMsg::Label { ref mut label, .. } => 
+                  { *label= txt.to_string(); },
+                };
+              parseOscSliderUpdate(om, argIndex + 2, newupd)
+              },
+            _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
+            }
+          }
+        },
+      _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown keyword!"))),
+      }
+  }
   
 }
                         

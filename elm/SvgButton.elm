@@ -91,7 +91,7 @@ encodeUpdateMessage um =
   let outlist1 = [ ("controlType", JE.string "button") 
             , ("controlId", SvgThings.encodeControlId um.controlId) ]
       outlist2 = case um.updateType of 
-                  Just ut -> List.append outlist1 [ ("updateType", encodeUpdateType ut) ]
+                  Just ut -> List.append outlist1 [ ("state", encodeUpdateType ut) ]
                   Nothing -> outlist1
       outlist3 = case um.label of 
                   Just txt -> List.append outlist2 [ ("label", JE.string txt)]

@@ -9522,7 +9522,7 @@ var _bburdette$oscpad$SvgButton$encodeUpdateMessage = function (um) {
 					[
 						{
 						ctor: '_Tuple2',
-						_0: 'updateType',
+						_0: 'state',
 						_1: _bburdette$oscpad$SvgButton$encodeUpdateType(_p1._0)
 					}
 					]));
@@ -9909,7 +9909,7 @@ var _bburdette$oscpad$SvgSlider$encodeUpdateMessage = function (um) {
 					[
 						{
 						ctor: '_Tuple2',
-						_0: 'updateType',
+						_0: 'state',
 						_1: _bburdette$oscpad$SvgSlider$encodeUpdateType(_p1._0)
 					}
 					]));

@@ -94,7 +94,6 @@ getY = "clientY" := JD.int
 
 type UpdateType 
   = Press
-  | Move
   | Unpress
 
 type alias UpdateMessage = 
@@ -125,11 +124,11 @@ encodeUpdateMessage um =
             , ("location", (JE.float um.location))
             ]
   -}
+
 encodeUpdateType: UpdateType -> JD.Value
 encodeUpdateType ut = 
   case ut of 
     Press -> JE.string "Press"
-    Move -> JE.string "Move"
     Unpress -> JE.string "Unpress"
 
 jsUpdateMessage : JD.Decoder UpdateMessage
@@ -143,7 +142,6 @@ jsUpdateType : String -> JD.Decoder UpdateType
 jsUpdateType ut = 
   case ut of 
     "Press" -> JD.succeed Press
-    "Move" -> JD.succeed Move
     "Unpress" -> JD.succeed Unpress 
     _ -> JD.succeed Unpress 
 
@@ -168,11 +166,11 @@ update msg model =
   case msg of
     SvgPress v -> 
       case (getLocation model v) of 
-        Ok l -> updsend model Press l
+        Ok l -> updsend model (Just Press) l
         _ -> (model, Cmd.none)
     SvgUnpress v -> 
       case model.pressed of 
-        True -> updsend model Unpress model.location 
+        True -> updsend model (Just Unpress) model.location 
         False -> (model, Cmd.none)
     NoOp -> (model, Cmd.none)
     Reply s -> ({model | name = s}, Cmd.none)
@@ -181,8 +179,8 @@ update msg model =
         True -> 
           case (getLocation model v) of 
             Ok l -> 
-               -- Debug.log "not blah" (updsend model Move l)
-               updsend model Move l
+               -- Debug.log "not blah" (updsend model Nothing l)
+               updsend model Nothing l
             _ -> (model, Cmd.none)
         False -> (model, Cmd.none)
     SvgUpdate um -> 
@@ -204,7 +202,7 @@ update msg model =
       case ST.extractFirstRectTouchSE stm model.rect of
         Nothing -> 
           if model.pressed then
-            updsend model Unpress model.location
+            updsend model (Just Unpress) model.location
           else 
             (model, Cmd.none )
         Just touch -> 
@@ -213,34 +211,35 @@ update msg model =
               let loc = (touch.x - (toFloat model.rect.x)) 
                          / toFloat model.rect.w in 
               if model.pressed then
-                updsend model Press loc
+                updsend model (Just Press) loc
               else 
-                updsend model Move loc
+                updsend model Nothing loc
             SvgThings.Vertical -> 
               let loc = (touch.y - (toFloat model.rect.y)) 
                          / toFloat model.rect.h in 
               if model.pressed then
-                updsend model Press loc
+                updsend model (Just Press) loc
               else 
-                updsend model Move loc
+                updsend model Nothing loc
 
 
-updsend: Model -> UpdateType -> Float -> (Model, Cmd Msg)
-updsend model ut loc = 
+updsend: Model -> Maybe UpdateType -> Float -> (Model, Cmd Msg)
+updsend model mbut loc = 
   let bLoc = if (loc > 1.0) then 
                 1.0
              else if (loc < 0.0) then
                 0.0
              else
                 loc 
-      prest = ut /= Unpress
+      prest = mbut /= Just Unpress
   in
+  -- if nothing changed, no message.
   if (model.location == bLoc && model.pressed == prest) then 
     (model, Cmd.none)
   else
     let um = JE.encode 0 
               (encodeUpdateMessage 
-                (UpdateMessage model.cid (Just ut) (Just bLoc) Nothing)) in
+                (UpdateMessage model.cid mbut (Just bLoc) Nothing)) in
     ( {model | location = bLoc, pressed = prest }
       ,(WebSocket.send model.sendaddr um) )
          

@@ -9876,13 +9876,10 @@ var _bburdette$oscpad$SvgSlider$resize = F2(
 	});
 var _bburdette$oscpad$SvgSlider$encodeUpdateType = function (ut) {
 	var _p0 = ut;
-	switch (_p0.ctor) {
-		case 'Press':
-			return _elm_lang$core$Json_Encode$string('Press');
-		case 'Move':
-			return _elm_lang$core$Json_Encode$string('Move');
-		default:
-			return _elm_lang$core$Json_Encode$string('Unpress');
+	if (_p0.ctor === 'Press') {
+		return _elm_lang$core$Json_Encode$string('Press');
+	} else {
+		return _elm_lang$core$Json_Encode$string('Unpress');
 	}
 };
 var _bburdette$oscpad$SvgSlider$encodeUpdateMessage = function (um) {
@@ -10200,8 +10197,10 @@ var _bburdette$oscpad$SvgSlider$view = function (model) {
 };
 var _bburdette$oscpad$SvgSlider$Unpress = {ctor: 'Unpress'};
 var _bburdette$oscpad$SvgSlider$updsend = F3(
-	function (model, ut, loc) {
-		var prest = !_elm_lang$core$Native_Utils.eq(ut, _bburdette$oscpad$SvgSlider$Unpress);
+	function (model, mbut, loc) {
+		var prest = !_elm_lang$core$Native_Utils.eq(
+			mbut,
+			_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Unpress));
 		var bLoc = (_elm_lang$core$Native_Utils.cmp(loc, 1.0) > 0) ? 1.0 : ((_elm_lang$core$Native_Utils.cmp(loc, 0.0) < 0) ? 0.0 : loc);
 		if (_elm_lang$core$Native_Utils.eq(model.location, bLoc) && _elm_lang$core$Native_Utils.eq(model.pressed, prest)) {
 			return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -10213,7 +10212,7 @@ var _bburdette$oscpad$SvgSlider$updsend = F3(
 					A4(
 						_bburdette$oscpad$SvgSlider$UpdateMessage,
 						model.cid,
-						_elm_lang$core$Maybe$Just(ut),
+						mbut,
 						_elm_lang$core$Maybe$Just(bLoc),
 						_elm_lang$core$Maybe$Nothing)));
 			return {
@@ -10225,15 +10224,12 @@ var _bburdette$oscpad$SvgSlider$updsend = F3(
 			};
 		}
 	});
-var _bburdette$oscpad$SvgSlider$Move = {ctor: 'Move'};
 var _bburdette$oscpad$SvgSlider$Press = {ctor: 'Press'};
 var _bburdette$oscpad$SvgSlider$jsUpdateType = function (ut) {
 	var _p12 = ut;
 	switch (_p12) {
 		case 'Press':
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgSlider$Press);
-		case 'Move':
-			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgSlider$Move);
 		case 'Unpress':
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgSlider$Unpress);
 		default:
@@ -10260,14 +10256,22 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 			case 'SvgPress':
 				var _p14 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p13._0);
 				if (_p14.ctor === 'Ok') {
-					return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, _p14._0);
+					return A3(
+						_bburdette$oscpad$SvgSlider$updsend,
+						model,
+						_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Press),
+						_p14._0);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'SvgUnpress':
 				var _p15 = model.pressed;
 				if (_p15 === true) {
-					return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Unpress, model.location);
+					return A3(
+						_bburdette$oscpad$SvgSlider$updsend,
+						model,
+						_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Unpress),
+						model.location);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
@@ -10286,7 +10290,7 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 				if (_p16 === true) {
 					var _p17 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p13._0);
 					if (_p17.ctor === 'Ok') {
-						return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, _p17._0);
+						return A3(_bburdette$oscpad$SvgSlider$updsend, model, _elm_lang$core$Maybe$Nothing, _p17._0);
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
@@ -10300,22 +10304,15 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 					{
 						pressed: function () {
 							var _p18 = _p21.updateType;
-							_v16_2:
-							do {
-								if (_p18.ctor === 'Just') {
-									switch (_p18._0.ctor) {
-										case 'Press':
-											return true;
-										case 'Unpress':
-											return false;
-										default:
-											break _v16_2;
-									}
+							if (_p18.ctor === 'Just') {
+								if (_p18._0.ctor === 'Press') {
+									return true;
 								} else {
-									break _v16_2;
+									return false;
 								}
-							} while(false);
-							return model.pressed;
+							} else {
+								return model.pressed;
+							}
 						}(),
 						location: function () {
 							var _p19 = _p21.location;
@@ -10338,16 +10335,28 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 			default:
 				var _p22 = A2(_bburdette$oscpad$SvgTouch$extractFirstRectTouchSE, _p13._0, model.rect);
 				if (_p22.ctor === 'Nothing') {
-					return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Unpress, model.location) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					return model.pressed ? A3(
+						_bburdette$oscpad$SvgSlider$updsend,
+						model,
+						_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Unpress),
+						model.location) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					var _p24 = _p22._0;
 					var _p23 = model.orientation;
 					if (_p23.ctor === 'Horizontal') {
 						var loc = (_p24.x - _elm_lang$core$Basics$toFloat(model.rect.x)) / _elm_lang$core$Basics$toFloat(model.rect.w);
-						return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, loc);
+						return model.pressed ? A3(
+							_bburdette$oscpad$SvgSlider$updsend,
+							model,
+							_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Press),
+							loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _elm_lang$core$Maybe$Nothing, loc);
 					} else {
 						var loc = (_p24.y - _elm_lang$core$Basics$toFloat(model.rect.y)) / _elm_lang$core$Basics$toFloat(model.rect.h);
-						return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, loc);
+						return model.pressed ? A3(
+							_bburdette$oscpad$SvgSlider$updsend,
+							model,
+							_elm_lang$core$Maybe$Just(_bburdette$oscpad$SvgSlider$Press),
+							loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _elm_lang$core$Maybe$Nothing, loc);
 					}
 				}
 		}

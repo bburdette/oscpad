@@ -99,18 +99,32 @@ type UpdateType
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
-  , updateType: UpdateType
-  , location: Float
+  , updateType: Maybe UpdateType
+  , location: Maybe Float
+  , label: Maybe String
   }
 
 encodeUpdateMessage: UpdateMessage -> JD.Value
 encodeUpdateMessage um = 
-  JE.object [ ("controlType", JE.string "slider") 
+  let outlist1 = [ ("controlType", JE.string "slider") 
+            , ("controlId", SvgThings.encodeControlId um.controlId) ]
+      outlist2 = case um.updateType of 
+                  Just ut -> List.append outlist1 [ ("updateType", encodeUpdateType ut) ]
+                  Nothing -> outlist1
+      outlist3 = case um.location of 
+                  Just loc -> List.append outlist2 [ ("location", JE.float loc)]
+                  Nothing -> outlist2
+      outlist4 = case um.label of 
+                  Just txt -> List.append outlist3 [ ("label", JE.string txt)]
+                  Nothing -> outlist3
+    in JE.object outlist4
+
+{-  JE.object [ ("controlType", JE.string "slider") 
             , ("controlId", SvgThings.encodeControlId um.controlId) 
             , ("updateType", encodeUpdateType um.updateType) 
             , ("location", (JE.float um.location))
             ]
-  
+  -}
 encodeUpdateType: UpdateType -> JD.Value
 encodeUpdateType ut = 
   case ut of 
@@ -119,10 +133,11 @@ encodeUpdateType ut =
     Unpress -> JE.string "Unpress"
 
 jsUpdateMessage : JD.Decoder UpdateMessage
-jsUpdateMessage = JD.object3 UpdateMessage 
+jsUpdateMessage = JD.object4 UpdateMessage 
   ("controlId" := SvgThings.decodeControlId) 
-  (("updateType" := JD.string) `JD.andThen` jsUpdateType)
-  ("location" := JD.float)
+  (JD.maybe (("state" := JD.string) `JD.andThen` jsUpdateType))
+  (JD.maybe ("location" := JD.float))
+  (JD.maybe ("label" := JD.string)) 
   
 jsUpdateType : String -> JD.Decoder UpdateType 
 jsUpdateType ut = 
@@ -172,10 +187,17 @@ update msg model =
         False -> (model, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
-      let mod = case um.updateType of 
-          Press -> { model | pressed = True, location = um.location }
-          Move -> { model | location = um.location }
-          Unpress -> { model | pressed = False, location = um.location }
+      let mod = { model | 
+            pressed = (case um.updateType of 
+                Just Press -> True              
+                Just Unpress -> False
+                _ -> model.pressed),
+            location = (case um.location of 
+              Just loc -> loc
+              Nothing -> model.location),
+            label = (case um.label of 
+              Just txt -> txt
+              Nothing -> model.label) }
         in
       (mod, Cmd.none )
     SvgTouch stm -> 
@@ -217,7 +239,8 @@ updsend model ut loc =
     (model, Cmd.none)
   else
     let um = JE.encode 0 
-              (encodeUpdateMessage (UpdateMessage model.cid ut bLoc)) in
+              (encodeUpdateMessage 
+                (UpdateMessage model.cid (Just ut) (Just bLoc) Nothing)) in
     ( {model | location = bLoc, pressed = prest }
       ,(WebSocket.send model.sendaddr um) )
          

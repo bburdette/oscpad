@@ -9499,29 +9499,60 @@ var _bburdette$oscpad$SvgButton$encodeUpdateType = function (ut) {
 	}
 };
 var _bburdette$oscpad$SvgButton$encodeUpdateMessage = function (um) {
-	return _elm_lang$core$Json_Encode$object(
-		_elm_lang$core$Native_List.fromArray(
-			[
-				{
-				ctor: '_Tuple2',
-				_0: 'controlType',
-				_1: _elm_lang$core$Json_Encode$string('button')
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'controlId',
-				_1: _bburdette$oscpad$SvgThings$encodeControlId(um.controlId)
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'updateType',
-				_1: _bburdette$oscpad$SvgButton$encodeUpdateType(um.updateType)
-			}
-			]));
+	var outlist1 = _elm_lang$core$Native_List.fromArray(
+		[
+			{
+			ctor: '_Tuple2',
+			_0: 'controlType',
+			_1: _elm_lang$core$Json_Encode$string('button')
+		},
+			{
+			ctor: '_Tuple2',
+			_0: 'controlId',
+			_1: _bburdette$oscpad$SvgThings$encodeControlId(um.controlId)
+		}
+		]);
+	var outlist2 = function () {
+		var _p1 = um.updateType;
+		if (_p1.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$List$append,
+				outlist1,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'updateType',
+						_1: _bburdette$oscpad$SvgButton$encodeUpdateType(_p1._0)
+					}
+					]));
+		} else {
+			return outlist1;
+		}
+	}();
+	var outlist3 = function () {
+		var _p2 = um.label;
+		if (_p2.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$List$append,
+				outlist2,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'label',
+						_1: _elm_lang$core$Json_Encode$string(_p2._0)
+					}
+					]));
+		} else {
+			return outlist2;
+		}
+	}();
+	return _elm_lang$core$Json_Encode$object(outlist3);
 };
 var _bburdette$oscpad$SvgButton$buttColor = function (pressed) {
-	var _p1 = pressed;
-	if (_p1 === true) {
+	var _p3 = pressed;
+	if (_p3 === true) {
 		return '#f000f0';
 	} else {
 		return '#60B5CC';
@@ -9544,9 +9575,9 @@ var _bburdette$oscpad$SvgButton$Model = F9(
 var _bburdette$oscpad$SvgButton$init = F4(
 	function (sendaddr, rect, cid, spec) {
 		var ts = function () {
-			var _p2 = spec.label;
-			if (_p2.ctor === 'Just') {
-				return A3(_bburdette$oscpad$SvgThings$calcTextSvg, _bburdette$oscpad$SvgThings$ff, _p2._0, rect);
+			var _p4 = spec.label;
+			if (_p4.ctor === 'Just') {
+				return A3(_bburdette$oscpad$SvgThings$calcTextSvg, _bburdette$oscpad$SvgThings$ff, _p4._0, rect);
 			} else {
 				return _elm_lang$core$Native_List.fromArray(
 					[]);
@@ -9573,9 +9604,9 @@ var _bburdette$oscpad$SvgButton$init = F4(
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	});
-var _bburdette$oscpad$SvgButton$UpdateMessage = F2(
-	function (a, b) {
-		return {controlId: a, updateType: b};
+var _bburdette$oscpad$SvgButton$UpdateMessage = F3(
+	function (a, b, c) {
+		return {controlId: a, updateType: b, label: c};
 	});
 var _bburdette$oscpad$SvgButton$SvgUpdate = function (a) {
 	return {ctor: 'SvgUpdate', _0: a};
@@ -9664,7 +9695,7 @@ var _bburdette$oscpad$SvgButton$view = function (model) {
 					[])),
 				A2(
 				_elm_lang$virtual_dom$VirtualDom$map,
-				function (_p3) {
+				function (_p5) {
 					return _bburdette$oscpad$SvgButton$NoOp;
 				},
 				A2(
@@ -9677,8 +9708,8 @@ var _bburdette$oscpad$SvgButton$view = function (model) {
 var _bburdette$oscpad$SvgButton$Unpress = {ctor: 'Unpress'};
 var _bburdette$oscpad$SvgButton$Press = {ctor: 'Press'};
 var _bburdette$oscpad$SvgButton$jsUpdateType = function (ut) {
-	var _p4 = ut;
-	switch (_p4) {
+	var _p6 = ut;
+	switch (_p6) {
 		case 'Press':
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgButton$Press);
 		case 'Unpress':
@@ -9687,21 +9718,28 @@ var _bburdette$oscpad$SvgButton$jsUpdateType = function (ut) {
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgButton$Unpress);
 	}
 };
-var _bburdette$oscpad$SvgButton$jsUpdateMessage = A3(
-	_elm_lang$core$Json_Decode$object2,
+var _bburdette$oscpad$SvgButton$jsUpdateMessage = A4(
+	_elm_lang$core$Json_Decode$object3,
 	_bburdette$oscpad$SvgButton$UpdateMessage,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'controlId', _bburdette$oscpad$SvgThings$decodeControlId),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'updateType', _elm_lang$core$Json_Decode$string),
-		_bburdette$oscpad$SvgButton$jsUpdateType));
+	_elm_lang$core$Json_Decode$maybe(
+		A2(
+			_elm_lang$core$Json_Decode$andThen,
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'state', _elm_lang$core$Json_Decode$string),
+			_bburdette$oscpad$SvgButton$jsUpdateType)),
+	_elm_lang$core$Json_Decode$maybe(
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'label', _elm_lang$core$Json_Decode$string)));
 var _bburdette$oscpad$SvgButton$pressup = F2(
 	function (model, ut) {
 		var um = A2(
 			_elm_lang$core$Json_Encode$encode,
 			0,
 			_bburdette$oscpad$SvgButton$encodeUpdateMessage(
-				A2(_bburdette$oscpad$SvgButton$UpdateMessage, model.cid, ut)));
+				A3(
+					_bburdette$oscpad$SvgButton$UpdateMessage,
+					model.cid,
+					_elm_lang$core$Maybe$Just(ut),
+					_elm_lang$core$Maybe$Nothing)));
 		return {
 			ctor: '_Tuple2',
 			_0: _elm_lang$core$Native_Utils.update(
@@ -9714,13 +9752,13 @@ var _bburdette$oscpad$SvgButton$pressup = F2(
 	});
 var _bburdette$oscpad$SvgButton$update = F2(
 	function (msg, model) {
-		var _p5 = msg;
-		switch (_p5.ctor) {
+		var _p7 = msg;
+		switch (_p7.ctor) {
 			case 'SvgPress':
 				return A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Press);
 			case 'SvgUnpress':
-				var _p6 = model.pressed;
-				if (_p6 === true) {
+				var _p8 = model.pressed;
+				if (_p8 === true) {
 					return A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Unpress);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -9732,28 +9770,42 @@ var _bburdette$oscpad$SvgButton$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{name: _p5._0}),
+						{name: _p7._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SvgUpdate':
-				var pressedupdate = function () {
-					var _p7 = _p5._0.updateType;
-					if (_p7.ctor === 'Press') {
-						return true;
-					} else {
-						return false;
-					}
-				}();
+				var _p11 = _p7._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{pressed: pressedupdate}),
+						{
+							pressed: function () {
+								var _p9 = _p11.updateType;
+								if (_p9.ctor === 'Just') {
+									if (_p9._0.ctor === 'Press') {
+										return true;
+									} else {
+										return false;
+									}
+								} else {
+									return model.pressed;
+								}
+							}(),
+							label: function () {
+								var _p10 = _p11.label;
+								if (_p10.ctor === 'Just') {
+									return _p10._0;
+								} else {
+									return model.label;
+								}
+							}()
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				var _p8 = _bburdette$oscpad$SvgTouch$extractFirstTouchSE(_p5._0);
-				if (_p8.ctor === 'Nothing') {
+				var _p12 = _bburdette$oscpad$SvgTouch$extractFirstTouchSE(_p7._0);
+				if (_p12.ctor === 'Nothing') {
 					return _elm_lang$core$Native_Utils.eq(model.pressed, true) ? A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Unpress) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					return _elm_lang$core$Native_Utils.eq(model.pressed, false) ? A2(_bburdette$oscpad$SvgButton$pressup, model, _bburdette$oscpad$SvgButton$Press) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -9834,57 +9886,101 @@ var _bburdette$oscpad$SvgSlider$encodeUpdateType = function (ut) {
 	}
 };
 var _bburdette$oscpad$SvgSlider$encodeUpdateMessage = function (um) {
-	return _elm_lang$core$Json_Encode$object(
-		_elm_lang$core$Native_List.fromArray(
-			[
-				{
-				ctor: '_Tuple2',
-				_0: 'controlType',
-				_1: _elm_lang$core$Json_Encode$string('slider')
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'controlId',
-				_1: _bburdette$oscpad$SvgThings$encodeControlId(um.controlId)
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'updateType',
-				_1: _bburdette$oscpad$SvgSlider$encodeUpdateType(um.updateType)
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'location',
-				_1: _elm_lang$core$Json_Encode$float(um.location)
-			}
-			]));
+	var outlist1 = _elm_lang$core$Native_List.fromArray(
+		[
+			{
+			ctor: '_Tuple2',
+			_0: 'controlType',
+			_1: _elm_lang$core$Json_Encode$string('slider')
+		},
+			{
+			ctor: '_Tuple2',
+			_0: 'controlId',
+			_1: _bburdette$oscpad$SvgThings$encodeControlId(um.controlId)
+		}
+		]);
+	var outlist2 = function () {
+		var _p1 = um.updateType;
+		if (_p1.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$List$append,
+				outlist1,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'updateType',
+						_1: _bburdette$oscpad$SvgSlider$encodeUpdateType(_p1._0)
+					}
+					]));
+		} else {
+			return outlist1;
+		}
+	}();
+	var outlist3 = function () {
+		var _p2 = um.location;
+		if (_p2.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$List$append,
+				outlist2,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'location',
+						_1: _elm_lang$core$Json_Encode$float(_p2._0)
+					}
+					]));
+		} else {
+			return outlist2;
+		}
+	}();
+	var outlist4 = function () {
+		var _p3 = um.label;
+		if (_p3.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$List$append,
+				outlist3,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'label',
+						_1: _elm_lang$core$Json_Encode$string(_p3._0)
+					}
+					]));
+		} else {
+			return outlist3;
+		}
+	}();
+	return _elm_lang$core$Json_Encode$object(outlist4);
 };
 var _bburdette$oscpad$SvgSlider$getY = A2(_elm_lang$core$Json_Decode_ops[':='], 'clientY', _elm_lang$core$Json_Decode$int);
 var _bburdette$oscpad$SvgSlider$getX = A2(_elm_lang$core$Json_Decode_ops[':='], 'clientX', _elm_lang$core$Json_Decode$int);
 var _bburdette$oscpad$SvgSlider$getLocation = F2(
 	function (model, v) {
-		var _p1 = model.orientation;
-		if (_p1.ctor === 'Horizontal') {
-			var _p2 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgSlider$getX, v);
-			if (_p2.ctor === 'Ok') {
+		var _p4 = model.orientation;
+		if (_p4.ctor === 'Horizontal') {
+			var _p5 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgSlider$getX, v);
+			if (_p5.ctor === 'Ok') {
 				return _elm_lang$core$Result$Ok(
-					_elm_lang$core$Basics$toFloat(_p2._0 - model.rect.x) / _elm_lang$core$Basics$toFloat(model.rect.w));
+					_elm_lang$core$Basics$toFloat(_p5._0 - model.rect.x) / _elm_lang$core$Basics$toFloat(model.rect.w));
 			} else {
-				return _elm_lang$core$Result$Err(_p2._0);
+				return _elm_lang$core$Result$Err(_p5._0);
 			}
 		} else {
-			var _p3 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgSlider$getY, v);
-			if (_p3.ctor === 'Ok') {
+			var _p6 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgSlider$getY, v);
+			if (_p6.ctor === 'Ok') {
 				return _elm_lang$core$Result$Ok(
-					_elm_lang$core$Basics$toFloat(_p3._0 - model.rect.y) / _elm_lang$core$Basics$toFloat(model.rect.h));
+					_elm_lang$core$Basics$toFloat(_p6._0 - model.rect.y) / _elm_lang$core$Basics$toFloat(model.rect.h));
 			} else {
-				return _elm_lang$core$Result$Err(_p3._0);
+				return _elm_lang$core$Result$Err(_p6._0);
 			}
 		}
 	});
 var _bburdette$oscpad$SvgSlider$buttColor = function (pressed) {
-	var _p4 = pressed;
-	if (_p4 === true) {
+	var _p7 = pressed;
+	if (_p7 === true) {
 		return '#f000f0';
 	} else {
 		return '#60B5CC';
@@ -9930,9 +10026,9 @@ var _bburdette$oscpad$SvgSlider$Model = function (a) {
 var _bburdette$oscpad$SvgSlider$init = F4(
 	function (sendaddr, rect, cid, spec) {
 		var ts = function () {
-			var _p5 = spec.label;
-			if (_p5.ctor === 'Just') {
-				return A3(_bburdette$oscpad$SvgThings$calcTextSvg, _bburdette$oscpad$SvgThings$ff, _p5._0, rect);
+			var _p8 = spec.label;
+			if (_p8.ctor === 'Just') {
+				return A3(_bburdette$oscpad$SvgThings$calcTextSvg, _bburdette$oscpad$SvgThings$ff, _p8._0, rect);
 			} else {
 				return _elm_lang$core$Native_List.fromArray(
 					[]);
@@ -9951,9 +10047,9 @@ var _bburdette$oscpad$SvgSlider$init = F4(
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	});
-var _bburdette$oscpad$SvgSlider$UpdateMessage = F3(
-	function (a, b, c) {
-		return {controlId: a, updateType: b, location: c};
+var _bburdette$oscpad$SvgSlider$UpdateMessage = F4(
+	function (a, b, c, d) {
+		return {controlId: a, updateType: b, location: c, label: d};
 	});
 var _bburdette$oscpad$SvgSlider$SvgUpdate = function (a) {
 	return {ctor: 'SvgUpdate', _0: a};
@@ -10022,9 +10118,9 @@ var _bburdette$oscpad$SvgSlider$buildEvtHandlerList = function (touchonly) {
 };
 var _bburdette$oscpad$SvgSlider$view = function (model) {
 	var evtlist = _bburdette$oscpad$SvgSlider$buildEvtHandlerList(model.touchonly);
-	var _p6 = function () {
-		var _p7 = model.orientation;
-		if (_p7.ctor === 'Vertical') {
+	var _p9 = function () {
+		var _p10 = model.orientation;
+		if (_p10.ctor === 'Vertical') {
 			return {
 				ctor: '_Tuple4',
 				_0: model.srect.x,
@@ -10046,10 +10142,10 @@ var _bburdette$oscpad$SvgSlider$view = function (model) {
 			};
 		}
 	}();
-	var sx = _p6._0;
-	var sy = _p6._1;
-	var sw = _p6._2;
-	var sh = _p6._3;
+	var sx = _p9._0;
+	var sy = _p9._1;
+	var sw = _p9._2;
+	var sh = _p9._3;
 	return A2(
 		_elm_lang$svg$Svg$g,
 		evtlist,
@@ -10092,7 +10188,7 @@ var _bburdette$oscpad$SvgSlider$view = function (model) {
 					[])),
 				A2(
 				_elm_lang$virtual_dom$VirtualDom$map,
-				function (_p8) {
+				function (_p11) {
 					return _bburdette$oscpad$SvgSlider$NoOp;
 				},
 				A2(
@@ -10114,7 +10210,12 @@ var _bburdette$oscpad$SvgSlider$updsend = F3(
 				_elm_lang$core$Json_Encode$encode,
 				0,
 				_bburdette$oscpad$SvgSlider$encodeUpdateMessage(
-					A3(_bburdette$oscpad$SvgSlider$UpdateMessage, model.cid, ut, bLoc)));
+					A4(
+						_bburdette$oscpad$SvgSlider$UpdateMessage,
+						model.cid,
+						_elm_lang$core$Maybe$Just(ut),
+						_elm_lang$core$Maybe$Just(bLoc),
+						_elm_lang$core$Maybe$Nothing)));
 			return {
 				ctor: '_Tuple2',
 				_0: _elm_lang$core$Native_Utils.update(
@@ -10127,8 +10228,8 @@ var _bburdette$oscpad$SvgSlider$updsend = F3(
 var _bburdette$oscpad$SvgSlider$Move = {ctor: 'Move'};
 var _bburdette$oscpad$SvgSlider$Press = {ctor: 'Press'};
 var _bburdette$oscpad$SvgSlider$jsUpdateType = function (ut) {
-	var _p9 = ut;
-	switch (_p9) {
+	var _p12 = ut;
+	switch (_p12) {
 		case 'Press':
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgSlider$Press);
 		case 'Move':
@@ -10139,29 +10240,33 @@ var _bburdette$oscpad$SvgSlider$jsUpdateType = function (ut) {
 			return _elm_lang$core$Json_Decode$succeed(_bburdette$oscpad$SvgSlider$Unpress);
 	}
 };
-var _bburdette$oscpad$SvgSlider$jsUpdateMessage = A4(
-	_elm_lang$core$Json_Decode$object3,
+var _bburdette$oscpad$SvgSlider$jsUpdateMessage = A5(
+	_elm_lang$core$Json_Decode$object4,
 	_bburdette$oscpad$SvgSlider$UpdateMessage,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'controlId', _bburdette$oscpad$SvgThings$decodeControlId),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'updateType', _elm_lang$core$Json_Decode$string),
-		_bburdette$oscpad$SvgSlider$jsUpdateType),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'location', _elm_lang$core$Json_Decode$float));
+	_elm_lang$core$Json_Decode$maybe(
+		A2(
+			_elm_lang$core$Json_Decode$andThen,
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'state', _elm_lang$core$Json_Decode$string),
+			_bburdette$oscpad$SvgSlider$jsUpdateType)),
+	_elm_lang$core$Json_Decode$maybe(
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'location', _elm_lang$core$Json_Decode$float)),
+	_elm_lang$core$Json_Decode$maybe(
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'label', _elm_lang$core$Json_Decode$string)));
 var _bburdette$oscpad$SvgSlider$update = F2(
 	function (msg, model) {
-		var _p10 = msg;
-		switch (_p10.ctor) {
+		var _p13 = msg;
+		switch (_p13.ctor) {
 			case 'SvgPress':
-				var _p11 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p10._0);
-				if (_p11.ctor === 'Ok') {
-					return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, _p11._0);
+				var _p14 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p13._0);
+				if (_p14.ctor === 'Ok') {
+					return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, _p14._0);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'SvgUnpress':
-				var _p12 = model.pressed;
-				if (_p12 === true) {
+				var _p15 = model.pressed;
+				if (_p15 === true) {
 					return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Unpress, model.location);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -10173,15 +10278,15 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{name: _p10._0}),
+						{name: _p13._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SvgMoved':
-				var _p13 = model.pressed;
-				if (_p13 === true) {
-					var _p14 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p10._0);
-					if (_p14.ctor === 'Ok') {
-						return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, _p14._0);
+				var _p16 = model.pressed;
+				if (_p16 === true) {
+					var _p17 = A2(_bburdette$oscpad$SvgSlider$getLocation, model, _p13._0);
+					if (_p17.ctor === 'Ok') {
+						return A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, _p17._0);
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
@@ -10189,37 +10294,59 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'SvgUpdate':
-				var _p16 = _p10._0;
-				var mod = function () {
-					var _p15 = _p16.updateType;
-					switch (_p15.ctor) {
-						case 'Press':
-							return _elm_lang$core$Native_Utils.update(
-								model,
-								{pressed: true, location: _p16.location});
-						case 'Move':
-							return _elm_lang$core$Native_Utils.update(
-								model,
-								{location: _p16.location});
-						default:
-							return _elm_lang$core$Native_Utils.update(
-								model,
-								{pressed: false, location: _p16.location});
-					}
-				}();
+				var _p21 = _p13._0;
+				var mod = _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						pressed: function () {
+							var _p18 = _p21.updateType;
+							_v16_2:
+							do {
+								if (_p18.ctor === 'Just') {
+									switch (_p18._0.ctor) {
+										case 'Press':
+											return true;
+										case 'Unpress':
+											return false;
+										default:
+											break _v16_2;
+									}
+								} else {
+									break _v16_2;
+								}
+							} while(false);
+							return model.pressed;
+						}(),
+						location: function () {
+							var _p19 = _p21.location;
+							if (_p19.ctor === 'Just') {
+								return _p19._0;
+							} else {
+								return model.location;
+							}
+						}(),
+						label: function () {
+							var _p20 = _p21.label;
+							if (_p20.ctor === 'Just') {
+								return _p20._0;
+							} else {
+								return model.label;
+							}
+						}()
+					});
 				return {ctor: '_Tuple2', _0: mod, _1: _elm_lang$core$Platform_Cmd$none};
 			default:
-				var _p17 = A2(_bburdette$oscpad$SvgTouch$extractFirstRectTouchSE, _p10._0, model.rect);
-				if (_p17.ctor === 'Nothing') {
+				var _p22 = A2(_bburdette$oscpad$SvgTouch$extractFirstRectTouchSE, _p13._0, model.rect);
+				if (_p22.ctor === 'Nothing') {
 					return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Unpress, model.location) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var _p19 = _p17._0;
-					var _p18 = model.orientation;
-					if (_p18.ctor === 'Horizontal') {
-						var loc = (_p19.x - _elm_lang$core$Basics$toFloat(model.rect.x)) / _elm_lang$core$Basics$toFloat(model.rect.w);
+					var _p24 = _p22._0;
+					var _p23 = model.orientation;
+					if (_p23.ctor === 'Horizontal') {
+						var loc = (_p24.x - _elm_lang$core$Basics$toFloat(model.rect.x)) / _elm_lang$core$Basics$toFloat(model.rect.w);
 						return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, loc);
 					} else {
-						var loc = (_p19.y - _elm_lang$core$Basics$toFloat(model.rect.y)) / _elm_lang$core$Basics$toFloat(model.rect.h);
+						var loc = (_p24.y - _elm_lang$core$Basics$toFloat(model.rect.y)) / _elm_lang$core$Basics$toFloat(model.rect.h);
 						return model.pressed ? A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Press, loc) : A3(_bburdette$oscpad$SvgSlider$updsend, model, _bburdette$oscpad$SvgSlider$Move, loc);
 					}
 				}

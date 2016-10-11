@@ -82,16 +82,28 @@ type UpdateType
 
 type alias UpdateMessage = 
   { controlId: SvgThings.ControlId
-  , updateType: UpdateType
+  , updateType: Maybe UpdateType
+  , label: Maybe String
   }
 
 encodeUpdateMessage: UpdateMessage -> JD.Value
 encodeUpdateMessage um = 
-  JE.object [ ("controlType", JE.string "button") 
+  let outlist1 = [ ("controlType", JE.string "button") 
+            , ("controlId", SvgThings.encodeControlId um.controlId) ]
+      outlist2 = case um.updateType of 
+                  Just ut -> List.append outlist1 [ ("updateType", encodeUpdateType ut) ]
+                  Nothing -> outlist1
+      outlist3 = case um.label of 
+                  Just txt -> List.append outlist2 [ ("label", JE.string txt)]
+                  Nothing -> outlist2
+    in JE.object outlist3
+
+{-  JE.object [ ("controlType", JE.string "button") 
             , ("controlId", SvgThings.encodeControlId um.controlId) 
             , ("updateType", encodeUpdateType um.updateType) 
             ]
-  
+  -}
+
 encodeUpdateType: UpdateType -> JD.Value
 encodeUpdateType ut = 
   case ut of 
@@ -100,9 +112,10 @@ encodeUpdateType ut =
 
 
 jsUpdateMessage : JD.Decoder UpdateMessage
-jsUpdateMessage = JD.object2 UpdateMessage 
+jsUpdateMessage = JD.object3 UpdateMessage 
   ("controlId" := SvgThings.decodeControlId) 
-  (("updateType" := JD.string) `JD.andThen` jsUpdateType)
+  (JD.maybe (("state" := JD.string) `JD.andThen` jsUpdateType))
+  (JD.maybe ("label" := JD.string)) 
   
 jsUpdateType : String -> JD.Decoder UpdateType 
 jsUpdateType ut = 
@@ -124,11 +137,14 @@ update msg model =
     Reply s -> ({model | name = s}, Cmd.none)
     SvgUpdate um -> 
       -- sanity check for ids?  or don't.
-      let pressedupdate = case um.updateType of 
-                      Press -> True
-                      Unpress -> False
-        in
-      ({ model | pressed = pressedupdate }
+      ({ model | 
+          pressed = (case um.updateType of 
+                      Just Press -> True
+                      Just Unpress -> False
+                      _ -> model.pressed), 
+          label = (case um.label of 
+                      Just txt -> txt
+                      Nothing -> model.label) }
        , Cmd.none )
     SvgTouch stm -> 
       case ST.extractFirstTouchSE stm of
@@ -145,7 +161,9 @@ update msg model =
 
 pressup: Model -> UpdateType -> (Model, Cmd Msg)
 pressup model ut = 
-  let um = JE.encode 0 (encodeUpdateMessage (UpdateMessage model.cid ut)) in
+  let um = JE.encode 0 
+              (encodeUpdateMessage 
+                (UpdateMessage model.cid (Just ut) Nothing)) in
   ({ model | pressed = (ut == Press)}
     , (WebSocket.send model.sendaddr um) )
 

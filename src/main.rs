@@ -378,6 +378,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
         let u8 = message.payload.to_owned();
         let str = try!(std::str::from_utf8(&*u8));
         let jsonval: Value = try!(serde_json::from_str(str));
+        println!("jsonval {}", str);
         let s_um = controls::decodeUpdateMessage(&jsonval);
         match s_um { 
           Some(updmsg) => {
@@ -431,13 +432,13 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       if let &Some(ref state) = st {
         arghs.push (
           match state { 
-            &controls::ButtonState::Pressed => osc::Argument::s("b_pressed"),
-            &controls::ButtonState::Unpressed => osc::Argument::s("b_unpressed"),
+            &controls::ButtonState::Pressed => osc::Argument::s("pressed"),
+            &controls::ButtonState::Unpressed => osc::Argument::s("unpressed"),
           })
         };
 
       if let &Some(ref lb) = optLab {
-        arghs.push(osc::Argument::s("l_label"));
+        arghs.push(osc::Argument::s("label"));
         // arghs.push(osc::Argument::s(lr));  // &labs[..]));
         arghs.push(osc::Argument::s(&lb[..]));
       };
@@ -454,16 +455,17 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       if let &Some(ref state) = st {
         arghs.push (
           match state { 
-            &controls::SliderState::Pressed => osc::Argument::s("s_pressed"),
-            &controls::SliderState::Unpressed => osc::Argument::s("s_unpressed"),
+            &controls::SliderState::Pressed => osc::Argument::s("pressed"),
+            &controls::SliderState::Unpressed => osc::Argument::s("unpressed"),
           });
         };
       if let &Some(ref location) = loc { 
         let l = *location as f32;
+        arghs.push(osc::Argument::s("location"));
         arghs.push(osc::Argument::f(l));
         };
       if let &Some(ref label) = lb {
-        arghs.push(osc::Argument::s("l_label"));
+        arghs.push(osc::Argument::s("label"));
         arghs.push(osc::Argument::s(&label[..]));
       };
       
@@ -475,7 +477,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
              } => { 
       // find the control in the map.
       let mut arghs = Vec::new();
-      arghs.push(osc::Argument::s("l_label"));
+      arghs.push(osc::Argument::s("label"));
       arghs.push(osc::Argument::s(&labtext[..]));
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
@@ -483,14 +485,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
    } 
 } 
 
-/*
 
-parsing the osc messages:
-
- "b_pressed", "b_
-
-
-*/
 
 // TODO: find the control itself and check its type.
 // then build an update message based on that type.
@@ -500,72 +495,6 @@ parsing the osc messages:
 //  - make a function that takes the args array and an index.
 //  - check for the various things at the index.
 //  - recursively call self with updated update message.
-
-/*
-pub trait ControlUpdate : Debug + Send {
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg>;
-}
-
-impl ControlUpdate for controls::Slider
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Button
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Label
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Sizer
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
-    None
-    }
-}
-*/
-
-/*
-impl ControlUpdate for controls::Slider
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Slider> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Button
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Button> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Label
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg::Label> {
-    None
-    }
-}
-
-impl ControlUpdate for controls::Sizer
-{  
-  fn oscToUpdateMsg(&self, om: &osc::Message) -> Option<controls::UpdateMsg> {
-    None
-    }
-}
-
-
-*/
 
 // wow this code is hideous!  do not look!
 fn parseOscControlUpdate(om: &osc::Message,

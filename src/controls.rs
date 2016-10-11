@@ -383,9 +383,12 @@ pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   let obj = try_opt!(data.as_object());
  
   let contype = try_opt!(try_opt!(obj.get("controlType")).as_string());
+  println!("contype {}", contype);
   let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
+  println!("conid {:?}", conid);
   // TODO: MAKE THESE OPTIONAL
   let ststring = try_opt!(try_opt!(obj.get("state")).as_string());
+  println!("ststring {:?}", ststring);
  
   match contype {
     "slider" => {

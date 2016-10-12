@@ -144,7 +144,11 @@ update msg model =
                       _ -> model.pressed), 
           label = (case um.label of 
                       Just txt -> txt
-                      Nothing -> model.label) }
+                      Nothing -> model.label),
+          textSvg = case um.label of 
+            Just txt -> SvgThings.calcTextSvg SvgThings.ff txt model.rect
+            Nothing -> model.textSvg 
+        }
        , Cmd.none )
     SvgTouch stm -> 
       case ST.extractFirstTouchSE stm of

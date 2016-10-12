@@ -195,7 +195,11 @@ update msg model =
               Nothing -> model.location),
             label = (case um.label of 
               Just txt -> txt
-              Nothing -> model.label) }
+              Nothing -> model.label),
+            textSvg = case um.label of 
+              Just txt -> SvgThings.calcTextSvg SvgThings.ff txt model.rect
+              Nothing -> model.textSvg 
+           }
         in
       (mod, Cmd.none)
     SvgTouch stm -> 

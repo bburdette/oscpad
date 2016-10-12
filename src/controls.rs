@@ -160,7 +160,7 @@ pub struct Label {
 }
 
 impl Control for Label { 
-  fn controlType(&self) -> &'static str { "Label" } 
+  fn controlType(&self) -> &'static str { "label" } 
   fn controlId(&self) -> &Vec<i32> { &self.controlId }
   fn cloneTrol(&self) -> Box<Control> { 
     Box::new( 
@@ -287,19 +287,19 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
 
 */
 
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub enum ButtonState { 
   Pressed,
   Unpressed
   }
 
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub enum SliderState { 
   Pressed,
   Unpressed
   }
 
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub enum UpdateMsg { 
   Button  { controlId: Vec<i32>
           , state: Option<ButtonState>
@@ -345,12 +345,17 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
             (match st { &ButtonState::Pressed => "Press", 
                         &ButtonState::Unpressed => "Unpress", }))));
         };
+      if let &Some(ref lb) = optLabel { 
+        btv.insert(String::from("label"), 
+          Value::String(lb.clone()));
+        };
+      
       Value::Object(btv)
     }, 
     &UpdateMsg::Slider { controlId: ref cid
                        , state: ref optState
-                       , label: ref lb
-                       , location: ref loc } => 
+                       , label: ref optLabel 
+                       , location: ref optLoc } => 
     {
       let mut btv = BTreeMap::new();
       btv.insert(String::from("controlType"), 
@@ -363,9 +368,13 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
             (match st { &SliderState::Pressed => "Press",
                         &SliderState::Unpressed => "Unpress" }))));
       };
-      if let &Some(loc) = loc { 
+      if let &Some(loc) = optLoc { 
         btv.insert(String::from("location"), Value::F64(loc));
       };
+      if let &Some(ref lb) = optLabel { 
+        btv.insert(String::from("label"), 
+          Value::String(lb.clone()));
+        };
       
       Value::Object(btv)
     },

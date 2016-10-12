@@ -197,7 +197,7 @@ update msg model =
               Just txt -> txt
               Nothing -> model.label) }
         in
-      (mod, Cmd.none )
+      (mod, Cmd.none)
     SvgTouch stm -> 
       case ST.extractFirstRectTouchSE stm model.rect of
         Nothing -> 

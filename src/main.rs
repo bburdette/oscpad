@@ -14,6 +14,7 @@ use std::io::{Error,ErrorKind};
 use std::string::*;
 use std::collections::BTreeMap;
 // use std::fmt::Debug;
+use std::fmt::format;
 
 use std::net::UdpSocket;
 // use std::borrow::Cow;
@@ -501,7 +502,9 @@ fn parseOscControlUpdate(om: &osc::Message,
                         update: controls::UpdateMsg )
   -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
+//   println!("parseOscControlUpdate: {:?}", om);
   if argIndex >= om.arguments.len() {
+    println!("parseOscControlUpdate: {:?}", update);
     Ok(update)
   }
   else {
@@ -604,9 +607,15 @@ fn oscToCtrlUpdate(om: &osc::Message,
    "label" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Label 
             { controlId: cid.clone(), 
               label: String::from("") }),  
-   _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown type"))),
+   x => {
+    let msg = format(format_args!("unknown type: {:?}", x));    
+      Err(Box::new(Error::new(ErrorKind::Other, msg)))
+    },
    }
   
+//  println!("got upd: {:?}", upd);
+
+//  upd
 }
 
 fn oscmain( recvsocket: UdpSocket, 
@@ -629,15 +638,17 @@ fn oscmain( recvsocket: UdpSocket,
           println!("invalid osc messsage: {:?}", e)
         },
       Ok(inmsg) => {
-        let sci  = ci.lock().unwrap(); 
+        let mut sci = ci.lock().unwrap(); 
 
         match oscToCtrlUpdate(&inmsg, &cnm, &sci.cm) {
           Ok(updmsg) => { 
-            let mut sci  = ci.lock().unwrap(); 
+            println!("oscToCtrlUpdate returned: {:?}", updmsg);
             match sci.cm.get_mut(controls::getUmId(&updmsg)) {
               Some(ctl) => {
+                println!("pre update");
                 (*ctl).update(&updmsg);
               
+                println!("pre encodeupdatemessage");
                 let val = controls::encodeUpdateMessage(&updmsg); 
                 println!("sending control update {:?}", val);
                 match serde_json::ser::to_string(&val) { 
@@ -650,6 +661,7 @@ fn oscmain( recvsocket: UdpSocket,
             }
           },
           Err(e) => {
+            println!("oscToCtrlUpdate error: {:?}", e);
             if inmsg.path == "guiconfig" && inmsg.arguments.len() > 0 {
               // is this a control config update instead?
               match &inmsg.arguments[0] {
@@ -669,8 +681,6 @@ fn oscmain( recvsocket: UdpSocket,
                           // from control tree, make a map of ids->controls.
                           let mapp = controls::makeControlMap(&*controltree.rootControl);
                           cnm = controls::controlMapToNameMap(&mapp);
-
-                          let mut sci = ci.lock().unwrap(); 
                           sci.cm = mapp;
                           sci.guijson = guistring.to_string();
                           bc.broadcast(Message::text(guistring.to_string()));

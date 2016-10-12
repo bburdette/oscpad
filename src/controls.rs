@@ -386,36 +386,39 @@ pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   println!("contype {}", contype);
   let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
   println!("conid {:?}", conid);
-  // TODO: MAKE THESE OPTIONAL
-  let ststring = try_opt!(try_opt!(obj.get("state")).as_string());
-  println!("ststring {:?}", ststring);
- 
+
+  let mbst = obj.get("state").map(|wut| wut.as_string());
+
+  println!("mbst {:?}", mbst);
+   
   match contype {
     "slider" => {
-      let location = try_opt!(try_opt!(obj.get("location")).as_f64());
-      let st = try_opt!(match ststring 
-        { "Press" => Some( SliderState::Pressed ) 
-      //  , "Move" => Some( SliderState::Moved ) 
-        , "Unpress" => Some( SliderState::Unpressed )
+      let location = match obj.get("location").map(|l| l.as_f64())
+        { Some(Some(loc)) => Some(loc)
+        , _ => None };
+      let optst = match mbst 
+        { Some(Some("Press")) => Some( SliderState::Pressed ) 
+        , Some(Some("Unpress")) => Some( SliderState::Unpressed )
         , _ => None
-        });
+        };
       let lab = obj.get("label").and_then(|s| s.as_string()).map(|s| String::from(s));
+      println!("at some");
       Some( UpdateMsg::Slider { controlId: conid
-                              , state: Some(st)
-                              , location: Some(location)
+                              , state: optst
+                              , location: location 
                               , label: lab
                               } )
       },
     "button" => {
-      let st = try_opt!(match ststring 
-        { "Press" => Some( ButtonState::Pressed ) 
-        , "Unpress" => Some( ButtonState::Unpressed ) 
+      let optst = match mbst 
+        { Some(Some("Press")) => Some( ButtonState::Pressed ) 
+        , Some(Some("Unpress")) => Some( ButtonState::Unpressed )
         , _ => None
-        });
+        };
       let lab = obj.get("label").and_then(|s| s.as_string()).map(|s| String::from(s));
         
       Some( UpdateMsg::Button { controlId: conid
-                              , state: Some(st)
+                              , state: optst 
                               , label: lab } )
       },
     _ => None

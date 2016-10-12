@@ -381,15 +381,9 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
  
 pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
   let obj = try_opt!(data.as_object());
- 
   let contype = try_opt!(try_opt!(obj.get("controlType")).as_string());
-  println!("contype {}", contype);
   let conid = convarrayi32(try_opt!(try_opt!(obj.get("controlId")).as_array()));
-  println!("conid {:?}", conid);
-
   let mbst = obj.get("state").map(|wut| wut.as_string());
-
-  println!("mbst {:?}", mbst);
    
   match contype {
     "slider" => {
@@ -402,7 +396,6 @@ pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
         , _ => None
         };
       let lab = obj.get("label").and_then(|s| s.as_string()).map(|s| String::from(s));
-      println!("at some");
       Some( UpdateMsg::Slider { controlId: conid
                               , state: optst
                               , location: location 

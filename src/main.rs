@@ -378,7 +378,6 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
         let u8 = message.payload.to_owned();
         let str = try!(std::str::from_utf8(&*u8));
         let jsonval: Value = try!(serde_json::from_str(str));
-        println!("jsonval {}", str);
         let s_um = controls::decodeUpdateMessage(&jsonval);
         match s_um { 
           Some(updmsg) => {
@@ -398,7 +397,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
               None => println!("none"),
             }
           },
-          _ => println!("uknown msg"),
+          _ => println!("decodeUpdateMessage failed on websockets msg: {:?}", message),
         }
       },
       _ => { 
@@ -607,69 +606,7 @@ fn oscToCtrlUpdate(om: &osc::Message,
               label: String::from("") }),  
    _ => Err(Box::new(Error::new(ErrorKind::Other, "unknown type"))),
    }
-
-/*
-  match **control {
-   controls::Slider {..} => println!("slider"),
-   controls::Button {..} => println!("button"),
-   controls::Label {..} => println!("label"),
-   };
-*/
-
-
-  /*
-  match om.arguments.len() {
-    1 => {
-      let evt = &om.arguments[0];
-      match evt {
-        &osc::Argument::s("b_pressed") => {
-          // blah
-          Ok(controls::UpdateMsg::Button 
-            { controlId: cid.clone()
-            , state: Some(controls::ButtonState::Pressed) 
-            , label: Some(controls::ButtonState::Pressed) 
-            })
-        }, 
-        &osc::Argument::s("b_unpressed") => {
-          Ok(controls::UpdateMsg::Button 
-            { controlId: cid.clone()
-            , state: Some(controls::ButtonState::Unpressed) })
-        },
-        _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid button event"))),
-      }
-    },
-    2 => {
-      match (&om.arguments[0], &om.arguments[1]) {
-        (&osc::Argument::s("s_pressed"), &osc::Argument::f(loc))  => {
-          Ok(controls::UpdateMsg::Slider 
-            { controlId: cid.clone(), 
-              state: Some(controls::SliderState::Pressed),
-              location: Some(loc as f64) })
-        },
-        (&osc::Argument::s("s_moved"), &osc::Argument::f(loc))  => {
-          Ok(controls::UpdateMsg::Slider 
-            { controlId: cid.clone(), 
-              state: Some(controls::SliderState::Moved),
-              location: Some(loc as f64) })
-        },
-        (&osc::Argument::s("s_unpressed"), &osc::Argument::f(loc))  => {
-          Ok(controls::UpdateMsg::Slider 
-            { controlId: cid.clone(), 
-              state: Some(controls::SliderState::Unpressed),
-              location: Some(loc as f64) })
-        },
-        (&osc::Argument::s("l_label"), &osc::Argument::s(txt))  => {
-          Ok(controls::UpdateMsg::Label
-            { controlId: cid.clone() 
-            , label: txt.to_string()
-            })
-        },
-        _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid slider event"))),
-      }
-    },
-    _ => Err(Box::new(Error::new(ErrorKind::Other, "invalid osc message"))),
-  } 
-  */
+  
 }
 
 fn oscmain( recvsocket: UdpSocket, 
@@ -687,7 +624,6 @@ fn oscmain( recvsocket: UdpSocket,
   loop { 
     let (amt, src) = try!(recvsocket.recv_from(&mut buf));
 
-    println!("length: {}", amt);
     match osc::Message::deserialize(&buf[.. amt]) {
       Err(e) => {
           println!("invalid osc messsage: {:?}", e)

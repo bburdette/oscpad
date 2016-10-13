@@ -55,10 +55,8 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
        
         if &inpath[0..2] == "hs"
           {
-            // look for a "location" update.
-
-            println!("args: {:?}", args);
-
+            // look for a "location" update, ie
+            // an arg "location" followed by a float.
             let mut arg_iter = args.into_iter();
             let mut arg = arg_iter.next();
 

@@ -378,16 +378,17 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
         match s_um { 
           Some(updmsg) => {
             let mut sci  = ci.lock().unwrap();
-            let cntrl = sci.cm.get_mut(controls::getUmId(&updmsg));
-            match cntrl {
-              Some(x) => {
-                (*x).update(&updmsg);
-                println!("some x: {:?}", *x);
+            let mbcntrl = sci.cm.get_mut(controls::getUmId(&updmsg));
+            match mbcntrl {
+              Some(cntrl) => {
+                (*cntrl).update(&updmsg);
                 broadcaster.broadcast_others(&ip, Message::text(str));
-                match ctrlUpdateToOsc(&updmsg, &**x) { 
+                match ctrlUpdateToOsc(&updmsg, &**cntrl) { 
                   Ok(v) => oscsocket.send_to(&v, &oscsendip[..]),
                   _ => Err(Error::new(ErrorKind::Other, "meh")) 
                 };
+                
+                println!("websockets control update recieved: {:?}", updmsg);
                 ()
               },
               None => println!("none"),
@@ -497,9 +498,7 @@ fn parseOscControlUpdate(om: &osc::Message,
                         update: controls::UpdateMsg )
   -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
-  // println!("parseOscControlUpdate: {:?}", om);
   if argIndex >= om.arguments.len() {
-    println!("parseOscControlUpdate: {:?}", update);
     Ok(update)
   }
   else {

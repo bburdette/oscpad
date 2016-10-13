@@ -1,6 +1,5 @@
 use std::fmt;
 use std::error::Error as StdError;
-use std::result::Result;
 
 #[derive(Debug)]
 pub struct Error {

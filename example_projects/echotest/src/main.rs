@@ -4,7 +4,6 @@ mod tryopt;
 mod stringerror;
 
 use std::net::UdpSocket;
-use std::io::{Error,ErrorKind};
 use std::string::String;
 use std::env;
 
@@ -40,12 +39,13 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
   println!("echotest");
 
   loop { 
-    let (amt, src) = try!(recvsocket.recv_from(&mut buf));
+    let (amt, _) = try!(recvsocket.recv_from(&mut buf));
 
     println!("length: {}", amt);
     let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
        Ok(m) => m,
-       Err(e) => return Err(stringerror::stringBoxErr("OSC deserialize error")),
+       Err(e) => return Err(stringerror::stringBoxErr(
+                 &format(format_args!("OSC deserialize error {:?}", e)))),
       };
 
     println!("message recieved {} {:?}", inmsg.path, inmsg.arguments );
@@ -53,8 +53,6 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
     match inmsg {
       osc::Message { path: ref inpath, arguments: ref args } => {
        
-        println!("inpath: {} eq: {}", &inpath[0..2], &inpath[0..2] == "hs"); 
- 
         if &inpath[0..2] == "hs"
           {
             // look for a "location" update.
@@ -107,7 +105,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
             // for any kind of button message, update the label.
             // amounts to update the label to the last pressed (or released) button. 
             match &args[0] {
-              &osc::Argument::s(evt) => {
+              &osc::Argument::s(_) => {
                   let outpath = "lb3"; 
                   let mut arghs = Vec::new();
                   arghs.push(osc::Argument::s("label")); 

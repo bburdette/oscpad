@@ -10333,7 +10333,7 @@ var _bburdette$oscpad$SvgSlider$update = F2(
 						label: function () {
 							var _p20 = _p22.label;
 							if (_p20.ctor === 'Just') {
-								return A2(_elm_lang$core$Debug$log, 'got slider label text!', _p20._0);
+								return _p20._0;
 							} else {
 								return model.label;
 							}

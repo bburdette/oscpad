@@ -55,42 +55,62 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
        
         println!("inpath: {} eq: {}", &inpath[0..2], &inpath[0..2] == "hs"); 
  
-        if args.len() == 2 && &inpath[0..2] == "hs"
+        if &inpath[0..2] == "hs"
           {
-            let q = &args[0];
-            let r = &args[1];
-       
-            match (q,r) {
-              (&osc::Argument::s(_), &osc::Argument::f(b)) => {
-                  let outpath = format(format_args!("hs{}", &inpath[2..]));    
-                  let labtext = format(format_args!("{}", b));
-                  let mut arghs = Vec::new();
-                  // arghs.push(osc::Argument::f(b * 100.0 - 100.0)); 
-                  arghs.push(osc::Argument::s("l_label")); 
-                  arghs.push(osc::Argument::s(&labtext)); 
-                  let outmsg = osc::Message { path: &outpath, arguments: arghs };
-                  match outmsg.serialize() {
-                    Ok(v) => {
-                      println!("sending {} {:?}", outmsg.path, outmsg.arguments );
-              			  sendsocket.send_to(&v, &sendip[..])
+            // look for a "location" update.
+
+            println!("args: {:?}", args);
+
+            let mut arg_iter = args.into_iter();
+            let mut arg = arg_iter.next();
+
+            while arg.is_some()
+            {
+              match arg
+              {
+              Some(&osc::Argument::s("location")) => {
+                arg = arg_iter.next();
+                match arg {
+                  Some(&osc::Argument::f(loc)) => {
+                    let outpath = format(format_args!("hs{}", &inpath[2..]));    
+                    // let outpath = format(format_args!("lb{}", &inpath[2..]));    
+                    let labtext = format(format_args!("{}", loc));
+                    let mut arghs = Vec::new();
+                    // arghs.push(osc::Argument::f(b * 100.0 - 100.0)); 
+                    arghs.push(osc::Argument::s("label")); 
+                    arghs.push(osc::Argument::s(&labtext)); 
+                    let outmsg = osc::Message { path: &outpath, arguments: arghs };
+                    match outmsg.serialize() {
+                      Ok(v) => {
+                        println!("sending {} {:?}", outmsg.path, outmsg.arguments );
+                        sendsocket.send_to(&v, &sendip[..]);
+                      },
+                      Err(e) => { println!("error: {:?}", e) },
+                    }
+                    break;
                     },
-                    Err(e) => return Err(Box::new(e)),
+                  _ => {
+                    continue;
                   }
-                },
-              _ => { 
-                println!("ignore");
-                // return Err(Error::new(ErrorKind::Other, "unexpected osc args!"));
-                Ok(0)
-              },
+                }
+              }
+              _ => {
+                arg = arg_iter.next();
+                  continue;
+              }
             }
           }
-        else if args.len() == 1 && &inpath[0..1] == "b"
+          Ok(0)
+          }
+        else if &inpath[0..1] == "b"
           {
+            // for any kind of button message, update the label.
+            // amounts to update the label to the last pressed (or released) button. 
             match &args[0] {
               &osc::Argument::s(evt) => {
                   let outpath = "lb3"; 
                   let mut arghs = Vec::new();
-                  arghs.push(osc::Argument::s("l_label")); 
+                  arghs.push(osc::Argument::s("label")); 
                   arghs.push(osc::Argument::s(&inpath)); 
                   let outmsg = osc::Message { path: &outpath, arguments: arghs };
                   match outmsg.serialize() {
@@ -102,7 +122,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
                   }
                 },
               _ => { 
-                println!("ignore");
+                println!("ignore args: {:?}", args);
                 // return Err(Error::new(ErrorKind::Other, "unexpected osc args!"));
                 Ok(0)
               },
@@ -110,7 +130,8 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
           }
         else
           {
-             println!("ignore");
+             println!("ignore args 2: {:?}", args);
+             // println!("ignore");
              Ok(0)    
           }
         },

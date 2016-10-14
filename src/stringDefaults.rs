@@ -8311,7 +8311,8 @@ var _bburdette$oscpad$SvgThings$calcText = F5(
 						_elm_lang$svg$Svg_Attributes$fill('black'),
 						_elm_lang$svg$Svg_Attributes$fontSize('20px'),
 						_elm_lang$svg$Svg_Attributes$fontFamily(fontFam),
-						_elm_lang$svg$Svg_Attributes$transform(xf)
+						_elm_lang$svg$Svg_Attributes$transform(xf),
+						_elm_lang$svg$Svg_Attributes$style('cursor: default; -webkit-user-select: none;  -moz-user-select: none;  -ms-user-select: none; user-select: none;')
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
@@ -9550,7 +9551,7 @@ var _bburdette$oscpad$SvgButton$encodeUpdateMessage = function (um) {
 	}();
 	return _elm_lang$core$Json_Encode$object(outlist3);
 };
-var _bburdette$oscpad$SvgButton$buttColor = function (pressed) {
+var _bburdette$oscpad$SvgButton$pressedColor = function (pressed) {
 	var _p3 = pressed;
 	if (_p3 === true) {
 		return '#f000f0';
@@ -9688,7 +9689,7 @@ var _bburdette$oscpad$SvgButton$view = function (model) {
 							'fill: ',
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								_bburdette$oscpad$SvgButton$buttColor(model.pressed),
+								_bburdette$oscpad$SvgButton$pressedColor(model.pressed),
 								';')))
 					]),
 				_elm_lang$core$Native_List.fromArray(
@@ -9983,7 +9984,7 @@ var _bburdette$oscpad$SvgSlider$getLocation = F2(
 			}
 		}
 	});
-var _bburdette$oscpad$SvgSlider$buttColor = function (pressed) {
+var _bburdette$oscpad$SvgSlider$pressedColor = function (pressed) {
 	var _p7 = pressed;
 	if (_p7 === true) {
 		return '#f000f0';
@@ -10186,7 +10187,7 @@ var _bburdette$oscpad$SvgSlider$view = function (model) {
 							'fill: ',
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								_bburdette$oscpad$SvgSlider$buttColor(model.pressed),
+								_bburdette$oscpad$SvgSlider$pressedColor(model.pressed),
 								';')))
 					]),
 				_elm_lang$core$Native_List.fromArray(

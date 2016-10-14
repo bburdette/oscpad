@@ -194,6 +194,7 @@ calcText fontFam lbtext labelMeasuredWidth fontScaling rect =
             , fontSize "20px"
             , fontFamily fontFam
             , transform xf 
+            , style ("cursor: default; -webkit-user-select: none;  -moz-user-select: none;  -ms-user-select: none; user-select: none;")
             ] 
             [ text lbtext ]
     ]

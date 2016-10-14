@@ -60,8 +60,8 @@ init sendaddr rect cid spec =
   , Cmd.none
   )
 
-buttColor: Bool -> String
-buttColor pressed = 
+pressedColor: Bool -> String
+pressedColor pressed = 
   case pressed of 
     True -> "#f000f0"
     False -> "#60B5CC"
@@ -204,7 +204,7 @@ buildEvtHandlerList touchonly =
             , onTouchCancel 
             , onTouchLeave 
             , onTouchMove ] 
-     me = [ onMouseDown SvgPress
+     me = [ onMouseDown SvgPress 
           , onMouseUp SvgUnpress
           , onMouseOut SvgUnpress
           ] in
@@ -221,7 +221,7 @@ view model =
         , height model.srect.h
         , rx "15"
         , ry "15"
-        , style ("fill: " ++ buttColor(model.pressed) ++ ";")
+        , style ("fill: " ++ pressedColor(model.pressed) ++ ";")
         ]
         []
       , VD.map (\_ -> NoOp) (g [ ] model.textSvg)

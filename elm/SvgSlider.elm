@@ -69,8 +69,8 @@ init sendaddr rect cid spec =
   , Cmd.none
   )
 
-buttColor: Bool -> String
-buttColor pressed = 
+pressedColor: Bool -> String
+pressedColor pressed = 
   case pressed of 
     True -> "#f000f0"
     False -> "#60B5CC"
@@ -326,7 +326,7 @@ view model =
         , height sh 
         , rx "2"
         , ry "2"
-        , style ("fill: " ++ buttColor(model.pressed) ++ ";")
+        , style ("fill: " ++ pressedColor(model.pressed) ++ ";")
         ]
         []
     , VD.map (\_ -> NoOp) (g [ ] model.textSvg)

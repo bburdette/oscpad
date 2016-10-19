@@ -4,10 +4,8 @@ mod tryopt;
 mod stringerror;
 
 use std::net::UdpSocket;
-use std::io::{Error,ErrorKind};
 use std::string::String;
 use std::env;
-use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::io::Read;
@@ -15,8 +13,6 @@ use std::io::Read;
 extern crate tinyosc;
 use tinyosc as osc;
 
-
-use std::fmt::format;
 
 fn main() {
 
@@ -37,7 +33,6 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
   let guistring = try!(load_string(&guifilename));
 
   let socket = try!(UdpSocket::bind("0.0.0.0:0"));
-  let mut buf = [0; 100];
   println!("guisend");
 
   let mut arghs = Vec::new();

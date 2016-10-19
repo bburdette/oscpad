@@ -50,8 +50,10 @@ fn write_string(text: &str, file_name: &str) -> Result<(), Box<std::error::Error
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::create(path));
-  inf.write(text.as_bytes());
-  Ok(())
+  match inf.write(text.as_bytes()) { 
+    Ok(_) => Ok(()),
+    Err(e) => Err(Box::new(e)),
+    }
 }
       
 fn make_default_prefs(guifile: &str) -> BTreeMap<String, Value>

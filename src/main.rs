@@ -200,11 +200,11 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
     let blah = try!(controls::deserialize_root(&guival));
 
     println!("title: {} rootcontroltype: {} ", 
-      blah.title, blah.rootControl.controlType());
-    println!("controls: {:?}", blah.rootControl);
+      blah.title, blah.root_control.control_type());
+    println!("controls: {:?}", blah.root_control);
 
     // from control tree, make a map of ids->controls.
-    let mapp = controls::make_control_map(&*blah.rootControl);
+    let mapp = controls::make_control_map(&*blah.root_control);
     let guijson = guistring.clone();
 
     let ci = ControlInfo { cm: mapp, guijson: guijson };
@@ -416,7 +416,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
 {
   match um {
-    &controls::UpdateMsg::Button { controlId: _
+    &controls::UpdateMsg::Button { control_id: _
                                  , label: ref opt_lab
                                  , state: ref st
                                  } => { 
@@ -439,7 +439,7 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
-    &controls::UpdateMsg::Slider  { controlId: _
+    &controls::UpdateMsg::Slider  { control_id: _
                                   , label: ref lb
                                   , state: ref st
                                   , location: ref loc
@@ -465,7 +465,7 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
-    &controls::UpdateMsg::Label { controlId: _ 
+    &controls::UpdateMsg::Label { control_id: _ 
              , label: ref labtext
              } => { 
       // find the control in the map.
@@ -585,18 +585,18 @@ fn osc_to_ctrl_update(om: &osc::Message,
   
   let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
-  match &(*control.controlType()) {
+  match &(*control.control_type()) {
    "slider" => parse_osc_control_update(om, 0, controls::UpdateMsg::Slider 
-            { controlId: cid.clone(), 
+            { control_id: cid.clone(), 
               state: None,
               location: None,
               label: None }),  
    "button" => parse_osc_control_update(om, 0, controls::UpdateMsg::Button 
-            { controlId: cid.clone(), 
+            { control_id: cid.clone(), 
               state: None,
               label: None }),  
    "label" => parse_osc_control_update(om, 0, controls::UpdateMsg::Label 
-            { controlId: cid.clone(), 
+            { control_id: cid.clone(), 
               label: String::from("") }),  
    x => {
     let msg = format(format_args!("unknown type: {:?}", x));    
@@ -656,11 +656,11 @@ fn oscmain( recvsocket: UdpSocket,
                           println!("new control layout recieved!");
 
                           println!("title: {} count: {} ", 
-                            controltree.title, controltree.rootControl.controlType());
-                          println!("controls: {:?}", controltree.rootControl);
+                            controltree.title, controltree.root_control.control_type());
+                          println!("controls: {:?}", controltree.root_control);
 
                           // from control tree, make a map of ids->controls.
-                          let mapp = controls::make_control_map(&*controltree.rootControl);
+                          let mapp = controls::make_control_map(&*controltree.root_control);
                           cnm = controls::control_map_to_name_map(&mapp);
                           sci.cm = mapp;
                           sci.guijson = guistring.to_string();

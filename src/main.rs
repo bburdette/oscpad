@@ -383,8 +383,13 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
                 (*cntrl).update(&updmsg);
                 broadcaster.broadcast_others(&ip, Message::text(str));
                 match ctrl_update_to_osc(&updmsg, &**cntrl) { 
-                  Ok(v) => oscsocket.send_to(&v, &oscsendip[..]),
-                  _ => Err(Error::new(ErrorKind::Other, "meh")) 
+                  Ok(v) => match oscsocket.send_to(&v, &oscsendip[..]) {
+                    Ok(_) => (),
+                    Err(e) => 
+                      println!("error sending osc message: {:?}", e),
+                    },
+                  Err(e) => 
+                    println!("error building osc message: {:?}", e),
                 };
                 
                 println!("websockets control update recieved: {:?}", updmsg);

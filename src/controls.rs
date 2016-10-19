@@ -203,7 +203,7 @@ impl Control for Sizer {
   fn oscname(&self) -> &str { "" }
 }
 
-fn deserialize_control(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<Error> >
+fn deserialize_control(id: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<Error> >
 {
   // what's the type?
   let obj = try_opt_resbox!(data.as_object(), "unable to parse control as json");
@@ -222,7 +222,7 @@ fn deserialize_control(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box
             },
           None => None,
           };
-      Ok(Box::new(Button { control_id: aVId.clone()
+      Ok(Box::new(Button { control_id: id.clone()
                          , name: String::from(name)
                          , label: label // String::from(label)
                          , pressed: false }))
@@ -238,7 +238,7 @@ fn deserialize_control(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box
             },
           None => None,
           };
-      Ok(Box::new(Slider { control_id: aVId.clone()
+      Ok(Box::new(Slider { control_id: id.clone()
                          , name: String::from(name)
                          , label: label 
                          , pressed: false
@@ -247,7 +247,7 @@ fn deserialize_control(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box
     "label" => { 
       let name = try_opt_resbox!(try_opt_resbox!(obj.get("name"), "'name' not found!").as_string(), "'name' is not a string!");
       let label = try_opt_resbox!(try_opt_resbox!(obj.get("label"), "'label' not found!").as_string(), "'label' is not a string!");
-      Ok(Box::new(Label { control_id: aVId.clone(), name: String::from(name), label: label.to_string() }))
+      Ok(Box::new(Label { control_id: id.clone(), name: String::from(name), label: label.to_string() }))
     },
     "sizer" => { 
       let controls = 
@@ -257,13 +257,13 @@ fn deserialize_control(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box
 
       // loop through array, makin controls.
       for (i, v) in controls.into_iter().enumerate() {
-          let mut id = aVId.clone();
+          let mut id = id.clone();
           id.push(i as i32); 
           let c = try!(deserialize_control(id, v));
           controlv.push(c);
           }
       
-      Ok(Box::new(Sizer { control_id: aVId.clone(), controls: controlv }))
+      Ok(Box::new(Sizer { control_id: id.clone(), controls: controlv }))
     },
     _ => Err(stringerror::string_box_err("objtype not supported!"))
   }

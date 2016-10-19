@@ -79,7 +79,10 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
                     match outmsg.serialize() {
                       Ok(v) => {
                         println!("sending {} {:?}", outmsg.path, outmsg.arguments );
-                        sendsocket.send_to(&v, &sendip[..]);
+                        match sendsocket.send_to(&v, &sendip[..]) {
+                          Ok(_) => (),
+                          Err(e) => println!("error sending osc message: {:?}", e),
+                          }
                       },
                       Err(e) => { println!("error: {:?}", e) },
                     }

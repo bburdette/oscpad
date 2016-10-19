@@ -463,9 +463,9 @@ fn makeControlMap_impl (control: &Control, mut map: ControlMap)
   map
 }
 
-pub type controlNameMap = BTreeMap<String, Vec<i32>>;
+pub type ControlNameMap = BTreeMap<String, Vec<i32>>;
 
-pub fn ControlMapToNameMap(cmap: &ControlMap) -> controlNameMap 
+pub fn ControlMapToNameMap(cmap: &ControlMap) -> ControlNameMap 
 {
   let mut iter = cmap.iter();
   let mut cnm = BTreeMap::new();

@@ -578,7 +578,7 @@ fn parseOscControlUpdate(om: &osc::Message,
                         
 
 fn oscToCtrlUpdate(om: &osc::Message, 
-                   cnm: &controls::controlNameMap,
+                   cnm: &controls::ControlNameMap,
                    cm: &controls::ControlMap) 
    -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {

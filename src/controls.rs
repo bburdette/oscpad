@@ -47,7 +47,7 @@ pub trait Control : Debug + Send {
   fn controlId(&self) -> &Vec<i32>;
   fn cloneTrol(&self) -> Box<Control>;
   fn subControls(&self) -> Option<&Vec<Box<Control>>>; 
-  fn update(&mut self, &UpdateMsg); 
+  fn update(&mut self, _: &UpdateMsg); 
   // build full update message of current state.
   fn toUpdate(&self) -> Option<UpdateMsg>;
   fn oscname(&self) -> &str;
@@ -198,7 +198,7 @@ impl Control for Sizer {
       Sizer { controlId: self.controlId.clone(), 
               controls: Vec::new() } ) } 
   fn subControls(&self) -> Option<&Vec<Box<Control>>> { Some(&self.controls) } 
-  fn update(&mut self, um: &UpdateMsg) {}
+  fn update(&mut self, _: &UpdateMsg) {}
   fn toUpdate(&self) -> Option<UpdateMsg> { None }
   fn oscname(&self) -> &str { "" }
 }
@@ -431,16 +431,16 @@ pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
 // control state map.  copies all the controls.
 // --------------------------------------------------------
 
-pub type controlMap = BTreeMap<Vec<i32>,Box<Control>>;
+pub type ControlMap = BTreeMap<Vec<i32>,Box<Control>>;
 
-pub fn makeControlMap (control: &Control) -> controlMap {
+pub fn makeControlMap (control: &Control) -> ControlMap {
   let mut btm = BTreeMap::new();
 
   makeControlMap_impl(control, btm)
 }
 
-fn makeControlMap_impl (control: &Control, mut map: controlMap) 
-  -> controlMap 
+fn makeControlMap_impl (control: &Control, mut map: ControlMap) 
+  -> ControlMap 
 { 
   map.insert(control.controlId().clone(), control.cloneTrol());
 
@@ -465,7 +465,7 @@ fn makeControlMap_impl (control: &Control, mut map: controlMap)
 
 pub type controlNameMap = BTreeMap<String, Vec<i32>>;
 
-pub fn controlMapToNameMap(cmap: &controlMap) -> controlNameMap 
+pub fn ControlMapToNameMap(cmap: &ControlMap) -> controlNameMap 
 {
   let mut iter = cmap.iter();
   let mut cnm = BTreeMap::new();
@@ -484,7 +484,7 @@ pub fn controlMapToNameMap(cmap: &controlMap) -> controlNameMap
   cnm
 }
 
-pub fn cmToUpdateArray(cm: &controlMap) -> Vec<UpdateMsg>
+pub fn cmToUpdateArray(cm: &ControlMap) -> Vec<UpdateMsg>
 {
   let mut iter = cm.iter();
   let mut result = Vec::new();

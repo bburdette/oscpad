@@ -18,7 +18,6 @@ use std::net::UdpSocket;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
-// use websocket::stream::WebSocketStream;
 use websocket::message::Type;
 
 extern crate iron;
@@ -125,7 +124,7 @@ fn main() {
 }
 
 pub struct ControlInfo {
-  cm: controls::controlMap,
+  cm: controls::ControlMap,
   guijson: String,
 }
 
@@ -580,7 +579,7 @@ fn parseOscControlUpdate(om: &osc::Message,
 
 fn oscToCtrlUpdate(om: &osc::Message, 
                    cnm: &controls::controlNameMap,
-                   cm: &controls::controlMap) 
+                   cm: &controls::ControlMap) 
    -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
@@ -617,7 +616,7 @@ fn oscmain( recvsocket: UdpSocket,
 
   let mut cnm = {
     let sci  = ci.lock().unwrap(); 
-    controls::controlMapToNameMap(&sci.cm)
+    controls::ControlMapToNameMap(&sci.cm)
     };
 
   loop { 
@@ -664,7 +663,7 @@ fn oscmain( recvsocket: UdpSocket,
 
                           // from control tree, make a map of ids->controls.
                           let mapp = controls::makeControlMap(&*controltree.rootControl);
-                          cnm = controls::controlMapToNameMap(&mapp);
+                          cnm = controls::ControlMapToNameMap(&mapp);
                           sci.cm = mapp;
                           sci.guijson = guistring.to_string();
                           bc.broadcast(Message::text(guistring.to_string()));

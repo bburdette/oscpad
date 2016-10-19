@@ -29,7 +29,7 @@ mod tryopt;
 mod stringerror;
 mod controls;
 mod broadcaster;
-mod stringDefaults; 
+mod string_defaults; 
 
 extern crate tinyosc;
 use tinyosc as osc;
@@ -86,7 +86,7 @@ fn main() {
                 Ok(()) => println!("wrote example server config to file: {}", prefs_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
-              match write_string(stringDefaults::SAMPLE_GUI_CONFIG, &gui_filename[..]) {
+              match write_string(string_defaults::SAMPLE_GUI_CONFIG, &gui_filename[..]) {
                 Ok(()) => println!("wrote example gui config to file: {}", gui_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
@@ -187,7 +187,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
           try!(load_string(&htmlfilename[..]))
         }
-        None => stringDefaults::MAIN_HTML.to_string()
+        None => string_defaults::MAIN_HTML.to_string()
       }
     };
     

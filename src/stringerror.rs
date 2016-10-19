@@ -12,7 +12,7 @@ impl Error {
     }
 }
 
-pub fn stringBoxErr(s: &str) -> Box<Error> {
+pub fn string_box_err(s: &str) -> Box<Error> {
   Box::new(Error::new(s))
 } 
 

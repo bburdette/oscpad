@@ -78,7 +78,7 @@ impl Control for Slider {
       &UpdateMsg::Slider { controlId: _
                          , state: ref optState
                          , location: ref optLoc
-                         , label: ref optLabel
+                         , label: ref opt_label
                          } => {
         if let &Some(ref st) = optState {
           self.pressed = match st { &SliderState::Pressed => true
@@ -87,7 +87,7 @@ impl Control for Slider {
         if let &Some(ref loc) = optLoc { 
           self.location = *loc as f32;
         };
-        if let &Some(ref t) = optLabel {
+        if let &Some(ref t) = opt_label {
           self.label = Some(t.clone());
         };
         ()
@@ -129,12 +129,12 @@ impl Control for Button {
     match um { 
       &UpdateMsg::Button { controlId: _ 
                          , state: ref optState
-                         , label: ref optLabel } => {
+                         , label: ref opt_label } => {
         if let &Some(ref st) = optState { 
           self.pressed = match st { &ButtonState::Pressed => true
                                   , &ButtonState::Unpressed => false };
           };
-        if let &Some(ref t) = optLabel {
+        if let &Some(ref t) = opt_label {
           self.label = Some(t.clone());
         };
         ()
@@ -265,7 +265,7 @@ fn deserializeControl(aVId: Vec<i32>, data: &Value) -> Result<Box<Control>, Box<
       
       Ok(Box::new(Sizer { controlId: aVId.clone(), controls: controlv }))
     },
-    _ => Err(stringerror::stringBoxErr("objtype not supported!"))
+    _ => Err(stringerror::string_box_err("objtype not supported!"))
   }
 }
 
@@ -335,7 +335,7 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
   match um { 
     &UpdateMsg::Button { controlId: ref cid 
                        , state: ref optState
-                       , label: ref optLabel } => {
+                       , label: ref opt_label } => {
       let mut btv = BTreeMap::new();
       btv.insert(String::from("controlType"), Value::String(String::from("button")));
       btv.insert(String::from("controlId"), Value::Array(convi32array(cid)));
@@ -345,7 +345,7 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
             (match st { &ButtonState::Pressed => "Press", 
                         &ButtonState::Unpressed => "Unpress", }))));
         };
-      if let &Some(ref lb) = optLabel { 
+      if let &Some(ref lb) = opt_label { 
         btv.insert(String::from("label"), 
           Value::String(lb.clone()));
         };
@@ -354,7 +354,7 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
     }, 
     &UpdateMsg::Slider { controlId: ref cid
                        , state: ref optState
-                       , label: ref optLabel 
+                       , label: ref opt_label 
                        , location: ref optLoc } => 
     {
       let mut btv = BTreeMap::new();
@@ -371,7 +371,7 @@ pub fn encodeUpdateMessage(um: &UpdateMsg) -> Value {
       if let &Some(loc) = optLoc { 
         btv.insert(String::from("location"), Value::F64(loc));
       };
-      if let &Some(ref lb) = optLabel { 
+      if let &Some(ref lb) = opt_label { 
         btv.insert(String::from("label"), 
           Value::String(lb.clone()));
         };
@@ -484,7 +484,7 @@ pub fn ControlMapToNameMap(cmap: &ControlMap) -> ControlNameMap
   cnm
 }
 
-pub fn cmToUpdateArray(cm: &ControlMap) -> Vec<UpdateMsg>
+pub fn cm_to_update_array(cm: &ControlMap) -> Vec<UpdateMsg>
 {
   let mut iter = cm.iter();
   let mut result = Vec::new();

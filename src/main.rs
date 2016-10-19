@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 extern crate websocket;
 
 use std::thread;
@@ -39,7 +37,7 @@ use tinyosc as osc;
 extern crate serde_json;
 use serde_json::Value;
 
-fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
+fn load_string(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::open(path));
@@ -48,7 +46,7 @@ fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
   Ok(result)
 }
 
-fn writeString(text: &str, file_name: &str) -> Result<(), Box<std::error::Error> >
+fn write_string(text: &str, file_name: &str) -> Result<(), Box<std::error::Error> >
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::create(path));
@@ -56,7 +54,7 @@ fn writeString(text: &str, file_name: &str) -> Result<(), Box<std::error::Error>
   Ok(())
 }
       
-fn makeDefaultPrefs(guifile: &str) -> BTreeMap<String, Value>
+fn make_default_prefs(guifile: &str) -> BTreeMap<String, Value>
 {
     let mut map = BTreeMap::new();
     map.insert(String::from("guifile"), Value::String(guifile.to_string()));
@@ -80,26 +78,26 @@ fn main() {
         let a = iter.next();
         let b = iter.next();
         match (a,b) { 
-          (Some(prefsFilename), Some(guiFilename)) => {
-            let value = Value::Object(makeDefaultPrefs(&guiFilename[..]));
+          (Some(prefs_filename), Some(gui_filename)) => {
+            let value = Value::Object(make_default_prefs(&gui_filename[..]));
            
             if let Ok(sv) = serde_json::to_string_pretty(&value) {
-              match writeString(&sv[..], &prefsFilename[..]) {
-                Ok(()) => println!("wrote example server config to file: {}", prefsFilename),
+              match write_string(&sv[..], &prefs_filename[..]) {
+                Ok(()) => println!("wrote example server config to file: {}", prefs_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
-              match writeString(stringDefaults::SAMPLE_GUI_CONFIG, &guiFilename[..]) {
-                Ok(()) => println!("wrote example gui config to file: {}", guiFilename),
+              match write_string(stringDefaults::SAMPLE_GUI_CONFIG, &gui_filename[..]) {
+                Ok(()) => println!("wrote example gui config to file: {}", gui_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
             }
           }
-          (Some(prefsFilename), _) => { 
-            let value = Value::Object(makeDefaultPrefs("gui.conf"));
+          (Some(prefs_filename), _) => { 
+            let value = Value::Object(make_default_prefs("gui.conf"));
            
             if let Ok(sv) = serde_json::to_string_pretty(&value) {
-              match writeString(&sv[..], &prefsFilename[..]) {
-                Ok(()) => println!("wrote server config to file: {}", prefsFilename),
+              match write_string(&sv[..], &prefs_filename[..]) {
+                Ok(()) => println!("wrote server config to file: {}", prefs_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
             }
@@ -131,7 +129,7 @@ pub struct ControlInfo {
 fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
-    let configstring = try!(loadString(&file_name));
+    let configstring = try!(load_string(&file_name));
 
     // read config file as json
     let configval: Value = try!(serde_json::from_str(&configstring[..]));
@@ -143,7 +141,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
         try_opt_resbox!(obj.get("guifile"), 
                         "'guifile' not found in config file").as_string(), 
         "failed to convert to string");
-    let guistring = try!(loadString(&guifilename[..]));
+    let guistring = try!(load_string(&guifilename[..]));
 
     let ip = String::new() + 
       try_opt_resbox!(
@@ -187,7 +185,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
       match obj.get("htmlfile") {
         Some(fname) => { 
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
-          try!(loadString(&htmlfilename[..]))
+          try!(load_string(&htmlfilename[..]))
         }
         None => stringDefaults::MAIN_HTML.to_string()
       }
@@ -317,7 +315,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
   {
     let sci = ci.lock().unwrap();
 
-    let updarray = controls::cmToUpdateArray(&sci.cm);
+    let updarray = controls::cm_to_update_array(&sci.cm);
   
     // build json message containing both guijson and the updarray.
     // let updvals = updarray.into_iter().map(|x|{controls::encodeUpdateMessage(&x)}).collect();
@@ -382,7 +380,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
               Some(cntrl) => {
                 (*cntrl).update(&updmsg);
                 broadcaster.broadcast_others(&ip, Message::text(str));
-                match ctrlUpdateToOsc(&updmsg, &**cntrl) { 
+                match ctrl_update_to_osc(&updmsg, &**cntrl) { 
                   Ok(v) => oscsocket.send_to(&v, &oscsendip[..]),
                   _ => Err(Error::new(ErrorKind::Other, "meh")) 
                 };
@@ -415,11 +413,11 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 //  I'm tending towards the named pairs.  But, look at the client code and
 // see if that would be an undue hardship.  
 
-fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
+fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
 {
   match um {
     &controls::UpdateMsg::Button { controlId: _
-                                 , label: ref optLab
+                                 , label: ref opt_lab
                                  , state: ref st
                                  } => { 
       // find the control in the map.
@@ -432,7 +430,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
           })
         };
 
-      if let &Some(ref lb) = optLab {
+      if let &Some(ref lb) = opt_lab {
         arghs.push(osc::Argument::s("label"));
         // arghs.push(osc::Argument::s(lr));  // &labs[..]));
         arghs.push(osc::Argument::s(&lb[..]));
@@ -492,16 +490,16 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
 //  - recursively call self with updated update message.
 
 // wow this code is hideous!  do not look!
-fn parseOscControlUpdate(om: &osc::Message,
-                        argIndex: usize, 
+fn parse_osc_control_update(om: &osc::Message,
+                        arg_index: usize, 
                         update: controls::UpdateMsg )
   -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
-  if argIndex >= om.arguments.len() {
+  if arg_index >= om.arguments.len() {
     Ok(update)
   }
   else {
-    match om.arguments[argIndex] { 
+    match om.arguments[arg_index] { 
       osc::Argument::s("pressed") => {
         let mut newupd = update.clone();
         match newupd { 
@@ -511,8 +509,8 @@ fn parseOscControlUpdate(om: &osc::Message,
             { *state = Some(controls::SliderState::Pressed); },
           _ => (),
           };
-        parseOscControlUpdate(om, 
-                             argIndex + 1, newupd)
+        parse_osc_control_update(om, 
+                             arg_index + 1, newupd)
         },
       osc::Argument::s("unpressed") => {
         let mut newupd = update.clone();
@@ -523,17 +521,17 @@ fn parseOscControlUpdate(om: &osc::Message,
             { *state = Some(controls::SliderState::Unpressed); },
           _ => (),
           };
-        parseOscControlUpdate(om, 
-                             argIndex + 1, newupd)
+        parse_osc_control_update(om, 
+                             arg_index + 1, newupd)
         },
       osc::Argument::s("location") => {
-        if om.arguments.len() <= argIndex + 1
+        if om.arguments.len() <= arg_index + 1
         {
           Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!")))
         }
         else
         {
-          match &om.arguments[argIndex + 1] {
+          match &om.arguments[arg_index + 1] {
             &osc::Argument::f(loc) => { 
               let mut newupd = update.clone();
               match newupd { 
@@ -541,20 +539,20 @@ fn parseOscControlUpdate(om: &osc::Message,
                   { *location = Some(loc as f64); },
                 _ => (),
                 };
-              parseOscControlUpdate(om, argIndex + 2, newupd)
+              parse_osc_control_update(om, arg_index + 2, newupd)
               },
             _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
             }
           }
         },
       osc::Argument::s("label") => {
-        if om.arguments.len() <= argIndex + 1
+        if om.arguments.len() <= arg_index + 1
         {
           Err(Box::new(Error::new(ErrorKind::Other, "'label' should be followed by a string!")))
         }
         else
         {
-          match &om.arguments[argIndex + 1] {
+          match &om.arguments[arg_index + 1] {
             &osc::Argument::s(txt) => { 
               let mut newupd = update.clone();
               match newupd { 
@@ -565,7 +563,7 @@ fn parseOscControlUpdate(om: &osc::Message,
                 controls::UpdateMsg::Label { ref mut label, .. } => 
                   { *label= txt.to_string(); },
                 };
-              parseOscControlUpdate(om, argIndex + 2, newupd)
+              parse_osc_control_update(om, arg_index + 2, newupd)
               },
             _ => Err(Box::new(Error::new(ErrorKind::Other, "location should be followed by a number between 0.0 and 1.0!"))),
             }
@@ -577,7 +575,7 @@ fn parseOscControlUpdate(om: &osc::Message,
 }
                         
 
-fn oscToCtrlUpdate(om: &osc::Message, 
+fn osc_to_ctrl_update(om: &osc::Message, 
                    cnm: &controls::ControlNameMap,
                    cm: &controls::ControlMap) 
    -> Result<controls::UpdateMsg, Box<std::error::Error> >
@@ -588,16 +586,16 @@ fn oscToCtrlUpdate(om: &osc::Message,
   let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
   match &(*control.controlType()) {
-   "slider" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Slider 
+   "slider" => parse_osc_control_update(om, 0, controls::UpdateMsg::Slider 
             { controlId: cid.clone(), 
               state: None,
               location: None,
               label: None }),  
-   "button" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Button 
+   "button" => parse_osc_control_update(om, 0, controls::UpdateMsg::Button 
             { controlId: cid.clone(), 
               state: None,
               label: None }),  
-   "label" => parseOscControlUpdate(om, 0, controls::UpdateMsg::Label 
+   "label" => parse_osc_control_update(om, 0, controls::UpdateMsg::Label 
             { controlId: cid.clone(), 
               label: String::from("") }),  
    x => {
@@ -629,7 +627,7 @@ fn oscmain( recvsocket: UdpSocket,
       Ok(inmsg) => {
         let mut sci = ci.lock().unwrap(); 
 
-        match oscToCtrlUpdate(&inmsg, &cnm, &sci.cm) {
+        match osc_to_ctrl_update(&inmsg, &cnm, &sci.cm) {
           Ok(updmsg) => { 
             match sci.cm.get_mut(controls::getUmId(&updmsg)) {
               Some(ctl) => {

@@ -44,7 +44,7 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
     println!("length: {}", amt);
     let inmsg = match osc::Message::deserialize(&buf[.. amt]) {
        Ok(m) => m,
-       Err(e) => return Err(stringerror::stringBoxErr(
+       Err(e) => return Err(stringerror::string_box_err(
                  &format(format_args!("OSC deserialize error {:?}", e)))),
       };
 

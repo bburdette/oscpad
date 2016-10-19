@@ -19,7 +19,7 @@ macro_rules! try_opt_resbox {
   ($e: expr, $s: expr) => { 
     match $e { 
       Some(x) => x, 
-      None => return Err(stringerror::stringBoxErr($s)),
+      None => return Err(stringerror::string_box_err($s)),
       // None => return Err(Box::new(stringerror::Error::new($s))), 
       } 
   } 

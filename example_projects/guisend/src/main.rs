@@ -34,7 +34,7 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
 
   let sendip = try_opt_resbox!(iter.next(), syntax);
   let guifilename = try_opt_resbox!(iter.next(), syntax);
-  let guistring = try!(loadString(&guifilename));
+  let guistring = try!(load_string(&guifilename));
 
   let socket = try!(UdpSocket::bind("0.0.0.0:0"));
   let mut buf = [0; 100];
@@ -53,7 +53,7 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
 }
 
 
-fn loadString(file_name: &str) -> Result<String, Box<std::error::Error> >
+fn load_string(file_name: &str) -> Result<String, Box<std::error::Error> >
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::open(path));

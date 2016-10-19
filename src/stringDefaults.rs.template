@@ -1,6 +1,6 @@
 
 
-pub const sampleGuiConfig: &'static str = r##"{
+pub const SAMPLE_GUI_CONFIG: &'static str = r##"{
   "title": "rustmeh",
   "rootControl": 
     {
@@ -53,4 +53,4 @@ pub const sampleGuiConfig: &'static str = r##"{
 }"##;
 
 
-pub const mainhtml: &'static str = r##"index.html"##;
+pub const MAIN_HTML: &'static str = r##"index.html"##;

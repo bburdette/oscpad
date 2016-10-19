@@ -88,7 +88,7 @@ fn main() {
                 Ok(()) => println!("wrote example server config to file: {}", prefsFilename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
-              match writeString(stringDefaults::sampleGuiConfig, &guiFilename[..]) {
+              match writeString(stringDefaults::SAMPLE_GUI_CONFIG, &guiFilename[..]) {
                 Ok(()) => println!("wrote example gui config to file: {}", guiFilename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
@@ -98,8 +98,8 @@ fn main() {
             let value = Value::Object(makeDefaultPrefs("gui.conf"));
            
             if let Ok(sv) = serde_json::to_string_pretty(&value) {
-              match writeString(&sv[..], &file_name[..]) {
-                Ok(()) => println!("wrote server config to file: {}", file_name),
+              match writeString(&sv[..], &prefsFilename[..]) {
+                Ok(()) => println!("wrote server config to file: {}", prefsFilename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
             }
@@ -189,7 +189,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
           let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
           try!(loadString(&htmlfilename[..]))
         }
-        None => stringDefaults::mainhtml.to_string()
+        None => stringDefaults::MAIN_HTML.to_string()
       }
     };
     

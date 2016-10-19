@@ -5,11 +5,11 @@ use websocket::{Message, Sender};
 use websocket::stream::WebSocketStream;
 use websocket::sender;
 
-type sendBlah = Arc<Mutex<sender::Sender<WebSocketStream>>>;
+pub type SendBlah = Arc<Mutex<sender::Sender<WebSocketStream>>>;
 
 #[derive(Clone)]
 pub struct Broadcaster {
-    tvs : Arc<Mutex<Vec<sendBlah >>>
+    tvs : Arc<Mutex<Vec<SendBlah >>>
 }
 
 fn mysockeq(saleft: &SocketAddr, saright: &SocketAddr) -> bool {
@@ -28,7 +28,7 @@ impl Broadcaster {
     }
   }
 
-  pub fn register(&mut self, sender : sendBlah) {
+  pub fn register(&mut self, sender : SendBlah) {
     let mut tvs = self.tvs.lock().unwrap();
 
     tvs.push(sender);
@@ -40,7 +40,9 @@ impl Broadcaster {
     for tv in tvs.iter_mut() {
       let mut tvsend = tv.lock().unwrap();
       match tvsend.send_message(&msg) {
-        Err(e) => {},
+        Err(e) => {
+          println!("error from send_message: {:?}", e);
+          },
         _ => {}
       }
     }
@@ -57,12 +59,16 @@ impl Broadcaster {
           if !mysockeq(sa,&sa_send) {
             // println!("sending to: {:?}", sa_send);
             match tvsend.send_message(&msg) {
-              Err(e) => {},
+              Err(e) => {
+                println!("error from send_message: {:?}", e);
+                },
               _ => {}
             }
           }
          },
-        Err(e) => {},
+        Err(e) => {
+          println!("error from get_mut: {:?}", e);
+          },
       }
     }
   }

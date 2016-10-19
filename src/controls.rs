@@ -434,7 +434,7 @@ pub fn decodeUpdateMessage(data: &Value) -> Option<UpdateMsg> {
 pub type ControlMap = BTreeMap<Vec<i32>,Box<Control>>;
 
 pub fn makeControlMap (control: &Control) -> ControlMap {
-  let mut btm = BTreeMap::new();
+  let btm = BTreeMap::new();
 
   makeControlMap_impl(control, btm)
 }
@@ -491,7 +491,7 @@ pub fn cmToUpdateArray(cm: &ControlMap) -> Vec<UpdateMsg>
   
   loop {
     match iter.next() {
-      Some((key,val)) => { 
+      Some((_,val)) => { 
         match val.toUpdate() { 
           Some(updmsg) => result.push(updmsg),
           None => (),

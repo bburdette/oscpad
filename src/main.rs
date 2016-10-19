@@ -197,14 +197,14 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
 
     let guival: Value = try!(serde_json::from_str(&guistring[..])); 
 
-    let blah = try!(controls::deserializeRoot(&guival));
+    let blah = try!(controls::deserialize_root(&guival));
 
     println!("title: {} rootcontroltype: {} ", 
       blah.title, blah.rootControl.controlType());
     println!("controls: {:?}", blah.rootControl);
 
     // from control tree, make a map of ids->controls.
-    let mapp = controls::makeControlMap(&*blah.rootControl);
+    let mapp = controls::make_control_map(&*blah.rootControl);
     let guijson = guistring.clone();
 
     let ci = ControlInfo { cm: mapp, guijson: guijson };
@@ -318,12 +318,12 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
     let updarray = controls::cm_to_update_array(&sci.cm);
   
     // build json message containing both guijson and the updarray.
-    // let updvals = updarray.into_iter().map(|x|{controls::encodeUpdateMessage(&x)}).collect();
+    // let updvals = updarray.into_iter().map(|x|{controls::encode_update_message(&x)}).collect();
 
     let mut updvals = Vec::new();
 
     for upd in updarray { 
-      let um = controls::encodeUpdateMessage(&upd);
+      let um = controls::encode_update_message(&upd);
       updvals.push(um);
     }
    
@@ -371,11 +371,11 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
         let u8 = message.payload.to_owned();
         let str = try!(std::str::from_utf8(&*u8));
         let jsonval: Value = try!(serde_json::from_str(str));
-        let s_um = controls::decodeUpdateMessage(&jsonval);
+        let s_um = controls::decode_update_message(&jsonval);
         match s_um { 
           Some(updmsg) => {
             let mut sci  = ci.lock().unwrap();
-            let mbcntrl = sci.cm.get_mut(controls::getUmId(&updmsg));
+            let mbcntrl = sci.cm.get_mut(controls::get_um_id(&updmsg));
             match mbcntrl {
               Some(cntrl) => {
                 (*cntrl).update(&updmsg);
@@ -391,7 +391,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
               None => println!("none"),
             }
           },
-          _ => println!("decodeUpdateMessage failed on websockets msg: {:?}", message),
+          _ => println!("decode_update_message failed on websockets msg: {:?}", message),
         }
       },
       _ => { 
@@ -614,7 +614,7 @@ fn oscmain( recvsocket: UdpSocket,
 
   let mut cnm = {
     let sci  = ci.lock().unwrap(); 
-    controls::ControlMapToNameMap(&sci.cm)
+    controls::control_map_to_name_map(&sci.cm)
     };
 
   loop { 
@@ -629,10 +629,10 @@ fn oscmain( recvsocket: UdpSocket,
 
         match osc_to_ctrl_update(&inmsg, &cnm, &sci.cm) {
           Ok(updmsg) => { 
-            match sci.cm.get_mut(controls::getUmId(&updmsg)) {
+            match sci.cm.get_mut(controls::get_um_id(&updmsg)) {
               Some(ctl) => {
                 (*ctl).update(&updmsg);
-                let val = controls::encodeUpdateMessage(&updmsg); 
+                let val = controls::encode_update_message(&updmsg); 
                 match serde_json::ser::to_string(&val) { 
                   Ok(s) => bc.broadcast(Message::text(s)), 
                   Err(_) => ()
@@ -651,7 +651,7 @@ fn oscmain( recvsocket: UdpSocket,
                   // deserialize the gui string into json.
                   match serde_json::from_str(&guistring[..]) { 
                     Ok(guival) => { 
-                      match controls::deserializeRoot(&guival) {
+                      match controls::deserialize_root(&guival) {
                         Ok(controltree) => { 
                           println!("new control layout recieved!");
 
@@ -660,8 +660,8 @@ fn oscmain( recvsocket: UdpSocket,
                           println!("controls: {:?}", controltree.rootControl);
 
                           // from control tree, make a map of ids->controls.
-                          let mapp = controls::makeControlMap(&*controltree.rootControl);
-                          cnm = controls::ControlMapToNameMap(&mapp);
+                          let mapp = controls::make_control_map(&*controltree.rootControl);
+                          cnm = controls::control_map_to_name_map(&mapp);
                           sci.cm = mapp;
                           sci.guijson = guistring.to_string();
                           bc.broadcast(Message::text(guistring.to_string()));

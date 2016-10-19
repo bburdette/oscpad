@@ -236,7 +236,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
       }
     });
 
-    try!(Iron::new(move |req: &mut Request| {
+    try!(Iron::new(move | _: &mut Request| {
         let content_type = "text/html".parse::<Mime>().unwrap();
         Ok(Response::with((content_type, status::Ok, &*htmlstring)))
     }).http(&http_ip[..]));
@@ -418,7 +418,7 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
 {
   match um {
-    &controls::UpdateMsg::Button { controlId: ref id
+    &controls::UpdateMsg::Button { controlId: _
                                  , label: ref optLab
                                  , state: ref st
                                  } => { 
@@ -441,7 +441,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
-    &controls::UpdateMsg::Slider  { controlId: ref id
+    &controls::UpdateMsg::Slider  { controlId: _
                                   , label: ref lb
                                   , state: ref st
                                   , location: ref loc
@@ -467,7 +467,7 @@ fn ctrlUpdateToOsc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result
       let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
       msg.serialize() 
     },
-    &controls::UpdateMsg::Label { controlId: ref id
+    &controls::UpdateMsg::Label { controlId: _ 
              , label: ref labtext
              } => { 
       // find the control in the map.
@@ -620,7 +620,7 @@ fn oscmain( recvsocket: UdpSocket,
     };
 
   loop { 
-    let (amt, src) = try!(recvsocket.recv_from(&mut buf));
+    let (amt, _) = try!(recvsocket.recv_from(&mut buf));
 
     match osc::Message::deserialize(&buf[.. amt]) {
       Err(e) => {

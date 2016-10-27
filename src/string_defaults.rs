@@ -8728,12 +8728,6 @@ var _bburdette$oscpad$SvgTouch$parseTouchCount = A2(
 	_elm_lang$core$Native_List.fromArray(
 		['touches', 'length']),
 	_elm_lang$core$Json_Decode$int);
-var _bburdette$oscpad$SvgTouch$Model = function (a) {
-	return {touches: a};
-};
-var _bburdette$oscpad$SvgTouch$init = _bburdette$oscpad$SvgTouch$Model(
-	_elm_lang$core$Native_List.fromArray(
-		[]));
 var _bburdette$oscpad$SvgTouch$Touch = F3(
 	function (a, b, c) {
 		return {x: a, y: b, id: c};
@@ -8786,26 +8780,6 @@ var _bburdette$oscpad$SvgTouch$extractTouches = function (evt) {
 				[]));
 	}
 };
-var _bburdette$oscpad$SvgTouch$update = F2(
-	function (msg, model) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
-			case 'SvgTouchStart':
-				return _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						touches: _bburdette$oscpad$SvgTouch$extractTouches(_p2._0)
-					});
-			case 'SvgTouchMove':
-				return model;
-			case 'SvgTouchEnd':
-				return model;
-			case 'SvgTouchCancel':
-				return model;
-			default:
-				return model;
-		}
-	});
 var _bburdette$oscpad$SvgTouch$extractFirstTouchInRect = F2(
 	function (evt, rect) {
 		var touches = _bburdette$oscpad$SvgTouch$extractTouches(evt);
@@ -8823,12 +8797,12 @@ var _bburdette$oscpad$SvgTouch$extractFirstTouchInRect = F2(
 	});
 var _bburdette$oscpad$SvgTouch$extractFirstRectTouchSE = F2(
 	function (msg, rect) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
 			case 'SvgTouchStart':
-				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p3._0, rect);
+				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p2._0, rect);
 			case 'SvgTouchMove':
-				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p3._0, rect);
+				return A2(_bburdette$oscpad$SvgTouch$extractFirstTouchInRect, _p2._0, rect);
 			case 'SvgTouchEnd':
 				return _elm_lang$core$Maybe$Nothing;
 			case 'SvgTouchCancel':
@@ -8838,8 +8812,8 @@ var _bburdette$oscpad$SvgTouch$extractFirstRectTouchSE = F2(
 		}
 	});
 var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
-	var _p4 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgTouch$parseTouchCount, evt);
-	if (_p4.ctor === 'Ok') {
+	var _p3 = A2(_elm_lang$core$Json_Decode$decodeValue, _bburdette$oscpad$SvgTouch$parseTouchCount, evt);
+	if (_p3.ctor === 'Ok') {
 		var touchresults = A2(
 			_elm_lang$core$List$map,
 			function (idx) {
@@ -8855,16 +8829,16 @@ var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
 						_bburdette$oscpad$SvgTouch$parseTouch),
 					evt);
 			},
-			_elm_lang$core$Native_List.range(0, _p4._0 - 1));
+			_elm_lang$core$Native_List.range(0, _p3._0 - 1));
 		var touches = A3(
 			_elm_lang$core$List$foldr,
 			F2(
 				function (rst, tl) {
-					var _p5 = rst;
-					if (_p5.ctor === 'Ok') {
-						return A2(_elm_lang$core$List_ops['::'], _p5._0, tl);
+					var _p4 = rst;
+					if (_p4.ctor === 'Ok') {
+						return A2(_elm_lang$core$List_ops['::'], _p4._0, tl);
 					} else {
-						return A2(_elm_lang$core$Debug$log, _p5._0, tl);
+						return A2(_elm_lang$core$Debug$log, _p4._0, tl);
 					}
 				}),
 			_elm_lang$core$Native_List.fromArray(
@@ -8872,11 +8846,11 @@ var _bburdette$oscpad$SvgTouch$extractTouchDict = function (evt) {
 			touchresults);
 		return _bburdette$oscpad$SvgTouch$makeTd(touches);
 	} else {
-		return A2(_elm_lang$core$Debug$log, _p4._0, _elm_lang$core$Dict$empty);
+		return A2(_elm_lang$core$Debug$log, _p3._0, _elm_lang$core$Dict$empty);
 	}
 };
 var _bburdette$oscpad$SvgTouch$extractFirstTouch = function (evt) {
-	var _p6 = A2(
+	var _p5 = A2(
 		_elm_lang$core$Json_Decode$decodeValue,
 		A2(
 			_elm_lang$core$Json_Decode$at,
@@ -8884,19 +8858,19 @@ var _bburdette$oscpad$SvgTouch$extractFirstTouch = function (evt) {
 				['touches', '0']),
 			_bburdette$oscpad$SvgTouch$parseTouch),
 		evt);
-	if (_p6.ctor === 'Ok') {
-		return _elm_lang$core$Maybe$Just(_p6._0);
+	if (_p5.ctor === 'Ok') {
+		return _elm_lang$core$Maybe$Just(_p5._0);
 	} else {
-		return A2(_elm_lang$core$Debug$log, _p6._0, _elm_lang$core$Maybe$Nothing);
+		return A2(_elm_lang$core$Debug$log, _p5._0, _elm_lang$core$Maybe$Nothing);
 	}
 };
 var _bburdette$oscpad$SvgTouch$extractFirstTouchSE = function (msg) {
-	var _p7 = msg;
-	switch (_p7.ctor) {
+	var _p6 = msg;
+	switch (_p6.ctor) {
 		case 'SvgTouchStart':
-			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p7._0);
+			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p6._0);
 		case 'SvgTouchMove':
-			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p7._0);
+			return _bburdette$oscpad$SvgTouch$extractFirstTouch(_p6._0);
 		case 'SvgTouchEnd':
 			return _elm_lang$core$Maybe$Nothing;
 		case 'SvgTouchCancel':

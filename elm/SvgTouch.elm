@@ -16,11 +16,6 @@ A touch also keeps info about the initial point and time of contact:
 like taps, drags, and swipes which need to know about timing or direction.
 -}
 
-
-type alias Model = { 
-  touches: List Touch
-  }
-
 type Msg 
   = SvgTouchStart JD.Value
   | SvgTouchMove JD.Value
@@ -28,17 +23,10 @@ type Msg
   | SvgTouchCancel JD.Value
   | SvgTouchLeave JD.Value
    
-init: Model
-init = Model []
-
-
 type alias Touch =
     { x : Float
     , y : Float
     , id : Int
---    , x0 : Int
---    , y0 : Int
---    , t0 : Time.Time
     }
 
 parseTouch: JD.Decoder Touch
@@ -56,24 +44,8 @@ makeTd: List Touch -> Dict.Dict Int Touch
 makeTd touchlist = 
   Dict.fromList <| List.map (\t -> (t.id, t)) touchlist
 
--- should update take a different message for each touch message type, or just one generic one and do the detect?
--- hmm the detect will be done regardless.  
-update : Msg -> Model -> Model
-update msg model = 
-  -- let _ = Debug.log "meh" msg
-  case msg of 
-    SvgTouchStart v -> 
-      { model | touches = extractTouches v }
-    SvgTouchMove v -> model 
-    SvgTouchEnd v -> model
-    SvgTouchCancel v -> model
-    SvgTouchLeave v -> model
-
--- should update take a different message for each touch message type, or just one generic one and do the detect?
--- hmm the detect will be done regardless.  
 extractFirstTouchSE : Msg -> Maybe Touch 
 extractFirstTouchSE msg = 
-  -- let _ = Debug.log "meh" msg
   case msg of 
     SvgTouchStart v -> extractFirstTouch v
     SvgTouchMove v -> extractFirstTouch v
@@ -83,7 +55,6 @@ extractFirstTouchSE msg =
 
 extractFirstRectTouchSE : Msg -> SvgThings.Rect -> Maybe Touch 
 extractFirstRectTouchSE msg rect = 
-  -- let _ = Debug.log "meh" msg
   case msg of 
     SvgTouchStart v -> extractFirstTouchInRect v rect
     SvgTouchMove v -> extractFirstTouchInRect v rect
@@ -107,6 +78,13 @@ extractTouches evt =
     Err str_msg -> 
       Debug.log str_msg [] 
 
+extractFirstTouchInRect: JD.Value -> SvgThings.Rect -> Maybe Touch
+extractFirstTouchInRect evt rect = 
+  let touches = extractTouches evt in
+    List.head (List.filter (\touch -> 
+      SvgThings.containsXY rect (truncate touch.x) (truncate touch.y))
+                 touches) 
+
 extractTouchDict: JD.Value -> Dict.Dict Int Touch
 extractTouchDict evt = 
   case JD.decodeValue parseTouchCount evt of 
@@ -129,10 +107,4 @@ extractFirstTouch evt =
     Ok touch -> Just touch
     Err e -> Debug.log e Nothing
 
-extractFirstTouchInRect: JD.Value -> SvgThings.Rect -> Maybe Touch
-extractFirstTouchInRect evt rect = 
-  let touches = extractTouches evt in
-    List.head (List.filter (\touch -> 
-      SvgThings.containsXY rect (truncate touch.x) (truncate touch.y))
-                 touches) 
 

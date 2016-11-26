@@ -24,12 +24,17 @@ use iron::prelude::*;
 use iron::status;
 use iron::mime::Mime;
 
+use touchpage::startserver;
+extern crate touchpage;
+
+
 #[macro_use]
 mod tryopt;
 mod stringerror;
-mod controls;
-mod broadcaster;
-mod string_defaults; 
+use touchpage::control_updates as cu;
+// mod controls;
+// mod broadcaster;
+// mod string_defaults; 
 
 extern crate tinyosc;
 use tinyosc as osc;
@@ -58,15 +63,15 @@ fn write_string(text: &str, file_name: &str) -> Result<(), Box<std::error::Error
       
 fn make_default_prefs(guifile: &str) -> BTreeMap<String, Value>
 {
-    let mut map = BTreeMap::new();
-    map.insert(String::from("guifile"), Value::String(guifile.to_string()));
-    map.insert(String::from("ip"), Value::String("0.0.0.0".to_string()));
-    map.insert(String::from("http-port"), Value::String("3030".to_string()));
-    map.insert(String::from("websockets-port"), Value::String("1234".to_string()));
-    map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
-    map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
-    
-    map
+  let mut map = BTreeMap::new();
+  map.insert(String::from("guifile"), Value::String(guifile.to_string()));
+  map.insert(String::from("ip"), Value::String("0.0.0.0".to_string()));
+  map.insert(String::from("http-port"), Value::String("3030".to_string()));
+  map.insert(String::from("websockets-port"), Value::String("1234".to_string()));
+  map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
+  map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
+  
+  map
 }   
 
 fn main() {
@@ -75,6 +80,7 @@ fn main() {
   let mut iter = args.skip(1); // skip the program name
   match iter.next() {
     Some(file_name) => {
+      /*
       if file_name == "-mkconfigs" 
       {
         let a = iter.next();
@@ -108,11 +114,12 @@ fn main() {
         }
       }
       else {
-        match startserver(&file_name) {
+      */
+        match startserver_w_config(&file_name) {
           Err(e) => println!("error starting server: {:?}", e),
           _ => (),
         }
-      }
+      // }
 
     }
     None => {
@@ -123,12 +130,7 @@ fn main() {
   }
 }
 
-pub struct ControlInfo {
-  cm: controls::ControlMap,
-  guijson: String,
-}
-
-fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
+fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
     let configstring = try!(load_string(&file_name));
@@ -167,10 +169,7 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'websockets-port' not found!").as_string(), 
         "'websockets-port' not a string!");
 
-    let mut websockets_ip = String::from(ip.as_str());
-    websockets_ip.push_str(":");
-    websockets_ip.push_str(&websockets_port);
-    
+   
     let oscrecvip = String::new() + 
       try_opt_resbox!(
         try_opt_resbox!(obj.get("oscrecvip"), 
@@ -183,232 +182,39 @@ fn startserver(file_name: &String) -> Result<(), Box<std::error::Error> >
                        "'oscsendip' not found!").as_string(), 
         "'oscsendip' not a string!");
 
-    let htmltemplate = {  
-      match obj.get("htmlfile") {
-        Some(fname) => { 
-          let htmlfilename = try_opt_resbox!(fname.as_string(), "failed to convert html file to string!");
-          try!(load_string(&htmlfilename[..]))
-        }
-        None => string_defaults::MAIN_HTML.to_string()
-      }
-    };
-    
-    let htmlstring = htmltemplate.replace("<websockets-port>", &websockets_port);
 
-    // println!("{}", htmlstring);
-
-    let guival: Value = try!(serde_json::from_str(&guistring[..])); 
-
-    let blah = try!(controls::deserialize_root(&guival));
-
-    println!("title: {} rootcontroltype: {} ", 
-      blah.title, blah.root_control.control_type());
-    println!("controls: {:?}", blah.root_control);
-
-    // from control tree, make a map of ids->controls.
-    let mapp = controls::make_control_map(&*blah.root_control);
-    let guijson = guistring.clone();
-
-    let ci = ControlInfo { cm: mapp, guijson: guijson };
-
-    let cmshare = Arc::new(Mutex::new(ci));
-    let wscmshare = cmshare.clone();
     let oscsocket = try!(UdpSocket::bind(&oscrecvip[..]));
+
     // for sending, bind to this.  if we bind to localhost, we can't
     // send messages to other machines.  
     let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
-    let bc = broadcaster::Broadcaster::new();
+//    let bc = broadcaster::Broadcaster::new();
     let wsos = try!(oscsendsocket.try_clone());
-    let wsbc = bc.clone();
     let wsoscsendip = oscsendip.clone();
 
+    // let ci = ControlInfo { cm: mapp, guijson: guijson };
+    // let cmshare = Arc::new(Mutex::new(ci));
+
     thread::spawn(move || { 
-      match oscmain(oscsocket, bc, cmshare) {
+      match touchpage::startserver(guifilename, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None) {
         Err(e) => println!("oscmain exited with error: {:?}", e),
         Ok(_) => (),
       }
       }); 
 
-    thread::spawn(move || { 
-      match websockets_main(websockets_ip, wscmshare, wsbc, wsoscsendip, wsos) {
-        Ok(_) => (),
-        Err(e) => println!("error in websockets_main: {:?}", e),
-      }
-    });
 
-    try!(Iron::new(move | _: &mut Request| {
-        let content_type = "text/html".parse::<Mime>().unwrap();
-        Ok(Response::with((content_type, status::Ok, &*htmlstring)))
-    }).http(&http_ip[..]));
+    thread::spawn(move || { 
+      // match oscmain(oscsocket, bc, cmshare) {
+      match oscmain(oscsocket) {
+        Err(e) => println!("oscmain exited with error: {:?}", e),
+        Ok(_) => (),
+      }
+      }); 
+
 
     Ok(())
 }
 
-fn websockets_main( ipaddr: String, 
-                    ci: Arc<Mutex<ControlInfo>>,
-                    broadcaster: broadcaster::Broadcaster, 
-                    oscsendip: String, 
-                    oscsocket: UdpSocket ) 
-                  -> Result<(), Box<std::error::Error> >
-{
-	let server = try!(Server::bind(&ipaddr[..]));
-
-	for connection in server {
-
-    println!("new websockets connection!");
-		// Spawn a new thread for each connection.
-    
-    let sci = ci.clone();
-    let osock = try!(oscsocket.try_clone());
-    let osend = oscsendip.clone();
-    let broadcaster = broadcaster.clone();
-
-    let conn = try!(connection);
-    thread::spawn(move || {
-      match websockets_client(conn,
-                            sci,
-                            broadcaster,
-                            osend,
-                            osock) {
-        Ok(_) => (), 
-        Err(e) => {
-          println!("error in websockets thread: {:?}", e);
-          ()
-        },
-      }
-    });
-  } 
-
-  Ok(())
-}
-
-fn websockets_client(connection: websocket::server::Connection<websocket::stream::WebSocketStream, websocket::stream::WebSocketStream>,
-                    ci: Arc<Mutex<ControlInfo>>,
-                    mut broadcaster: broadcaster::Broadcaster, 
-                    oscsendip: String, 
-                    oscsocket: UdpSocket 
-                    ) -> Result<(), Box<std::error::Error> >
-{
-  // Get the request
-  let request = try!(connection.read_request());
-  // Keep the headers so we can check them
-  let headers = request.headers.clone(); 
-  
-  try!(request.validate()); // Validate the request
-  
-  let mut response = request.accept(); // Form a response
-  
-  if let Some(&WebSocketProtocol(ref protocols)) = headers.get() {
-    if protocols.contains(&("rust-websocket".to_string())) {
-      // We have a protocol we want to use
-      response.headers.set(WebSocketProtocol(vec!["rust-websocket".to_string()]));
-    }
-  }
-  
-  let mut client = try!(response.send()); // Send the response
-  
-  let ip = try!(client.get_mut_sender()
-                  .get_mut()
-                  .peer_addr());
-  
-  println!("Websocket connection from {}", ip);
-
-  // send up the json of the current controls.
-  {
-    let sci = ci.lock().unwrap();
-
-    let updarray = controls::cm_to_update_array(&sci.cm);
-  
-    // build json message containing both guijson and the updarray.
-    // let updvals = updarray.into_iter().map(|x|{controls::encode_update_message(&x)}).collect();
-
-    let mut updvals = Vec::new();
-
-    for upd in updarray { 
-      let um = controls::encode_update_message(&upd);
-      updvals.push(um);
-    }
-   
-    let mut guival: Value = try!(serde_json::from_str(&sci.guijson[..]));
-
-    match guival.as_object_mut() {
-      Some(obj) => {
-        obj.insert("state".to_string(), Value::Array(updvals));
-        ()
-      },
-      None => (),
-    }
-  
-    let guistring = try!(serde_json::ser::to_string(&guival));
-    let message = Message::text(guistring);
-    try!(client.send_message(&message));
-  }
- 
-  let (sender, mut receiver) = client.split();
-
-  let sendmeh = Arc::new(Mutex::new(sender));
-  
-  broadcaster.register(sendmeh.clone());      
-  
-  for msg in receiver.incoming_messages() {
-    let message: Message = try!(msg);
-    // println!("message: {:?}", message);
-
-    match message.opcode {
-      Type::Close => {
-        let message = Message::close();
-        // let mut sender = try!(sendmeh.lock());
-        let mut sender = sendmeh.lock().unwrap();
-        try!(sender.send_message(&message));
-        println!("Client {} disconnected", ip);
-        return Ok(());
-      }
-      Type::Ping => {
-        println!("Message::Ping(data)");
-        let message = Message::pong(message.payload);
-        let mut sender = sendmeh.lock().unwrap();
-        try!(sender.send_message(&message));
-      }
-      Type::Text => {
-        let u8 = message.payload.to_owned();
-        let str = try!(std::str::from_utf8(&*u8));
-        let jsonval: Value = try!(serde_json::from_str(str));
-        let s_um = controls::decode_update_message(&jsonval);
-        match s_um { 
-          Some(updmsg) => {
-            let mut sci  = ci.lock().unwrap();
-            let mbcntrl = sci.cm.get_mut(controls::get_um_id(&updmsg));
-            match mbcntrl {
-              Some(cntrl) => {
-                (*cntrl).update(&updmsg);
-                broadcaster.broadcast_others(&ip, Message::text(str));
-                match ctrl_update_to_osc(&updmsg, &**cntrl) { 
-                  Ok(v) => match oscsocket.send_to(&v, &oscsendip[..]) {
-                    Ok(_) => (),
-                    Err(e) => 
-                      println!("error sending osc message: {:?}", e),
-                    },
-                  Err(e) => 
-                    println!("error building osc message: {:?}", e),
-                };
-                
-                println!("websockets control update recieved: {:?}", updmsg);
-                ()
-              },
-              None => println!("none"),
-            }
-          },
-          _ => println!("decode_update_message failed on websockets msg: {:?}", message),
-        }
-      },
-      _ => { 
-        println!("unknown websockets msg: {:?}", message);
-      }
-    }
-  }
-
-  Ok(())
-}
 
 // TODO:
 // break out osc encode/decode into a separate file, looking to be a 
@@ -420,7 +226,8 @@ fn websockets_client(connection: websocket::server::Connection<websocket::stream
 //  I'm tending towards the named pairs.  But, look at the client code and
 // see if that would be an undue hardship.  
 
-fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
+/*
+fn ctrl_update_to_osc(um: &control_updates::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
 {
   match um {
     &controls::UpdateMsg::Button { control_id: _
@@ -432,8 +239,8 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
       if let &Some(ref state) = st {
         arghs.push (
           match state { 
-            &controls::ButtonState::Pressed => osc::Argument::s("pressed"),
-            &controls::ButtonState::Unpressed => osc::Argument::s("unpressed"),
+            &cu::ButtonState::Pressed => osc::Argument::s("pressed"),
+            &cu::ButtonState::Unpressed => osc::Argument::s("unpressed"),
           })
         };
 
@@ -455,8 +262,8 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
       if let &Some(ref state) = st {
         arghs.push (
           match state { 
-            &controls::SliderState::Pressed => osc::Argument::s("pressed"),
-            &controls::SliderState::Unpressed => osc::Argument::s("unpressed"),
+            &cu::SliderState::Pressed => osc::Argument::s("pressed"),
+            &cu::SliderState::Unpressed => osc::Argument::s("unpressed"),
           });
         };
       if let &Some(ref location) = loc { 
@@ -484,6 +291,7 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
     },
    } 
 } 
+*/
 
 
 
@@ -499,8 +307,8 @@ fn ctrl_update_to_osc(um: &controls::UpdateMsg, ctrl: &controls::Control) -> Res
 // wow this code is hideous!  do not look!
 fn parse_osc_control_update(om: &osc::Message,
                         arg_index: usize, 
-                        update: controls::UpdateMsg )
-  -> Result<controls::UpdateMsg, Box<std::error::Error> >
+                        update: cu::UpdateMsg )
+  -> Result<cu::UpdateMsg, Box<std::error::Error> >
 {
   if arg_index >= om.arguments.len() {
     Ok(update)
@@ -510,10 +318,10 @@ fn parse_osc_control_update(om: &osc::Message,
       osc::Argument::s("pressed") => {
         let mut newupd = update.clone();
         match newupd { 
-          controls::UpdateMsg::Button { ref mut state, .. } => 
-            { *state = Some(controls::ButtonState::Pressed); },
-          controls::UpdateMsg::Slider { ref mut state, .. } => 
-            { *state = Some(controls::SliderState::Pressed); },
+          cu::UpdateMsg::Button { ref mut state, .. } => 
+            { *state = Some(cu::ButtonState::Pressed); },
+          cu::UpdateMsg::Slider { ref mut state, .. } => 
+            { *state = Some(cu::SliderState::Pressed); },
           _ => (),
           };
         parse_osc_control_update(om, 
@@ -522,10 +330,10 @@ fn parse_osc_control_update(om: &osc::Message,
       osc::Argument::s("unpressed") => {
         let mut newupd = update.clone();
         match newupd { 
-          controls::UpdateMsg::Button { ref mut state, .. } => 
-            { *state = Some(controls::ButtonState::Unpressed); },
-          controls::UpdateMsg::Slider { ref mut state, .. } => 
-            { *state = Some(controls::SliderState::Unpressed); },
+          cu::UpdateMsg::Button { ref mut state, .. } => 
+            { *state = Some(cu::ButtonState::Unpressed); },
+          cu::UpdateMsg::Slider { ref mut state, .. } => 
+            { *state = Some(cu::SliderState::Unpressed); },
           _ => (),
           };
         parse_osc_control_update(om, 
@@ -542,7 +350,7 @@ fn parse_osc_control_update(om: &osc::Message,
             &osc::Argument::f(loc) => { 
               let mut newupd = update.clone();
               match newupd { 
-                controls::UpdateMsg::Slider { ref mut location, .. } => 
+                cu::UpdateMsg::Slider { ref mut location, .. } => 
                   { *location = Some(loc as f64); },
                 _ => (),
                 };
@@ -563,11 +371,11 @@ fn parse_osc_control_update(om: &osc::Message,
             &osc::Argument::s(txt) => { 
               let mut newupd = update.clone();
               match newupd { 
-                controls::UpdateMsg::Button { ref mut label, .. } => 
+                cu::UpdateMsg::Button { ref mut label, .. } => 
                   { *label= Some(txt.to_string()); },
-                controls::UpdateMsg::Slider { ref mut label, .. } => 
+                cu::UpdateMsg::Slider { ref mut label, .. } => 
                   { *label= Some(txt.to_string()); },
-                controls::UpdateMsg::Label { ref mut label, .. } => 
+                cu::UpdateMsg::Label { ref mut label, .. } => 
                   { *label= txt.to_string(); },
                 };
               parse_osc_control_update(om, arg_index + 2, newupd)
@@ -612,9 +420,9 @@ fn osc_to_ctrl_update(om: &osc::Message,
    }
 }
 
-fn oscmain( recvsocket: UdpSocket, 
-            mut bc: broadcaster::Broadcaster, 
-            ci: Arc<Mutex<ControlInfo>>)
+fn oscmain( recvsocket: UdpSocket )
+//            mut bc: broadcaster::Broadcaster, 
+//            ci: Arc<Mutex<ControlInfo>>)
               -> Result<String, Box<std::error::Error> >
 { 
   let mut buf = [0; 10000];

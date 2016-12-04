@@ -205,12 +205,10 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
-    thread::spawn(move || { 
       match touchpage::startserver(guistring.as_str(), printupdatemsg, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None) {
-        Err(e) => println!("oscmain exited with error: {:?}", e),
+        Err(e) => println!("startserver returned error: {:?}", e),
         Ok(_) => (),
-      }
-      }); 
+      };
 
 
 //    thread::spawn(move || { 

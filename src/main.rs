@@ -1,4 +1,3 @@
-extern crate websocket;
 
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -14,6 +13,8 @@ use std::fmt::format;
 
 use std::net::UdpSocket;
 
+/*
+extern crate websocket;
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
 use websocket::message::Type;
@@ -23,15 +24,16 @@ extern crate iron;
 use iron::prelude::*;
 use iron::status;
 use iron::mime::Mime;
+*/
 
 use touchpage::startserver;
+use touchpage::control_updates as cu;
 extern crate touchpage;
 
 
 #[macro_use]
 mod tryopt;
 mod stringerror;
-use touchpage::control_updates as cu;
 // mod controls;
 // mod broadcaster;
 // mod string_defaults; 
@@ -130,6 +132,12 @@ fn main() {
   }
 }
 
+fn printupdatemsg(update: &cu::UpdateMsg) -> ()
+{
+  println!("update callback called! {:?}", update);
+  ()
+}
+
 fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
@@ -138,14 +146,16 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // read config file as json
     let configval: Value = try!(serde_json::from_str(&configstring[..]));
 
-    let obj = try_opt_resbox!(configval.as_object(), "config file is not a json object!");
-    
+    let oobj = try_opt_resbox!(configval.as_object(), "config file is not a json object!");
+    let obj = oobj.clone();
+  
     let guifilename = 
       try_opt_resbox!(
         try_opt_resbox!(obj.get("guifile"), 
                         "'guifile' not found in config file").as_string(), 
         "failed to convert to string");
     let guistring = try!(load_string(&guifilename[..]));
+    // let guistring = "wtf";
 
     let ip = String::new() + 
       try_opt_resbox!(
@@ -189,27 +199,27 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // send messages to other machines.  
     let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
 //    let bc = broadcaster::Broadcaster::new();
-    let wsos = try!(oscsendsocket.try_clone());
-    let wsoscsendip = oscsendip.clone();
+    // let wsos = try!(oscsendsocket.try_clone());
+    // let wsoscsendip = oscsendip.clone();
 
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
     thread::spawn(move || { 
-      match touchpage::startserver(guifilename, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None) {
+      match touchpage::startserver(guistring.as_str(), printupdatemsg, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None) {
         Err(e) => println!("oscmain exited with error: {:?}", e),
         Ok(_) => (),
       }
       }); 
 
 
-    thread::spawn(move || { 
+//    thread::spawn(move || { 
       // match oscmain(oscsocket, bc, cmshare) {
       match oscmain(oscsocket) {
         Err(e) => println!("oscmain exited with error: {:?}", e),
         Ok(_) => (),
-      }
-      }); 
+      };
+ //     }); 
 
 
     Ok(())
@@ -390,16 +400,21 @@ fn parse_osc_control_update(om: &osc::Message,
 }
                         
 
+/*
 fn osc_to_ctrl_update(om: &osc::Message, 
                    cnm: &controls::ControlNameMap,
                    cm: &controls::ControlMap) 
    -> Result<controls::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
+
+  // first the control id
   let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
   
+  // next the control itself.
   let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
+  // make an update message based on the control type.
   match &(*control.control_type()) {
    "slider" => parse_osc_control_update(om, 0, controls::UpdateMsg::Slider 
             { control_id: cid.clone(), 
@@ -419,6 +434,7 @@ fn osc_to_ctrl_update(om: &osc::Message,
     },
    }
 }
+*/
 
 fn oscmain( recvsocket: UdpSocket )
 //            mut bc: broadcaster::Broadcaster, 
@@ -427,10 +443,12 @@ fn oscmain( recvsocket: UdpSocket )
 { 
   let mut buf = [0; 10000];
 
+  /*
   let mut cnm = {
     let sci  = ci.lock().unwrap(); 
     controls::control_map_to_name_map(&sci.cm)
     };
+    */
 
   loop { 
     let (amt, _) = try!(recvsocket.recv_from(&mut buf));
@@ -440,8 +458,9 @@ fn oscmain( recvsocket: UdpSocket )
           println!("invalid osc messsage: {:?}", e)
         },
       Ok(inmsg) => {
-        let mut sci = ci.lock().unwrap(); 
+        // let mut sci = ci.lock().unwrap(); 
 
+        /*
         match osc_to_ctrl_update(&inmsg, &cnm, &sci.cm) {
           Ok(updmsg) => { 
             match sci.cm.get_mut(controls::get_um_id(&updmsg)) {
@@ -492,6 +511,7 @@ fn oscmain( recvsocket: UdpSocket )
             }
           }
         };
+        */
     
         // print received afterwards, I guess for latency savings?
         println!("osc message received {} {:?}", inmsg.path, inmsg.arguments);

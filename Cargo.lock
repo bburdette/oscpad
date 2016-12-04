@@ -2,13 +2,11 @@
 name = "oscpad"
 version = "0.2.2"
 dependencies = [
- "iron 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.34 (registry+https://github.com/rust-lang/crates.io-index)",
  "tinyosc 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "touchpage 0.2.2",
- "websocket 0.15.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

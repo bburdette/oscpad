@@ -13,30 +13,13 @@ use std::fmt::format;
 
 use std::net::UdpSocket;
 
-/*
-extern crate websocket;
-use websocket::{Server, Message, Sender, Receiver};
-use websocket::header::WebSocketProtocol;
-use websocket::message::Type;
-
-extern crate iron;
-
-use iron::prelude::*;
-use iron::status;
-use iron::mime::Mime;
-*/
-
 use touchpage::startserver;
 use touchpage::control_updates as cu;
 extern crate touchpage;
 
-
 #[macro_use]
 mod tryopt;
 mod stringerror;
-// mod controls;
-// mod broadcaster;
-// mod string_defaults; 
 
 extern crate tinyosc;
 use tinyosc as osc;
@@ -138,6 +121,19 @@ fn printupdatemsg(update: &cu::UpdateMsg) -> ()
   ()
 }
 
+fn make_sendoscupdatemsg(control_server: &touchpage::ControlServer) -> 
+  (Fn (&cu::UpdateMsg) -> ())
+{
+  let f = | update | {
+    match ctrl_update_to_osc(update, control_server) {
+      Ok(msg) => println!("ok"),
+      _ => println!("err"),
+    }
+        // send to osc socket!
+  };
+  f
+}
+
 fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
@@ -205,19 +201,13 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
-      match touchpage::startserver(guistring.as_str(), printupdatemsg, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None) {
-        Err(e) => println!("startserver returned error: {:?}", e),
-        Ok(_) => (),
-      };
+    let control_server = 
+       try! (touchpage::startserver(guistring.as_str(), printupdatemsg, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
 
-
-//    thread::spawn(move || { 
-      // match oscmain(oscsocket, bc, cmshare) {
-      match oscmain(oscsocket) {
-        Err(e) => println!("oscmain exited with error: {:?}", e),
-        Ok(_) => (),
-      };
- //     }); 
+    match oscmain(oscsocket, &control_server) {
+      Err(e) => println!("oscmain exited with error: {:?}", e),
+      Ok(_) => (),
+    };
 
 
     Ok(())
@@ -234,72 +224,84 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
 //  I'm tending towards the named pairs.  But, look at the client code and
 // see if that would be an undue hardship.  
 
-/*
-fn ctrl_update_to_osc(um: &control_updates::UpdateMsg, ctrl: &controls::Control) -> Result<Vec<u8>, Error>
+fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> Result<Vec<u8>, Error>
 {
   match um {
-    &controls::UpdateMsg::Button { control_id: _
+    &cu::UpdateMsg::Button { control_id: id
                                  , label: ref opt_lab
                                  , state: ref st
                                  } => { 
       // find the control in the map.
-      let mut arghs = Vec::new();
-      if let &Some(ref state) = st {
-        arghs.push (
-          match state { 
-            &cu::ButtonState::Pressed => osc::Argument::s("pressed"),
-            &cu::ButtonState::Unpressed => osc::Argument::s("unpressed"),
-          })
-        };
+      match server.get_osc_name(&id) { 
+        Some(oscname) => {
+            let mut arghs = Vec::new();
+            if let &Some(ref state) = st {
+              arghs.push (
+                match state { 
+                  &cu::ButtonState::Pressed => osc::Argument::s("pressed"),
+                  &cu::ButtonState::Unpressed => osc::Argument::s("unpressed"),
+                })
+              };
 
-      if let &Some(ref lb) = opt_lab {
-        arghs.push(osc::Argument::s("label"));
-        // arghs.push(osc::Argument::s(lr));  // &labs[..]));
-        arghs.push(osc::Argument::s(&lb[..]));
-      };
-        
-      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
-      msg.serialize() 
+            if let &Some(ref lb) = opt_lab {
+              arghs.push(osc::Argument::s("label"));
+              // arghs.push(osc::Argument::s(lr));  // &labs[..]));
+              arghs.push(osc::Argument::s(&lb[..]));
+            };
+              
+            let msg = osc::Message { path: oscname.as_str(), arguments: arghs };
+            msg.serialize() 
+          },
+        None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
+      }
     },
-    &controls::UpdateMsg::Slider  { control_id: _
+    &cu::UpdateMsg::Slider  { control_id: id
                                   , label: ref lb
                                   , state: ref st
                                   , location: ref loc
                                   } => {
-      let mut arghs = Vec::new();
-      if let &Some(ref state) = st {
-        arghs.push (
-          match state { 
-            &cu::SliderState::Pressed => osc::Argument::s("pressed"),
-            &cu::SliderState::Unpressed => osc::Argument::s("unpressed"),
-          });
-        };
-      if let &Some(ref location) = loc { 
-        let l = *location as f32;
-        arghs.push(osc::Argument::s("location"));
-        arghs.push(osc::Argument::f(l));
-        };
-      if let &Some(ref label) = lb {
-        arghs.push(osc::Argument::s("label"));
-        arghs.push(osc::Argument::s(&label[..]));
-      };
-      
-      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
-      msg.serialize() 
+      match server.get_osc_name(&id) { 
+        Some(oscname) => { 
+            let mut arghs = Vec::new();
+            if let &Some(ref state) = st {
+              arghs.push (
+                match state { 
+                  &cu::SliderState::Pressed => osc::Argument::s("pressed"),
+                  &cu::SliderState::Unpressed => osc::Argument::s("unpressed"),
+                });
+              };
+            if let &Some(ref location) = loc { 
+              let l = *location as f32;
+              arghs.push(osc::Argument::s("location"));
+              arghs.push(osc::Argument::f(l));
+              };
+            if let &Some(ref label) = lb {
+              arghs.push(osc::Argument::s("label"));
+              arghs.push(osc::Argument::s(&label[..]));
+            };
+            
+            let msg = osc::Message { path: oscname.as_str(), arguments: arghs };
+            msg.serialize() 
+          },
+        None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
+      }
     },
-    &controls::UpdateMsg::Label { control_id: _ 
+    &cu::UpdateMsg::Label { control_id: id
              , label: ref labtext
              } => { 
-      // find the control in the map.
-      let mut arghs = Vec::new();
-      arghs.push(osc::Argument::s("label"));
-      arghs.push(osc::Argument::s(&labtext[..]));
-      let msg = osc::Message { path: ctrl.oscname(), arguments: arghs };
-      msg.serialize() 
+      match server.get_osc_name(&id) {
+        Some(oscname) => { 
+          let mut arghs = Vec::new();
+          arghs.push(osc::Argument::s("label"));
+          arghs.push(osc::Argument::s(&labtext[..]));
+          let msg = osc::Message { path: oscname.as_str(), arguments: arghs };
+          msg.serialize() 
+        },
+        None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
+      }
     },
    } 
 } 
-*/
 
 
 
@@ -398,21 +400,32 @@ fn parse_osc_control_update(om: &osc::Message,
 }
                         
 
-/*
 fn osc_to_ctrl_update(om: &osc::Message, 
-                   cnm: &controls::ControlNameMap,
-                   cm: &controls::ControlMap) 
-   -> Result<controls::UpdateMsg, Box<std::error::Error> >
+                   cserver: &touchpage::ControlServer,
+//                   cnm: &controls::ControlNameMap,
+//                   cm: &controls::ControlMap) 
+                   )
+   -> Result<cu::UpdateMsg, Box<std::error::Error> >
 {
   // find the control by name.  
 
+  let updmsg = cserver.make_update_msg(om.path);
+
+  match updmsg {
+   Some(updmsg_yeah) => parse_osc_control_update(om, 0, updmsg_yeah),
+   None => {
+    let msg = format(format_args!("failed to update control: {:?}", om.path));    
+      Err(Box::new(Error::new(ErrorKind::Other, msg)))
+    },
+   }
   // first the control id
-  let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
+  // let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
   
   // next the control itself.
-  let control = try_opt_resbox!(cm.get(cid), "control not found!");
+  // let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
   // make an update message based on the control type.
+  /*
   match &(*control.control_type()) {
    "slider" => parse_osc_control_update(om, 0, controls::UpdateMsg::Slider 
             { control_id: cid.clone(), 
@@ -431,10 +444,12 @@ fn osc_to_ctrl_update(om: &osc::Message,
       Err(Box::new(Error::new(ErrorKind::Other, msg)))
     },
    }
+   */
 }
-*/
 
-fn oscmain( recvsocket: UdpSocket )
+fn oscmain( recvsocket: UdpSocket,
+            control_server: &touchpage::ControlServer,
+            )
 //            mut bc: broadcaster::Broadcaster, 
 //            ci: Arc<Mutex<ControlInfo>>)
               -> Result<String, Box<std::error::Error> >
@@ -458,9 +473,10 @@ fn oscmain( recvsocket: UdpSocket )
       Ok(inmsg) => {
         // let mut sci = ci.lock().unwrap(); 
 
-        /*
-        match osc_to_ctrl_update(&inmsg, &cnm, &sci.cm) {
-          Ok(updmsg) => { 
+        match osc_to_ctrl_update(&inmsg, control_server) {
+          Ok(updmsg) => {
+            control_server.update(&updmsg)
+            /*
             match sci.cm.get_mut(controls::get_um_id(&updmsg)) {
               Some(ctl) => {
                 (*ctl).update(&updmsg);
@@ -473,12 +489,17 @@ fn oscmain( recvsocket: UdpSocket )
                },
               None => (),
             }
+            */
           },
           Err(e) => {
             if inmsg.path == "guiconfig" && inmsg.arguments.len() > 0 {
               // is this a control config update instead?
               match &inmsg.arguments[0] {
                 &osc::Argument::s(guistring) => {
+                  control_server.load_gui_string(guistring);
+                  println!("new control layout recieved!");
+
+                  /* 
                   // build a new control map with this.
                   // deserialize the gui string into json.
                   match serde_json::from_str(&guistring[..]) { 
@@ -503,13 +524,13 @@ fn oscmain( recvsocket: UdpSocket )
                     },
                     Err(e) => println!("error reading guiconfig json: {:?}", e),
                   }
+                  */
                 },
                 _ => println!("osc decode error: {:?}", e),
               }
             }
           }
         };
-        */
     
         // print received afterwards, I guess for latency savings?
         println!("osc message received {} {:?}", inmsg.path, inmsg.arguments);

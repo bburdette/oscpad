@@ -115,6 +115,16 @@ fn main() {
   }
 }
 
+pub struct PrintUpdateMsg {
+};
+
+impl ControlUpdateProcessor for PrintUpdatMsg { 
+  fn on_update_received(&self, update &control_updates::UpdateMsg) -> ()
+  {
+    println!("update callback called! {:?}", update);
+  }
+}
+
 fn printupdatemsg(update: &cu::UpdateMsg) -> ()
 {
   println!("update callback called! {:?}", update);
@@ -201,8 +211,10 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
+    let prup = PrintUpdateReceived::new();
+
     let control_server = 
-       try! (touchpage::startserver(guistring.as_str(), printupdatemsg, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
+       try! (touchpage::startserver(guistring.as_str(), prup, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
 
     match oscmain(oscsocket, &control_server) {
       Err(e) => println!("oscmain exited with error: {:?}", e),

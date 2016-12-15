@@ -116,10 +116,10 @@ fn main() {
 }
 
 pub struct PrintUpdateMsg {
-};
+}
 
-impl ControlUpdateProcessor for PrintUpdatMsg { 
-  fn on_update_received(&self, update &control_updates::UpdateMsg) -> ()
+impl touchpage::ControlUpdateProcessor for PrintUpdateMsg { 
+  fn on_update_received(&mut self, update: &cu::UpdateMsg) -> ()
   {
     println!("update callback called! {:?}", update);
   }
@@ -131,6 +131,9 @@ fn printupdatemsg(update: &cu::UpdateMsg) -> ()
   ()
 }
 
+pub struct SendOscMsg { 
+}
+/*
 fn make_sendoscupdatemsg(control_server: &touchpage::ControlServer) -> 
   (Fn (&cu::UpdateMsg) -> ())
 {
@@ -143,6 +146,7 @@ fn make_sendoscupdatemsg(control_server: &touchpage::ControlServer) ->
   };
   f
 }
+*/
 
 fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
@@ -211,7 +215,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
-    let prup = PrintUpdateReceived::new();
+    let prup = Box::new(PrintUpdateMsg{});// ::new();
 
     let control_server = 
        try! (touchpage::startserver(guistring.as_str(), prup, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
@@ -239,10 +243,10 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
 fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> Result<Vec<u8>, Error>
 {
   match um {
-    &cu::UpdateMsg::Button { control_id: id
-                                 , label: ref opt_lab
-                                 , state: ref st
-                                 } => { 
+    &cu::UpdateMsg::Button { control_id: ref id
+                           , label: ref opt_lab
+                           , state: ref st
+                           } => { 
       // find the control in the map.
       match server.get_osc_name(&id) { 
         Some(oscname) => {
@@ -267,11 +271,11 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> 
         None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
       }
     },
-    &cu::UpdateMsg::Slider  { control_id: id
-                                  , label: ref lb
-                                  , state: ref st
-                                  , location: ref loc
-                                  } => {
+    &cu::UpdateMsg::Slider  { control_id: ref id
+                            , label: ref lb
+                            , state: ref st
+                            , location: ref loc
+                            } => {
       match server.get_osc_name(&id) { 
         Some(oscname) => { 
             let mut arghs = Vec::new();
@@ -298,9 +302,9 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> 
         None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
       }
     },
-    &cu::UpdateMsg::Label { control_id: id
-             , label: ref labtext
-             } => { 
+    &cu::UpdateMsg::Label { control_id: ref id
+                          , label: ref labtext
+                          } => { 
       match server.get_osc_name(&id) {
         Some(oscname) => { 
           let mut arghs = Vec::new();

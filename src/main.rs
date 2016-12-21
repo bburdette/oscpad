@@ -464,33 +464,6 @@ fn oscmain( recvsocket: UdpSocket,
                 &osc::Argument::s(guistring) => {
                   control_server.load_gui_string(guistring);
                   println!("new control layout recieved!");
-
-                  /* 
-                  // build a new control map with this.
-                  // deserialize the gui string into json.
-                  match serde_json::from_str(&guistring[..]) { 
-                    Ok(guival) => { 
-                      match controls::deserialize_root(&guival) {
-                        Ok(controltree) => { 
-                          println!("new control layout recieved!");
-
-                          println!("title: {} count: {} ", 
-                            controltree.title, controltree.root_control.control_type());
-                          println!("controls: {:?}", controltree.root_control);
-
-                          // from control tree, make a map of ids->controls.
-                          let mapp = controls::make_control_map(&*controltree.root_control);
-                          cnm = controls::control_map_to_name_map(&mapp);
-                          sci.cm = mapp;
-                          sci.guijson = guistring.to_string();
-                          bc.broadcast(Message::text(guistring.to_string()));
-                        },
-                        Err(e) => println!("error reading guiconfig from json: {:?}", e),
-                      }
-                    },
-                    Err(e) => println!("error reading guiconfig json: {:?}", e),
-                  }
-                  */
                 },
                 _ => println!("osc decode error: {:?}", e),
               }

@@ -14,6 +14,7 @@ use std::fmt::format;
 use std::net::UdpSocket;
 
 use touchpage::startserver;
+use touchpage as tp;
 use touchpage::control_updates as cu;
 extern crate touchpage;
 
@@ -119,7 +120,7 @@ pub struct PrintUpdateMsg {
 }
 
 impl touchpage::ControlUpdateProcessor for PrintUpdateMsg { 
-  fn on_update_received(&mut self, update: &cu::UpdateMsg) -> ()
+  fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> ()
   {
     println!("update callback called! {:?}", update);
   }
@@ -132,7 +133,20 @@ fn printupdatemsg(update: &cu::UpdateMsg) -> ()
 }
 
 pub struct SendOscMsg { 
+  sendsocket: UdpSocket,
 }
+
+impl touchpage::ControlUpdateProcessor for SendOscMsg { 
+  fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> ()
+  {
+    match ctrl_update_to_osc(update, ci) {
+      Ok(msg) => println!("ok"),
+      _ => println!("err"),
+    }
+     println!("update callback called! {:?}", update);
+  }
+}
+
 /*
 fn make_sendoscupdatemsg(control_server: &touchpage::ControlServer) -> 
   (Fn (&cu::UpdateMsg) -> ())
@@ -240,7 +254,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
 //  I'm tending towards the named pairs.  But, look at the client code and
 // see if that would be an undue hardship.  
 
-fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> Result<Vec<u8>, Error>
+fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result<Vec<u8>, Error>
 {
   match um {
     &cu::UpdateMsg::Button { control_id: ref id
@@ -248,7 +262,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> 
                            , state: ref st
                            } => { 
       // find the control in the map.
-      match server.get_osc_name(&id) { 
+      match ci.get_osc_name(&id) { 
         Some(oscname) => {
             let mut arghs = Vec::new();
             if let &Some(ref state) = st {
@@ -276,7 +290,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> 
                             , state: ref st
                             , location: ref loc
                             } => {
-      match server.get_osc_name(&id) { 
+      match ci.get_osc_name(&id) { 
         Some(oscname) => { 
             let mut arghs = Vec::new();
             if let &Some(ref state) = st {
@@ -305,7 +319,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, server: &touchpage::ControlServer) -> 
     &cu::UpdateMsg::Label { control_id: ref id
                           , label: ref labtext
                           } => { 
-      match server.get_osc_name(&id) {
+      match ci.get_osc_name(&id) {
         Some(oscname) => { 
           let mut arghs = Vec::new();
           arghs.push(osc::Argument::s("label"));

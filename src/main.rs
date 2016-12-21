@@ -156,21 +156,6 @@ impl touchpage::ControlUpdateProcessor for SendOscMsg {
   }
 }
 
-/*
-fn make_sendoscupdatemsg(control_server: &touchpage::ControlServer) -> 
-  (Fn (&cu::UpdateMsg) -> ())
-{
-  let f = | update | {
-    match ctrl_update_to_osc(update, control_server) {
-      Ok(msg) => println!("ok"),
-      _ => println!("err"),
-    }
-        // send to osc socket!
-  };
-  f
-}
-*/
-
 fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error> >
 {
     println!("loading config file: {}", file_name);
@@ -230,16 +215,11 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
 
     // for sending, bind to this.  if we bind to localhost, we can't
     // send messages to other machines.  
-    let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
-//    let bc = broadcaster::Broadcaster::new();
 
+    let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
     let wsos = try!(oscsendsocket.try_clone());
     let wsoscsendip = oscsendip.clone();
 
-    // let ci = ControlInfo { cm: mapp, guijson: guijson };
-    // let cmshare = Arc::new(Mutex::new(ci));
-
-    // let cup = Box::new(PrintUpdateMsg{});// ::new();
     let cup = Box::new(SendOscMsg{oscsendsocket: wsos, 
                                   oscsendip: wsoscsendip});
 
@@ -257,8 +237,6 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
 
 
 // TODO:
-// break out osc encode/decode into a separate file, looking to be a 
-// separate project at some point.
 // how should osc messages be structured?
 //  - seperate messages for each control attribute?
 //  - named pairs, attrib + amount
@@ -287,7 +265,6 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result
 
             if let &Some(ref lb) = opt_lab {
               arghs.push(osc::Argument::s("label"));
-              // arghs.push(osc::Argument::s(lr));  // &labs[..]));
               arghs.push(osc::Argument::s(&lb[..]));
             };
               
@@ -444,8 +421,6 @@ fn parse_osc_control_update(om: &osc::Message,
 
 fn osc_to_ctrl_update(om: &osc::Message, 
                    cserver: &touchpage::ControlServer,
-//                   cnm: &controls::ControlNameMap,
-//                   cm: &controls::ControlMap) 
                    )
    -> Result<cu::UpdateMsg, Box<std::error::Error> >
 {
@@ -460,50 +435,15 @@ fn osc_to_ctrl_update(om: &osc::Message,
       Err(Box::new(Error::new(ErrorKind::Other, msg)))
     },
    }
-  // first the control id
-  // let cid = try_opt_resbox!(cnm.get(om.path), "control name not found!");
-  
-  // next the control itself.
-  // let control = try_opt_resbox!(cm.get(cid), "control not found!");
 
-  // make an update message based on the control type.
-  /*
-  match &(*control.control_type()) {
-   "slider" => parse_osc_control_update(om, 0, controls::UpdateMsg::Slider 
-            { control_id: cid.clone(), 
-              state: None,
-              location: None,
-              label: None }),  
-   "button" => parse_osc_control_update(om, 0, controls::UpdateMsg::Button 
-            { control_id: cid.clone(), 
-              state: None,
-              label: None }),  
-   "label" => parse_osc_control_update(om, 0, controls::UpdateMsg::Label 
-            { control_id: cid.clone(), 
-              label: String::from("") }),  
-   x => {
-    let msg = format(format_args!("unknown type: {:?}", x));    
-      Err(Box::new(Error::new(ErrorKind::Other, msg)))
-    },
-   }
-   */
 }
 
 fn oscmain( recvsocket: UdpSocket,
             control_server: &touchpage::ControlServer,
             )
-//            mut bc: broadcaster::Broadcaster, 
-//            ci: Arc<Mutex<ControlInfo>>)
               -> Result<String, Box<std::error::Error> >
 { 
   let mut buf = [0; 10000];
-
-  /*
-  let mut cnm = {
-    let sci  = ci.lock().unwrap(); 
-    controls::control_map_to_name_map(&sci.cm)
-    };
-    */
 
   loop { 
     let (amt, _) = try!(recvsocket.recv_from(&mut buf));
@@ -513,25 +453,9 @@ fn oscmain( recvsocket: UdpSocket,
           println!("invalid osc messsage: {:?}", e)
         },
       Ok(inmsg) => {
-        // let mut sci = ci.lock().unwrap(); 
-
         match osc_to_ctrl_update(&inmsg, control_server) {
           Ok(updmsg) => {
             control_server.update(&updmsg)
-            /*
-            match sci.cm.get_mut(controls::get_um_id(&updmsg)) {
-              Some(ctl) => {
-                (*ctl).update(&updmsg);
-                let val = controls::encode_update_message(&updmsg); 
-                match serde_json::ser::to_string(&val) { 
-                  Ok(s) => bc.broadcast(Message::text(s)), 
-                  Err(_) => ()
-                }
-                ()
-               },
-              None => (),
-            }
-            */
           },
           Err(e) => {
             if inmsg.path == "guiconfig" && inmsg.arguments.len() > 0 {

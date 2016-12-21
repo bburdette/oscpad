@@ -252,7 +252,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result
                            , state: ref st
                            } => { 
       // find the control in the map.
-      match ci.get_osc_name(&id) { 
+      match ci.get_name(&id) { 
         Some(oscname) => {
             let mut arghs = Vec::new();
             if let &Some(ref state) = st {
@@ -279,7 +279,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result
                             , state: ref st
                             , location: ref loc
                             } => {
-      match ci.get_osc_name(&id) { 
+      match ci.get_name(&id) { 
         Some(oscname) => { 
             let mut arghs = Vec::new();
             if let &Some(ref state) = st {
@@ -308,7 +308,7 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result
     &cu::UpdateMsg::Label { control_id: ref id
                           , label: ref labtext
                           } => { 
-      match ci.get_osc_name(&id) {
+      match ci.get_name(&id) {
         Some(oscname) => { 
           let mut arghs = Vec::new();
           arghs.push(osc::Argument::s("label"));

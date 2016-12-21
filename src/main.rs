@@ -133,17 +133,26 @@ fn printupdatemsg(update: &cu::UpdateMsg) -> ()
 }
 
 pub struct SendOscMsg { 
-  sendsocket: UdpSocket,
+  oscsendsocket: UdpSocket,
+  oscsendip: String,
 }
 
 impl touchpage::ControlUpdateProcessor for SendOscMsg { 
   fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> ()
   {
     match ctrl_update_to_osc(update, ci) {
-      Ok(msg) => println!("ok"),
-      _ => println!("err"),
-    }
-     println!("update callback called! {:?}", update);
+      Ok(v) => match self.oscsendsocket.send_to(&v, &self.oscsendip[..]) {
+        Ok(_) => (),
+        Err(e) => { 
+          println!("oscsendip: {:?}", self.oscsendip);
+          println!("error sending osc message: {:?}", e)
+          },
+        },
+      Err(e) => 
+        println!("error building osc message: {:?}", e),
+    };
+      
+    println!("update callback called! {:?}", update);
   }
 }
 
@@ -223,16 +232,19 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     // send messages to other machines.  
     let oscsendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
 //    let bc = broadcaster::Broadcaster::new();
-    // let wsos = try!(oscsendsocket.try_clone());
-    // let wsoscsendip = oscsendip.clone();
+
+    let wsos = try!(oscsendsocket.try_clone());
+    let wsoscsendip = oscsendip.clone();
 
     // let ci = ControlInfo { cm: mapp, guijson: guijson };
     // let cmshare = Arc::new(Mutex::new(ci));
 
-    let prup = Box::new(PrintUpdateMsg{});// ::new();
+    // let cup = Box::new(PrintUpdateMsg{});// ::new();
+    let cup = Box::new(SendOscMsg{oscsendsocket: wsos, 
+                                  oscsendip: wsoscsendip});
 
     let control_server = 
-       try! (touchpage::startserver(guistring.as_str(), prup, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
+       try! (touchpage::startserver(guistring.as_str(), cup, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
 
     match oscmain(oscsocket, &control_server) {
       Err(e) => println!("oscmain exited with error: {:?}", e),

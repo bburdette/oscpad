@@ -55,7 +55,7 @@ fn make_default_prefs(guifile: &str) -> BTreeMap<String, Value>
   map.insert(String::from("http-port"), Value::String("3030".to_string()));
   map.insert(String::from("websockets-port"), Value::String("1234".to_string()));
   map.insert(String::from("oscrecvip"), Value::String("localhost:9000".to_string()));
-  map.insert(String::from("oscsendip"), Value::String("localhost:7".to_string()));
+  map.insert(String::from("oscsendip"), Value::String("127.0.0.1:7070".to_string()));
   
   map
 }   
@@ -66,7 +66,6 @@ fn main() {
   let mut iter = args.skip(1); // skip the program name
   match iter.next() {
     Some(file_name) => {
-      /*
       if file_name == "-mkconfigs" 
       {
         let a = iter.next();
@@ -80,7 +79,7 @@ fn main() {
                 Ok(()) => println!("wrote example server config to file: {}", prefs_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
-              match write_string(string_defaults::SAMPLE_GUI_CONFIG, &gui_filename[..]) {
+              match write_string(touchpage::sample_gui_config(), &gui_filename[..]) {
                 Ok(()) => println!("wrote example gui config to file: {}", gui_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
@@ -100,12 +99,11 @@ fn main() {
         }
       }
       else {
-      */
         match startserver_w_config(&file_name) {
           Err(e) => println!("error starting server: {:?}", e),
           _ => (),
         }
-      // }
+      }
 
     }
     None => {

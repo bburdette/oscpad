@@ -79,7 +79,7 @@ fn main() {
                 Ok(()) => println!("wrote example server config to file: {}", prefs_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }
-              match write_string(touchpage::sample_gui_config(), &gui_filename[..]) {
+              match write_string(touchpage::json::sample_gui_config(), &gui_filename[..]) {
                 Ok(()) => println!("wrote example gui config to file: {}", gui_filename),
                 Err(e) => println!("error writing default config file: {:?}", e),
               }

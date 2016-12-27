@@ -172,6 +172,11 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
         "failed to convert to string");
     let guistring = try!(load_string(&guifilename[..]));
     // let guistring = "wtf";
+    let htmlfilename = 
+      match obj.get("htmlfile") {
+        Some(val) => val.as_string(),
+        None => None,
+        };
 
     let ip = String::new() + 
       try_opt_resbox!(
@@ -222,7 +227,12 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
                                   oscsendip: wsoscsendip});
 
     let control_server = 
-       try! (touchpage::startserver(guistring.as_str(), cup, ip.as_str(), http_port.as_str(), websockets_port.as_str(), None));
+       try! (touchpage::startserver(guistring.as_str(), 
+                                    cup, 
+                                    ip.as_str(), 
+                                    http_port.as_str(), 
+                                    websockets_port.as_str(), 
+                                    htmlfilename));
 
     match oscmain(oscsocket, &control_server) {
       Err(e) => println!("oscmain exited with error: {:?}", e),

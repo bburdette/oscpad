@@ -171,7 +171,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
                         "'guifile' not found in config file").as_string(), 
         "failed to convert to string");
     let guistring = try!(load_string(&guifilename[..]));
-    // let guistring = "wtf";
+    
     let htmlfilename = 
       match obj.get("htmlfile") {
         Some(val) => val.as_string(),

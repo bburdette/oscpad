@@ -174,7 +174,8 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<std::error::Error>
     
     let htmlfilename = 
       match obj.get("htmlfile") {
-        Some(val) => val.as_string(),
+        Some(val) => { println!("loading htmlfile: {:?}", val.as_string());
+                       val.as_string() },
         None => None,
         };
 

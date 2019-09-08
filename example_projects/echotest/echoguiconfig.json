@@ -45,10 +45,12 @@
       , { "type": "button"
         , "name": "b2"
         , "label": "b2"
+        , "latch": true
         }
       , { "type": "button"
         , "name": "b3"
         , "label": "b3"
+        , "latch": true
         }
        ]
     }

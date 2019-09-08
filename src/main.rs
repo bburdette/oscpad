@@ -344,8 +344,8 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &touchpage::ControlInfo) -> Result
 
 // wow this code is hideous!  do not look!
 fn parse_osc_control_update(om: &osc::Message,
-                        arg_index: usize, 
-                        update: cu::UpdateMsg )
+                            arg_index: usize, 
+                            update: cu::UpdateMsg )
   -> Result<cu::UpdateMsg, Box<std::error::Error> >
 {
   if arg_index >= om.arguments.len() {

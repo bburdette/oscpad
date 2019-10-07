@@ -1,15 +1,15 @@
-let 
-  nixpkgs = import <nixpkgs> {};
+let
+  moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
+  nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
 in
   with nixpkgs;
   stdenv.mkDerivation {
-    name = "oscpad-env";
-    buildInputs = [ 
-      cargo
-      rustc
-      pkgconfig
+    name = "moz_overlay_shell";
+    buildInputs = [
+      nixpkgs.latest.rustChannels.stable.rust
       openssl.dev 
+      pkgconfig
       nix
       ];
-    OPENSSL_DEV=openssl.dev;
+    OPENSSL_LIB_DIR=openssl.dev;
   }

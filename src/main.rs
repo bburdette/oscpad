@@ -242,7 +242,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<dyn std::error::Er
         false,
     ));
 
-    tp::webserver::startwebserver("localhost", "8000", websockets_port.as_str(), None);
+    tp::webserver::startwebserver("localhost", "8000", websockets_port.as_str(), None, false);
 
     println!("after startwebserver");
     match oscmain(oscsocket, &control_server) {

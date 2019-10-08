@@ -124,11 +124,6 @@ impl cn::ControlUpdateProcessor for PrintUpdateMsg {
   }
 }
 
-fn printupdatemsg(update: &cu::UpdateMsg) -> () {
-  println!("update callback called! {:?}", update);
-  ()
-}
-
 pub struct SendOscMsg {
   oscsendsocket: UdpSocket,
   oscsendip: String,
@@ -136,9 +131,13 @@ pub struct SendOscMsg {
 
 impl cn::ControlUpdateProcessor for SendOscMsg {
   fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &cn::ControlInfo) -> () {
+    println!("on_update_receivedi {:?}", update);
     match ctrl_update_to_osc(update, ci) {
       Ok(v) => match self.oscsendsocket.send_to(&v, &self.oscsendip[..]) {
-        Ok(_) => (),
+        Ok(_) => {
+          println!("osc message sent : {:?}, {:?}", v, self.oscsendip);
+          ()
+        }
         Err(e) => {
           println!("oscsendip: {:?}", self.oscsendip);
           println!("error sending osc message: {:?}", e)

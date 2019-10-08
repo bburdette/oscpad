@@ -1,5 +1,5 @@
 { "guifile": "example_projects/echotest/echoguiconfig.json", 
-  "htmlfile": "../touchpage/elm/index.html+main.js",
+  "htmlfile": "../touchpage/example/index.html",
   "ip": "0.0.0.0",
   "NOTip": "100.100.100.157",
   "http-port": "3030",

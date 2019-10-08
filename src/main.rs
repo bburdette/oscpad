@@ -119,7 +119,7 @@ fn main() {
 pub struct PrintUpdateMsg {}
 
 impl cn::ControlUpdateProcessor for PrintUpdateMsg {
-  fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &cn::ControlInfo) -> () {
+  fn on_update_received(&mut self, update: &cu::UpdateMsg, _ci: &cn::ControlInfo) -> () {
     println!("update callback called! {:?}", update);
   }
 }
@@ -231,7 +231,22 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<dyn std::error::Er
     false,
   ));
 
-  tp::webserver::startwebserver("localhost", http_port.as_str(), websockets_port.as_str(), None, false);
+
+  //"../touchpage/example/index.html"
+  let htmltemplate =
+    match htmlfilename {
+      Some(fname) =>
+        match load_string(fname) {
+          Ok(s) => Some(s),
+          Err(_) => {
+            println!("no html template, using default.");
+            None
+          }
+        }
+      None => None,
+    };
+
+  tp::webserver::startwebserver("localhost", http_port.as_str(), websockets_port.as_str(), htmltemplate, false);
 
   println!("after startwebserver");
   match oscmain(oscsocket, &control_server) {
@@ -476,8 +491,11 @@ fn oscmain(
               // is this a control config update instead?
               match &inmsg.arguments[0] {
                 &osc::Argument::s(guistring) => {
-                  control_server.load_gui_string(guistring);
                   println!("new control layout recieved!");
+                  match control_server.load_gui_string(guistring) {
+                    Ok(()) => (),
+                    Err(e) => println!("error loading control layout: {}", e),
+                  }
                 }
                 _ => println!("osc decode error: {:?}", e),
               }

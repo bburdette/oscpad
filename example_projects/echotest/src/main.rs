@@ -1,4 +1,3 @@
-
 #[macro_use]
 mod tryopt;
 mod stringerror;
@@ -21,7 +20,7 @@ fn main() {
     }
 }
 
-fn rmain() -> Result<String, Box<std::error::Error> > { 
+fn rmain() -> Result<String, Box<dyn std::error::Error> > {
   let args = env::args();
   let mut iter = args.skip(1); // skip the program name
   
@@ -36,7 +35,10 @@ fn rmain() -> Result<String, Box<std::error::Error> > {
   // recvsocket for sending. 
   let sendsocket = try!(UdpSocket::bind("0.0.0.0:0"));
   let mut buf = [0; 100];
+
   println!("echotest");
+  println!("sending to: {}", sendip);
+  println!("receiving from: {}", recvip);
 
   loop { 
     let (amt, _) = try!(recvsocket.recv_from(&mut buf));

@@ -1,34 +1,31 @@
-
-// use std::error;   
+// use std::error;
 // use stringerror;
 
-
 #[macro_export]
-macro_rules! try_opt { 
-  ($e: expr) => { 
-    match $e { 
-      Some(x) => x, 
-      None => return None 
-      } 
-  } 
+macro_rules! try_opt {
+  ($e: expr) => {
+    match $e {
+      Some(x) => x,
+      None => return None,
+    }
+  };
 }
 
 #[macro_export]
-macro_rules! try_opt_resbox { 
-
-  ($e: expr, $s: expr) => { 
-    match $e { 
-      Some(x) => x, 
+macro_rules! try_opt_resbox {
+  ($e: expr, $s: expr) => {
+    match $e {
+      Some(x) => x,
       None => return Err(stringerror::string_box_err($s)),
-      // None => return Err(Box::new(stringerror::Error::new($s))), 
-      } 
-  } 
+      // None => return Err(Box::new(stringerror::Error::new($s))),
+    }
+  };
 }
 
 /*
 #[macro_export]
 macro_rules! try_opt_res {
-  ($e: expr, $s: expr) =>  
+  ($e: expr, $s: expr) =>
     (match $e {
       Some(val) => val,
       None => {
@@ -42,7 +39,7 @@ macro_rules! try_opt_res {
 hmmm not getting why this doesn't work... want it to be like the try! macro.
 
 macro_rules! try_opt_res {
-  ($e: expr, $s: expr) =>  
+  ($e: expr, $s: expr) =>
     (match $e {
       Some(val) => val,
       None => {
@@ -52,5 +49,3 @@ macro_rules! try_opt_res {
     })
 }
 */
-
-

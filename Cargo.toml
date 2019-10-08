@@ -23,8 +23,8 @@ include = [ "src/**/*",
             "ns.sh"]
 
 [dependencies]
-
 touchpage = { path = "../touchpage" }
+# touchpage = "0.1.0" 
 serde_json = "0.7.0"
 serde = "0.5.3"
 time = "0.1.34" 

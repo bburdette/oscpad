@@ -22,7 +22,7 @@ fn main() {
     }
 }
 
-fn resmain() -> Result<String, Box<std::error::Error> > { 
+fn resmain() -> Result<String, Box<dyn std::error::Error> > {
   let args = env::args();
   let mut iter = args.skip(1); // skip the program name
   
@@ -48,7 +48,7 @@ fn resmain() -> Result<String, Box<std::error::Error> > {
 }
 
 
-fn load_string(file_name: &str) -> Result<String, Box<std::error::Error> >
+fn load_string(file_name: &str) -> Result<String, Box<dyn std::error::Error> >
 {
   let path = &Path::new(&file_name);
   let mut inf = try!(File::open(path));

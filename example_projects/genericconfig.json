@@ -1,7 +1,6 @@
 { "guifile": "example_projects/echotest/echoguiconfig.json", 
   "htmlfile": "../touchpage/example/index.html",
   "ip": "0.0.0.0",
-  "NOTip": "100.100.100.157",
   "http-port": "3030",
   "websockets-port": "1234",
   "oscrecvip": "127.0.0.1:9000",

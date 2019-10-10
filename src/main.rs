@@ -223,7 +223,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<dyn std::error::Er
   });
 
   println!("websockets port: {}", websockets_port);
-  let control_server = try!(tp::websocketserver::startserver(
+  let control_server = try!(tp::websocketserver::start(
     guistring.as_str(),
     cup,
     ip.as_str(),
@@ -246,7 +246,7 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<dyn std::error::Er
       None => None,
     };
 
-  tp::webserver::startwebserver("localhost", http_port.as_str(), websockets_port.as_str(), htmltemplate, false);
+  tp::webserver::start("localhost", http_port.as_str(), websockets_port.as_str(), htmltemplate, false);
 
   println!("after startwebserver");
   match oscmain(oscsocket, &control_server) {
@@ -278,8 +278,8 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
           let mut arghs = Vec::new();
           if let &Some(ref state) = st {
             arghs.push(match state {
-              &cu::ButtonState::Pressed => osc::Argument::s("pressed"),
-              &cu::ButtonState::Unpressed => osc::Argument::s("unpressed"),
+              &cu::PressState::Pressed => osc::Argument::s("pressed"),
+              &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
             })
           };
 
@@ -307,14 +307,48 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
         let mut arghs = Vec::new();
         if let &Some(ref state) = st {
           arghs.push(match state {
-            &cu::SliderState::Pressed => osc::Argument::s("pressed"),
-            &cu::SliderState::Unpressed => osc::Argument::s("unpressed"),
+            &cu::PressState::Pressed => osc::Argument::s("pressed"),
+            &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
           });
         };
         if let &Some(ref location) = loc {
           let l = *location as f32;
           arghs.push(osc::Argument::s("location"));
           arghs.push(osc::Argument::f(l));
+        };
+        if let &Some(ref label) = lb {
+          arghs.push(osc::Argument::s("label"));
+          arghs.push(osc::Argument::s(&label[..]));
+        };
+
+        let msg = osc::Message {
+          path: oscname.as_str(),
+          arguments: arghs,
+        };
+        msg.serialize()
+      }
+      None => Err(Error::new(ErrorKind::NotFound, "osc id not found!")),
+    },
+    &cu::UpdateMsg::XY {
+      control_id: ref id,
+      label: ref lb,
+      state: ref st,
+      location: ref loc,
+    } => match ci.get_name(&id) {
+      Some(oscname) => {
+        let mut arghs = Vec::new();
+        if let &Some(ref state) = st {
+          arghs.push(match state {
+            &cu::PressState::Pressed => osc::Argument::s("pressed"),
+            &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
+          });
+        };
+        if let &Some(ref location) = loc {
+          let (lx,ly) = *location as (f32, f32);
+          arghs.push(osc::Argument::s("locx"));
+          arghs.push(osc::Argument::f(lx));
+          arghs.push(osc::Argument::s("locy"));
+          arghs.push(osc::Argument::f(ly));
         };
         if let &Some(ref label) = lb {
           arghs.push(osc::Argument::s("label"));
@@ -371,10 +405,10 @@ fn parse_osc_control_update(
         let mut newupd = update.clone();
         match newupd {
           cu::UpdateMsg::Button { ref mut state, .. } => {
-            *state = Some(cu::ButtonState::Pressed);
+            *state = Some(cu::PressState::Pressed);
           }
           cu::UpdateMsg::Slider { ref mut state, .. } => {
-            *state = Some(cu::SliderState::Pressed);
+            *state = Some(cu::PressState::Pressed);
           }
           _ => (),
         };
@@ -384,10 +418,10 @@ fn parse_osc_control_update(
         let mut newupd = update.clone();
         match newupd {
           cu::UpdateMsg::Button { ref mut state, .. } => {
-            *state = Some(cu::ButtonState::Unpressed);
+            *state = Some(cu::PressState::Unpressed);
           }
           cu::UpdateMsg::Slider { ref mut state, .. } => {
-            *state = Some(cu::SliderState::Unpressed);
+            *state = Some(cu::PressState::Unpressed);
           }
           _ => (),
         };
@@ -435,6 +469,9 @@ fn parse_osc_control_update(
                   *label = Some(txt.to_string());
                 }
                 cu::UpdateMsg::Slider { ref mut label, .. } => {
+                  *label = Some(txt.to_string());
+                }
+                cu::UpdateMsg::XY { ref mut label, .. } => {
                   *label = Some(txt.to_string());
                 }
                 cu::UpdateMsg::Label { ref mut label, .. } => {

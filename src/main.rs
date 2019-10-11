@@ -116,34 +116,29 @@ fn main() {
   }
 }
 
-pub struct PrintUpdateMsg {}
-
-impl cn::ControlUpdateProcessor for PrintUpdateMsg {
-  fn on_update_received(&mut self, update: &cu::UpdateMsg, _ci: &cn::ControlInfo) -> () {
-    println!("update callback called! {:?}", update);
-  }
-}
-
 pub struct SendOscMsg {
   oscsendsocket: UdpSocket,
   oscsendip: String,
 }
 
 impl cn::ControlUpdateProcessor for SendOscMsg {
-  fn on_update_received(&mut self, update: &cu::UpdateMsg, ci: &cn::ControlInfo) -> () {
+  fn on_update_received(&mut self, update: &cu::UpdateMsg, cn: &mut cn::ControlNexus) -> () {
     println!("on_update_receivedi {:?}", update);
-    match ctrl_update_to_osc(update, ci) {
-      Ok(v) => match self.oscsendsocket.send_to(&v, &self.oscsendip[..]) {
-        Ok(_) => {
-          println!("osc message sent : {:?}, {:?}", v, self.oscsendip);
-          ()
-        }
-        Err(e) => {
-          println!("oscsendip: {:?}", self.oscsendip);
-          println!("error sending osc message: {:?}", e)
-        }
+    match cn.ci.lock() {
+      Ok(ci) => match ctrl_update_to_osc(update, &ci) {
+        Ok(v) => match self.oscsendsocket.send_to(&v, &self.oscsendip[..]) {
+          Ok(_) => {
+            println!("osc message sent : {:?}, {:?}", v, self.oscsendip);
+            ()
+          }
+          Err(e) => {
+            println!("oscsendip: {:?}", self.oscsendip);
+            println!("error sending osc message: {:?}", e)
+          }
+        },
+        Err(e) => println!("error building osc message: {:?}", e),
       },
-      Err(e) => println!("error building osc message: {:?}", e),
+      Err(e) => println!("error with locK: {}", e),
     };
 
     println!("update callback called! {:?}", update);
@@ -231,22 +226,25 @@ fn startserver_w_config(file_name: &String) -> Result<(), Box<dyn std::error::Er
     false,
   ));
 
-
   //"../touchpage/example/index.html"
-  let htmltemplate =
-    match htmlfilename {
-      Some(fname) =>
-        match load_string(fname) {
-          Ok(s) => Some(s),
-          Err(_) => {
-            println!("no html template, using default.");
-            None
-          }
-        }
-      None => None,
-    };
+  let htmltemplate = match htmlfilename {
+    Some(fname) => match load_string(fname) {
+      Ok(s) => Some(s),
+      Err(_) => {
+        println!("no html template, using default.");
+        None
+      }
+    },
+    None => None,
+  };
 
-  tp::webserver::start("localhost", http_port.as_str(), websockets_port.as_str(), htmltemplate, false);
+  tp::webserver::start(
+    "localhost",
+    http_port.as_str(),
+    websockets_port.as_str(),
+    htmltemplate,
+    false,
+  );
 
   println!("after startwebserver");
   match oscmain(oscsocket, &control_server) {
@@ -275,22 +273,22 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
       // find the control in the map.
       match ci.get_name(&id) {
         Some(oscname) => {
-          let mut arghs = Vec::new();
+          let mut args = Vec::new();
           if let &Some(ref state) = st {
-            arghs.push(match state {
+            args.push(match state {
               &cu::PressState::Pressed => osc::Argument::s("pressed"),
               &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
             })
           };
 
           if let &Some(ref lb) = opt_lab {
-            arghs.push(osc::Argument::s("label"));
-            arghs.push(osc::Argument::s(&lb[..]));
+            args.push(osc::Argument::s("label"));
+            args.push(osc::Argument::s(&lb[..]));
           };
 
           let msg = osc::Message {
             path: oscname.as_str(),
-            arguments: arghs,
+            arguments: args,
           };
           msg.serialize()
         }
@@ -304,26 +302,26 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
       location: ref loc,
     } => match ci.get_name(&id) {
       Some(oscname) => {
-        let mut arghs = Vec::new();
+        let mut args = Vec::new();
         if let &Some(ref state) = st {
-          arghs.push(match state {
+          args.push(match state {
             &cu::PressState::Pressed => osc::Argument::s("pressed"),
             &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
           });
         };
         if let &Some(ref location) = loc {
           let l = *location as f32;
-          arghs.push(osc::Argument::s("location"));
-          arghs.push(osc::Argument::f(l));
+          args.push(osc::Argument::s("location"));
+          args.push(osc::Argument::f(l));
         };
         if let &Some(ref label) = lb {
-          arghs.push(osc::Argument::s("label"));
-          arghs.push(osc::Argument::s(&label[..]));
+          args.push(osc::Argument::s("label"));
+          args.push(osc::Argument::s(&label[..]));
         };
 
         let msg = osc::Message {
           path: oscname.as_str(),
-          arguments: arghs,
+          arguments: args,
         };
         msg.serialize()
       }
@@ -336,28 +334,28 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
       location: ref loc,
     } => match ci.get_name(&id) {
       Some(oscname) => {
-        let mut arghs = Vec::new();
+        let mut args = Vec::new();
         if let &Some(ref state) = st {
-          arghs.push(match state {
+          args.push(match state {
             &cu::PressState::Pressed => osc::Argument::s("pressed"),
             &cu::PressState::Unpressed => osc::Argument::s("unpressed"),
           });
         };
         if let &Some(ref location) = loc {
-          let (lx,ly) = *location as (f32, f32);
-          arghs.push(osc::Argument::s("locx"));
-          arghs.push(osc::Argument::f(lx));
-          arghs.push(osc::Argument::s("locy"));
-          arghs.push(osc::Argument::f(ly));
+          let (lx, ly) = *location as (f32, f32);
+          args.push(osc::Argument::s("locx"));
+          args.push(osc::Argument::f(lx));
+          args.push(osc::Argument::s("locy"));
+          args.push(osc::Argument::f(ly));
         };
         if let &Some(ref label) = lb {
-          arghs.push(osc::Argument::s("label"));
-          arghs.push(osc::Argument::s(&label[..]));
+          args.push(osc::Argument::s("label"));
+          args.push(osc::Argument::s(&label[..]));
         };
 
         let msg = osc::Message {
           path: oscname.as_str(),
-          arguments: arghs,
+          arguments: args,
         };
         msg.serialize()
       }
@@ -368,12 +366,12 @@ fn ctrl_update_to_osc(um: &cu::UpdateMsg, ci: &cn::ControlInfo) -> Result<Vec<u8
       label: ref labtext,
     } => match ci.get_name(&id) {
       Some(oscname) => {
-        let mut arghs = Vec::new();
-        arghs.push(osc::Argument::s("label"));
-        arghs.push(osc::Argument::s(&labtext[..]));
+        let mut args = Vec::new();
+        args.push(osc::Argument::s("label"));
+        args.push(osc::Argument::s(&labtext[..]));
         let msg = osc::Message {
           path: oscname.as_str(),
-          arguments: arghs,
+          arguments: args,
         };
         msg.serialize()
       }

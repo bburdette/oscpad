@@ -1,5 +1,8 @@
 {
   "title": "test",
+  "textColor": "1F00F0",
+  "controlsColor": "FFFFFF" ,
+  "unpressedColor": "F0F0FF",
   "rootControl": 
     { "type": "sizer",
       "orientation": "vertical",

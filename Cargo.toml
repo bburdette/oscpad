@@ -27,7 +27,7 @@ include = [ "src/**/*",
 touchpage = "0.2.0" 
 serde_json = "0.7.0"
 serde = "0.5.3"
-time = "0.1.34" 
+time = "0.2.0" 
 tinyosc = "0.0.3"
 
 
